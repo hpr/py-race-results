@@ -42,8 +42,12 @@ class TestCoolRunning(unittest.TestCase):
         with open(self.membership_file,'w') as fp:
             fp.write('CALEB,GARTNER\n')
             fp.write('SEAN,SPALDING\n')
+            fp.write('JOHN,BANNER\n')
 
     def test_racelist(self):
+        """
+        Test compiling race results from a list of local files.
+        """
         self.populate_membership_file()
         self.populate_racelist_file()
         o = rr.crrr(verbose='critical',
@@ -57,6 +61,25 @@ class TestCoolRunning(unittest.TestCase):
         p = root.findall('.//div/pre')
         self.assertTrue("Caleb Gartner" in p[0].text)
         self.assertTrue("Sean Spalding" in p[0].text)
+
+    def test_web_download(self):
+        """
+        Verify that we can get results from the web.
+        """
+        self.populate_membership_file()
+        start_date = datetime.datetime(2012,12,9)
+        stop_date = datetime.datetime(2012,12,10)
+        o = rr.crrr(verbose='critical',
+                memb_list=self.membership_file,
+                output_file=self.results_file,
+                start_date=start_date,
+                stop_date=stop_date)
+        o.run()
+        tree = ET.parse(self.results_file)
+        root = tree.getroot()
+        root = rr.common.remove_namespace(root)
+        p = root.findall('.//div/pre')
+        self.assertTrue("John Banner" in p[0].text)
 
 
 if __name__ == "__main__":

@@ -41,6 +41,7 @@ class TestCompuscore(unittest.TestCase):
         """
         with open(self.membership_file,'w') as fp:
             fp.write('FITZGERALD,ROBERT\n')
+            fp.write('JOANNA,STEVENS\n')
 
     def test_racelist(self):
         self.populate_membership_file()
@@ -55,6 +56,23 @@ class TestCompuscore(unittest.TestCase):
         root = rr.common.remove_namespace(root)
         p = root.findall('.//div/pre')
         self.assertTrue("Robert Fitzgerald" in p[0].text)
+
+    def test_web_download(self):
+        """
+        Verify that we can get results from the web.
+        """
+        self.populate_membership_file()
+        o = rr.csrr(verbose='critical',
+                memb_list=self.membership_file,
+                output_file=self.results_file,
+                year=2012, month='feb')
+        o.run()
+        tree = ET.parse(self.results_file)
+        root = tree.getroot()
+        root = rr.common.remove_namespace(root)
+        p = root.findall('.//div/pre')
+        self.assertTrue("John Banner" in p[0].text)
+
 
 
 if __name__ == "__main__":

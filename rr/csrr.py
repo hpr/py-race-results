@@ -1,4 +1,3 @@
-import datetime
 import logging
 import os
 import re
@@ -105,43 +104,11 @@ class csrr:
         self.process_master_file()
 
 
-    def construct_state_match_pattern(self,state):
-        """
-        Want to match strings like
-
-        http://www.coolrunning.com/results/07/ma/Jan16_Coloni_set1.shtml
-
-        So we construct a regular expression to match against
-        all the dates in the specified range.
-        """
-
-        #pattern = 'http://ww.coolrunning.com/results/'
-        pattern = '/results/'
-        pattern += self.start_date.strftime('%y')
-        pattern += '/'
-        pattern += state
-        pattern += '/'
-        pattern += self.start_date.strftime('%b')
-
-        # continue with a regexp to match any of the days in the range.
-        day_range = '('
-        for day in range(self.start_date.day,self.stop_date.day):
-            day_range += "%d_|" % day
-        day_range += '%d_)' % self.stop_date.day
-
-        pattern += day_range
-
-        pattern += '.*shtml'
-        self.logger.debug('Match pattern is %s...' % pattern)
-        r = re.compile(pattern,re.DOTALL)
-        return(r)
-
-
     def process_master_file(self):
         """
         Compile results.
         """
-        pattern = 'http://www.compuscore.com/cs%s/%s' % (self.date.strftime('%Y'), self.month)
+        pattern = 'http://www.compuscore.com/cs%s/%s' % (self.year, self.month)
 
         tree = ET.parse('index.htm')
         root = tree.getroot()
@@ -272,7 +239,7 @@ class csrr:
         http://compuscore.com/csYYYY/MONTH/index.htm
 
         """
-        url = 'http://compuscore.com/cs%s/%s/index.htm' % (self.date.strftime('%Y'),self.month)
+        url = 'http://compuscore.com/cs%s/%s/index.htm' % (self.year,self.month)
         self.logger.info('Downloading %s.' % url)
         rr.common.download_file(url, 'index.htm')
         rr.common.local_tidy('index.htm')

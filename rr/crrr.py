@@ -15,7 +15,7 @@ class crrr:
     Class for handling CoolRunning Race Results.
     """
     def __init__(self, start_date=None, stop_date=None, verbose=None,
-            states=None, memb_list=None, race_list=None, output_file=None):
+            states=['ma'], memb_list=None, race_list=None, output_file=None):
         """
         base_url:  
         day:  range of days in which to look for results
@@ -242,29 +242,6 @@ class crrr:
             raise
 
 
-    def is_xml_pattern_03(self, race_file):
-        """
-        And this is another XHTML variant sometimes found on CoolRunning.
-        """
-        pattern = './/body/table/tr/td/table/tr/td/div/table/tr'
-
-        try:
-            tree = ET.parse(race_file)
-        except ET.ParseError:
-            self.logger.debug('XML_03 ParseError on %s' % race_file)
-            return False
-        except:
-            raise
-
-        root = tree.getroot()
-        rr.common.remove_namespace(root)
-        nodes = root.findall(pattern)
-        if len(nodes) > 0:
-            return True
-        else:
-            return False
-
-
     def is_xml_pattern_02(self, race_file):
         """
         And this is another XHTML variant sometimes found on CoolRunning.
@@ -312,39 +289,6 @@ class crrr:
             return True
         else:
             return False
-
-
-    def compile_race_results_xml_03(self, race_file):
-        """
-        """
-        pattern = './/body/table/tr/td/table/tr/td/div/table/tr'
-
-        tree = ET.parse(race_file)
-        root = tree.getroot()
-        rr.common.remove_namespace(root)
-
-        trs = root.findall(pattern)
-
-        results = []
-        for tr in trs:
-            tds = tr.getchildren()
-
-            runner_name = tds[2].text 
-            if runner_name is None:
-                continue
-            for idx in range(0, len(self.first_name_regex)): 
-                fregex = self.first_name_regex[idx] 
-                lregex = self.last_name_regex[idx] 
-                if fregex.search(runner_name) and lregex.search(runner_name): 
-                    tr = rr.common.remove_namespace(tr)
-                    results.append(tr)
-
-        if len(results) > 0:
-            # Prepend the header.
-            tr = rr.common.remove_namespace(trs[0])
-            results.insert(0, tr)
-            self.insert_race_results_xml_01(results, race_file)
-
 
     def compile_race_results_xml_01(self, race_file):
         """
