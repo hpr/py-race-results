@@ -6,7 +6,6 @@ import logging
 import os
 import re
 import sys
-import warnings
 import xml.etree.cElementTree as ET
 
 import rr

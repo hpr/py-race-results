@@ -10,40 +10,41 @@ import xml.etree.cElementTree as ET
 
 import rr
 
-logging.basicConfig(level=logging.DEBUG)
-
 class brrr:
-    def __init__(self, start_date=None, stop_date=None, verbose=None,
-            memb_list=None, race_list=None, output_file=None):
-        """
-        base_url:  
-        day:  range of days in which to look for results
-        month:  month in which to look for results
-        year:  year in which to look for results
+    """
+    Process races found on BestRace.com.
+
+    Attributes:
+        start_date, stop_date:  date range to restrict race searches
         memb_list:  membership list
         race_list:  file containing list of races
         output_file:  final race results file
         verbose:  how much output to produce
-        """
-        self.start_date = start_date
-        self.stop_date = stop_date
-        self.memb_list = memb_list
-        self.race_list = race_list
-        self.output_file = output_file
+        logger: handles verbosity of program execution
+        downloaded_url:  If a race retrieved from a URL has results for anyone
+            in the membership list, then we want to record that URL in the output.
+    """
 
-        self.base_url = 'http://www.coolrunning.com'
+    def __init__(self, **kwargs):
+        self.start_date  = None
+        self.stop_date   = None
+        self.memb_list   = None
+        self.race_list   = None
+        self.output_file = None
+        self.verbose     = 'info'
+        self.__dict__.update(**kwargs)
 
-        # Need to remember the current URL.
         self.downloaded_url = None
 
         # Set the appropriate logging level.  Requires an exact
         # match of the level string value.
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.logger.setLevel( getattr(logging, verbose.upper()) )
+        self.logger.setLevel( getattr(logging, self.verbose.upper()) )
 
     def run(self):
         self.load_membership_list()
         self.compile_results()
+        # Make the output human-readable.
         rr.common.local_tidy(self.output_file)
 
     def load_membership_list(self):
@@ -69,7 +70,8 @@ class brrr:
         self.last_name_regex = last_name_regex
 
     def local_tidy(self,html_file):
-        """Cleans up the HTML file.
+        """
+        Cleans up the HTML file.
 
         LIBTIDY doesn't seem to like p:colorspace, so get rid of it before
         calling LIBTIDY.  
@@ -86,21 +88,31 @@ class brrr:
         rr.common.local_tidy(html_file)
 
     def compile_results(self):
-        """Either download the requested results or go through the
-        provided list.
+        """
+        Start collecting race result files.
         """
 
         self.initialize_output_file()
         if self.race_list is None:
+            # No race list specified, so look at the remote web site.
             self.compile_web_results()
         else:
+            # Get race results
             self.compile_local_results()
 
-
-
     def initialize_output_file(self):
-        """Construct a skeleton of the results of parsing race results from
+        """
+        Construct a skeleton of the results of parsing race results from
         BestRace.
+
+        <html>
+            <head>
+                <link rel='stylesheet' href='rr.css' type='text/css'/>
+                <body>
+                    STUFF TO GO HERE
+                </body>
+            </head>
+        </html>
         """
         ofile = ET.Element('html')
         head = ET.SubElement(ofile,'head')
@@ -114,26 +126,15 @@ class brrr:
 
 
     def compile_web_results(self):
-        """Download the requested results and compile them.
+        """
+        Download the requested results and compile them.
         """
         self.download_master_file()
         self.process_master_file()
 
-
-    def construct_match_pattern(self):
-        """Want to match strings like
-
-            http://www.bestrace.com/results/YY/YYMMD1D2.html"
-
-        """
-
-        logging.debug('Match pattern is %s' % pattern) 
-        r = re.compile(pattern,re.DOTALL)
-        return(r)
-
-
     def process_master_file(self):
-        """Compile results for the specified state.
+        """
+        Compile results for the specified state.
 
         We assume that we have the state file stored locally.
         """
@@ -151,7 +152,7 @@ class brrr:
         pattern += day_range
     
         pattern += ".*HTM"
-        logging.debug('pattern is "%s"' % pattern)
+        self.logger.debug('pattern is "%s"' % pattern)
 
         tree = ET.parse(local_file)
         root = tree.getroot()
@@ -163,12 +164,13 @@ class brrr:
             if href is None:
                 continue
             if re.match(pattern,href): 
-                logging.info('Downloading %s...' % href)
+                self.logger.info('Downloading %s...' % href)
                 race_file = self.download_race(href) 
                 self.compile_race_results(race_file)
 
     def compile_race_results(self,race_file):
-        """Go through a race file and collect results.
+        """
+        Go through a single race file and collect results.
         """
         r = []
         for rline in open(race_file):
@@ -181,7 +183,8 @@ class brrr:
 
 
     def insert_race_results(self,result,race_file):
-        """Insert results into the output file.
+        """
+        Insert results into the output file.
         """
         div = ET.Element('div')
         div.set('class','race')
@@ -223,8 +226,6 @@ class brrr:
 
         ET.ElementTree(root).write(self.output_file)
 
-
-
     def parse_banner(self,root):
         """Retrieve the banner from the race file.
 
@@ -251,11 +252,10 @@ class brrr:
 
         return(banner)
 
-
     def match_against_membership(self,line):
-        """Given a line of text, does it contain a member's name?
         """
-        #z = zip(self.first_name_regex,self.last_name_regex)
+        Given a line of text, does it contain a member's name?
+        """
         for idx in range(0,len(self.first_name_regex)):
             fregex = self.first_name_regex[idx]
             lregex = self.last_name_regex[idx]
@@ -273,28 +273,25 @@ class brrr:
         """
         fmt = 'http://www.bestrace.com/%sschedule.html'
         url = fmt % self.start_date.strftime('%Y')
-        logging.info('Downloading %s.' % url)
+        self.logger.info('Downloading %s.' % url)
         rr.common.download_file(url,'index.html')
         self.local_tidy('index.html')
 
 
 
     def download_race(self,url):
-        """Download a race URL to a local file.
+        """
+        Download a race URL to a local file.
         """
         local_file = url.split('/')[-1]
-        logging.info('Downloading %s...' % local_file)
+        self.logger.info('Downloading %s...' % local_file)
         rr.common.download_file(url,local_file)
         self.downloaded_url = url
         rr.common.local_tidy(local_file)
         return(local_file)
-
-
 
     def compile_local_results(self):
         """Compile results from list of local files.
         """
         for line in open(self.race_list):
             self.compile_race_results(line.rstrip())
-
-

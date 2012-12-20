@@ -8,8 +8,7 @@ import xml.etree.cElementTree as ET
 import rr
 
 class csrr:
-    def __init__(self, year=None, month=None, verbose=None,
-            memb_list=None, race_list=None, output_file=None):
+    def __init__(self, **kwargs):
         """
         month:  month in which to look for results
         year:  year in which to look for results
@@ -18,12 +17,13 @@ class csrr:
         output_file:  final race results file
         verbose:  how much output to produce
         """
-        self.month = month
-        self.year = year
-        self.date = datetime.date(self.year,1,1) 
-        self.memb_list = memb_list
-        self.race_list = race_list
-        self.output_file = output_file
+        self.year  = None
+        self.month   = None
+        self.memb_list   = None
+        self.race_list   = None
+        self.output_file = None
+        self.verbose     = 'info'
+        self.__dict__.update(**kwargs)
 
         # Need to remember the current URL.
         self.downloaded_url = None
@@ -31,7 +31,7 @@ class csrr:
         # Set the appropriate logging level.  Requires an exact
         # match of the level string value.
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.logger.setLevel( getattr(logging, verbose.upper()) )
+        self.logger.setLevel( getattr(logging, self.verbose.upper()) )
 
     def run(self):
         """
@@ -284,7 +284,9 @@ class csrr:
         Compile results from list of local files.
         """
         for line in open(self.race_list):
-            self.logger.info('Processing %s...' % line.rstrip())
-            self.compile_race_results(line.rstrip())
+            line = line.rstrip()
+            self.logger.info('Processing %s...' % line)
+            rr.common.local_tidy(line) 
+            self.compile_race_results(line)
 
 
