@@ -209,7 +209,7 @@ class crrr:
 
                 self.compile_race_results(inner_race_file)
 
-    def compile_race_results_xml_02(self, race_file):
+    def compile_vanilla_results(self, race_file):
         """
         Compile race results for CoolRunning races posted inXML pattern 
         2 format.
@@ -232,17 +232,7 @@ class crrr:
             self.insert_race_results(r, race_file)
 
 
-    def there_is_any_hope_at_all(self, race_file):
-        try:
-            tree = ET.parse(race_file)
-        except ET.ParseError:
-            self.logger.warning('ElementTree ParseError on %s, no hope at all...' % race_file)
-            return False
-        except:
-            raise
-
-
-    def is_xml_pattern_02(self, race_file):
+    def is_vanilla_pattern(self, race_file):
         """
         And this is another XHTML variant sometimes found on CoolRunning.
         """
@@ -265,7 +255,7 @@ class crrr:
             return False
 
 
-    def is_xml_pattern_01(self, race_file):
+    def is_ccrr_pattern(self, race_file):
         """
         It would seem that Cape Cod Road Runners use this XML 
         pattern.
@@ -277,7 +267,7 @@ class crrr:
         try: 
             tree = ET.parse(race_file)
         except ET.ParseError:
-            self.logger.debug('XML_01 ParseError on %s' % race_file)
+            self.logger.debug('CCRR XHTML ParseError on %s' % race_file)
             return False
         except:
             raise
@@ -290,7 +280,7 @@ class crrr:
         else:
             return False
 
-    def compile_race_results_xml_01(self, race_file):
+    def compile_ccrr_race_results(self, race_file):
         """
         This is the format generally used by Cape Cod
         Road Runners.
@@ -324,36 +314,22 @@ class crrr:
             # Prepend the header.
             tr = rr.common.remove_namespace(trs[0])
             results.insert(0, tr)
-            self.insert_race_results_xml_01(results, race_file)
+            self.insert_race_results_ccrr(results, race_file)
 
-
-    def compile_race_results_vanilla_coolrunning(self, race_file):
-        """
-        Just do a brute-force line-by-line search for names.
-        """
-        results = []
-        for rline in open(race_file):
-            line = rline.rstrip()
-            if self.match_against_membership(line):
-                results.append(line)
-
-        if len(results) > 0:
-            self.insert_race_results(results, race_file)
 
     def compile_race_results(self, race_file):
         """
         Go through a race file and collect results.
         body table tr td table tr td table tr td div TABLE TR
         """
-        if self.is_xml_pattern_02(race_file):
+        if self.is_vanilla_pattern(race_file):
             self.logger.debug('XML pattern 2')
-            self.compile_race_results_xml_02(race_file)
-        elif self.is_xml_pattern_01(race_file):
+            self.compile_vanilla_results(race_file)
+        elif self.is_ccrr_pattern(race_file):
             self.logger.debug('XML pattern 1')
-            self.compile_race_results_xml_01(race_file)
-        elif self.there_is_any_hope_at_all(race_file):
-            self.logger.debug('Vanilla Coolrunning pattern')
-            self.compile_race_results_vanilla_coolrunning(race_file)
+            self.compile_ccrr_race_results(race_file)
+        else: 
+            self.logger.warning('Unknown pattern.')
 
     def construct_common_div(self, race_file):
         """
@@ -403,9 +379,10 @@ class crrr:
 
         return(div)
             
-    def insert_race_results_xml_01(self, results, race_file):
+    def insert_race_results_ccrr(self, results, race_file):
         """
         Insert CoolRunning results into the output file.
+        This works for CCRR races.
         """
         div = self.construct_common_div(race_file)
 
