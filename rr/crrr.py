@@ -1,4 +1,5 @@
 """
+Backend class for handling CoolRunning race results.
 """
 
 import datetime
@@ -10,6 +11,7 @@ import xml.etree.cElementTree as ET
 
 import rr
 
+
 class crrr:
     """
     Class for handling CoolRunning Race Results.
@@ -17,7 +19,7 @@ class crrr:
     def __init__(self, start_date=None, stop_date=None, verbose=None,
             states=['ma'], memb_list=None, race_list=None, output_file=None):
         """
-        base_url:  
+        base_url:
         day:  range of days in which to look for results
         month:  month in which to look for results
         year:  year in which to look for results
@@ -41,7 +43,7 @@ class crrr:
         # Set the appropriate logging level.  Requires an exact
         # match of the level string value.
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.logger.setLevel( getattr(logging, verbose.upper()) )
+        self.logger.setLevel(getattr(logging, verbose.upper()))
 
     def run(self):
         self.load_membership_list()
@@ -63,9 +65,9 @@ class crrr:
             # match.  Here's an example line to match.
             #   '60 Gene Gugliotta       North Plainfiel,NJ 53 M U '
             pattern = '\s+' + names.first[j] + '\s+'
-            first_name_regex.append(re.compile(pattern,re.IGNORECASE))
+            first_name_regex.append(re.compile(pattern, re.IGNORECASE))
             pattern = '\s+' + names.last[j] + '\s+'
-            last_name_regex.append(re.compile(pattern,re.IGNORECASE))
+            last_name_regex.append(re.compile(pattern, re.IGNORECASE))
 
         self.first_name_regex = first_name_regex
         self.last_name_regex = last_name_regex
@@ -86,12 +88,12 @@ class crrr:
         Construct an HTML skeleton.
         """
         ofile = ET.Element('html')
-        head = ET.SubElement(ofile,'head')
-        link = ET.SubElement(head,'link')
-        link.set('rel','stylesheet')
-        link.set('href','rr.css')
-        link.set('type','text/css')
-        ET.SubElement(ofile,'body')
+        head = ET.SubElement(ofile, 'head')
+        link = ET.SubElement(head, 'link')
+        link.set('rel', 'stylesheet')
+        link.set('href', 'rr.css')
+        link.set('type', 'text/css')
+        ET.SubElement(ofile, 'body')
         ET.ElementTree(ofile).write(self.output_file)
         rr.pretty_print_xml(self.output_file)
 
@@ -100,7 +102,7 @@ class crrr:
         Download the requested results and compile them.
         """
         for state in self.states:
-            self.download_state_master_file(state) 
+            self.download_state_master_file(state)
             self.process_state_master_file(state)
 
     def construct_state_match_pattern(self, state):
@@ -130,10 +132,9 @@ class crrr:
         pattern += day_range
 
         pattern += '.*shtml'
-        self.logger.debug('Match pattern is %s' % pattern) 
+        self.logger.debug('Match pattern is %s' % pattern)
         r = re.compile(pattern, re.DOTALL)
         return(r)
-
 
     def process_state_master_file(self, state):
         """
@@ -160,18 +161,17 @@ class crrr:
             match = pattern.search(href)
             if match is None:
                 continue
-            
+
             # keep track of the last part of the URL.
             # That should be unique.
             parts = href.split('/')
             urls.add(parts[-1])
 
-            race_file = self.download_race(anchor) 
+            race_file = self.download_race(anchor)
             self.compile_race_results(race_file)
 
-
             # Now collect any secondary result files.
-            try: 
+            try:
                 tree = ET.parse(race_file)
             except ET.ParseError:
                 self.logger.debug('ElementTree ParseError:  %s' % race_file)
@@ -203,15 +203,17 @@ class crrr:
 
                 urls.add(parts[-1])
 
-                inner_race_file = self.download_race(inner_anchor,inner_url=True,state=state) 
-                if inner_race_file is None: 
-                    continue 
+                inner_race_file = self.download_race(inner_anchor,
+                        inner_url=True,
+                        state=state)
+                if inner_race_file is None:
+                    continue
 
                 self.compile_race_results(inner_race_file)
 
     def compile_vanilla_results(self, race_file):
         """
-        Compile race results for CoolRunning races posted inXML pattern 
+        Compile race results for CoolRunning races posted inXML pattern
         2 format.
         """
         pattern = './/body/table/tr/td/table/tr/td/table/tr/td/div/pre'
@@ -231,10 +233,10 @@ class crrr:
         if len(r) > 0:
             self.insert_race_results(r, race_file)
 
-
     def is_vanilla_pattern(self, race_file):
         """
-        And this is another XHTML variant sometimes found on CoolRunning.
+        Check to see if the current race file matches the usual
+        pattern found on CoolRunning.
         """
         pattern = './/body/table/tr/td/table/tr/td/table/tr/td/div/pre'
 
@@ -254,17 +256,18 @@ class crrr:
         else:
             return False
 
-
     def is_ccrr_pattern(self, race_file):
         """
-        It would seem that Cape Cod Road Runners use this XML 
-        pattern.
+        Check to see if the current race file matches what the Cape Cod
+        Road Runners seem to use.
 
+        See
         http://www.coolrunning.com/results/12/ma/Jan8_CapeCo_set1.shtml
+        for an example.
         """
         pattern = './/body/table/tr/td/table/tr/td/table/tr/td/div/table/tr'
 
-        try: 
+        try:
             tree = ET.parse(race_file)
         except ET.ParseError:
             self.logger.debug('CCRR XHTML ParseError on %s' % race_file)
@@ -300,13 +303,13 @@ class crrr:
             if len(tds) < 3:
                 continue
 
-            runner_name = tds[2].text 
+            runner_name = tds[2].text
             if runner_name is None:
                 continue
-            for idx in range(0, len(self.first_name_regex)): 
-                fregex = self.first_name_regex[idx] 
-                lregex = self.last_name_regex[idx] 
-                if fregex.search(runner_name) and lregex.search(runner_name): 
+            for idx in range(0, len(self.first_name_regex)):
+                fregex = self.first_name_regex[idx]
+                lregex = self.last_name_regex[idx]
+                if fregex.search(runner_name) and lregex.search(runner_name):
                     tr = rr.common.remove_namespace(tr)
                     results.append(tr)
 
@@ -315,7 +318,6 @@ class crrr:
             tr = rr.common.remove_namespace(trs[0])
             results.insert(0, tr)
             self.insert_race_results_ccrr(results, race_file)
-
 
     def compile_race_results(self, race_file):
         """
@@ -328,7 +330,7 @@ class crrr:
         elif self.is_ccrr_pattern(race_file):
             self.logger.debug('XML pattern 1')
             self.compile_ccrr_race_results(race_file)
-        else: 
+        else:
             self.logger.warning('Unknown pattern.')
 
     def construct_common_div(self, race_file):
@@ -336,9 +338,9 @@ class crrr:
         Construct an XHTML element to contain race results.
         """
         div = ET.Element('div')
-        div.set('class','race')
+        div.set('class', 'race')
         hr = ET.Element('hr')
-        hr.set('class','race_header')
+        hr.set('class', 'race_header')
         div.append(hr)
 
         # The H1 tag has the race name.
@@ -378,7 +380,7 @@ class crrr:
             div.append(p)
 
         return(div)
-            
+
     def insert_race_results_ccrr(self, results, race_file):
         """
         Insert CoolRunning results into the output file.
@@ -388,7 +390,7 @@ class crrr:
 
         table = ET.Element('table')
         for tr in results:
-            if tr is not None: 
+            if tr is not None:
                 table.append(tr)
 
         div.append(table)
@@ -401,7 +403,7 @@ class crrr:
         div = self.construct_common_div(race_file)
 
         pre = ET.Element('pre')
-        pre.set('class','actual_results')
+        pre.set('class', 'actual_results')
 
         root = ET.parse(race_file).getroot()
         root = rr.common.remove_namespace(root)
@@ -430,13 +432,13 @@ class crrr:
 
     def parse_banner(self, root):
         """
-                   The Andrea Holden 5k Thanksgiving Race            
-         PLC    Time  Pace  PLC/Group  PLC/Sex Bib#   Name             
-           1   16:40  5:23    1 30-39    1 M   142 Brian Allen        
+                   The Andrea Holden 5k Thanksgiving Race
+         PLC    Time  Pace  PLC/Group  PLC/Sex Bib#   Name
+           1   16:40  5:23    1 30-39    1 M   142 Brian Allen
 
         """
         pattern = './/pre'
-        try: 
+        try:
             pre = root.findall(pattern)[0]
         except IndexError:
             return('')
@@ -454,14 +456,14 @@ class crrr:
         # If there are ANY html elements in here, then forget it, because the
         # html elements will end up converted into entities, which we do not
         # want.
-        if re.search('<.*?>', banner) is not None: 
+        if re.search('<.*?>', banner) is not None:
             return('')
         else:
             return(banner)
 
     def match_against_membership(self, line):
         """
-        We have a line of text from the URL.  Match it agains the 
+        We have a line of text from the URL.  Match it agains the
         membership list.
         """
         for idx in range(0, len(self.first_name_regex)):
@@ -482,13 +484,13 @@ class crrr:
         """
         self.logger.info('Processing %s...' % state)
         local_state_file = state + '.shtml'
-        fmt = 'http://www.coolrunning.com/results/%s/%s' 
+        fmt = 'http://www.coolrunning.com/results/%s/%s'
         url = fmt % (self.start_date.strftime('%y'), local_state_file)
         self.logger.info('Downloading %s.' % url)
         rr.common.download_file(url, local_state_file)
         rr.common.local_tidy(local_state_file)
 
-    def download_race(self, anchor,inner_url=False,state=''):
+    def download_race(self, anchor, inner_url=False, state=''):
         """
         """
         href = anchor.get('href')
@@ -499,17 +501,17 @@ class crrr:
             pattern += '/'
             pattern += state
             href = pattern + '/' + href
-            
+
         url = 'http://www.coolrunning.com/%s' % href
         local_file = href.split('/')[-1]
         self.logger.info('Downloading %s...' % url)
         rr.common.download_file(url, local_file)
         self.downloaded_url = url
-        try: 
+        try:
             rr.common.local_tidy(local_file)
         except IOError:
-            self.logger.debug('Encountered an error processing %s, skipping it' %
-                    local_file)
+            fmt = 'Encountered an error processing %s, skipping it.'
+            self.logger.debug(fmt % local_file)
             local_file = None
 
         return(local_file)
@@ -519,10 +521,11 @@ class crrr:
         Compile results from list of local files.
         """
         for line in open(self.race_list):
-            try: 
-                self.logger.info('Processing file %s' % line) 
-                race_file = line.rstrip() 
+            try:
+                self.logger.info('Processing file %s' % line)
+                race_file = line.rstrip()
                 rr.common.local_tidy(race_file)
                 self.compile_race_results(race_file)
             except IOError:
-                self.logger.debug('Encountered an error processing %s, skipping it' % line) 
+                fmt = 'Encountered an error processing %s, skipping it.'
+                self.logger.debug(fmt % line)
