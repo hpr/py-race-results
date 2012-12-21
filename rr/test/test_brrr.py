@@ -58,6 +58,25 @@ class TestBestRace(unittest.TestCase):
         self.assertTrue("MICHAEL CARR" in p[0].text)
         self.assertTrue("MARK STRAWN" in p[0].text)
 
+    def test_web_download(self):
+        """
+        Verify that we can get results from BestRace.com.
+        """
+        self.populate_membership_file()
+        start_date = datetime.datetime(2012,12,9)
+        stop_date = datetime.datetime(2012,12,10)
+        o = rr.brrr(verbose='critical',
+                memb_list=self.membership_file,
+                output_file=self.results_file,
+                start_date=start_date,
+                stop_date=stop_date)
+        o.run()
+        tree = ET.parse(self.results_file)
+        root = tree.getroot()
+        root = rr.common.remove_namespace(root)
+        p = root.findall('.//div/pre')
+        self.assertTrue("MARK STRAWN" in p[0].text)
+
 
 
 if __name__ == "__main__":
