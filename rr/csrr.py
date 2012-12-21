@@ -6,6 +6,8 @@ import xml.etree.cElementTree as ET
 
 import rr
 
+logging.basicConfig()
+
 class csrr:
     def __init__(self, **kwargs):
         """

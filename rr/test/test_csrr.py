@@ -41,7 +41,7 @@ class TestCompuscore(unittest.TestCase):
         """
         with open(self.membership_file,'w') as fp:
             fp.write('FITZGERALD,ROBERT\n')
-            fp.write('JOANNA,STEVENS\n')
+            fp.write('STEVENS,JOANNA\n')
 
     def test_racelist(self):
         self.populate_membership_file()
@@ -65,13 +65,13 @@ class TestCompuscore(unittest.TestCase):
         o = rr.csrr(verbose='critical',
                 memb_list=self.membership_file,
                 output_file=self.results_file,
-                year=2012, month='feb')
+                year=2012, month='janfeb')
         o.run()
         tree = ET.parse(self.results_file)
         root = tree.getroot()
         root = rr.common.remove_namespace(root)
         p = root.findall('.//div/pre')
-        self.assertTrue("John Banner" in p[0].text)
+        self.assertTrue("Joanna Stevens" in p[0].text)
 
 
 
