@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta name="generator" content=
-    "HTML Tidy for HTML5 (experimental) for Mac OS X https://github.com/w3c/tidy-html5/tree/68a9e74" />
+    "HTML Tidy for HTML5 (experimental) for Mac OS X https://github.com/w3c/tidy-html5/tree/c63cc39" />
     <title>
       Cool Running | 3rd. Annual Bulldog Dash Race Results
     </title>
@@ -18,68 +18,8 @@
     "text/css" />
     <script language="JavaScript" type="text/javascript">
 </script>
-    <script type="text/javascript">
-//<![CDATA[
-
-    var _gaq = _gaq || [];
-    _gaq.push(['_setAccount', 'UA-34777449-1']);
-    _gaq.push(['_trackPageview']);
-
-    (function() {
-    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-    })();
-
-    //]]>
-    </script>
-    <style type="text/css">
-/*<![CDATA[*/
-    <!--
-    .curvedtableborder {
-        border: 1px solid #FFF;
-        border-radius: 10px;
-        -moz-border-radius: 10px;
-        -webkit-border-radius: 10px;
-    }
-    .curvedtableborder1 {   border: 1px solid #FFF;
-        border-radius: 10px;
-        -moz-border-radius: 10px;
-        -webkit-border-radius: 10px;
-    }
-    -->
-    /*]]>*/
-    </style>
   </head>
   <body bgcolor="#FFFFFF" text="#000000">
-    <map name="m_nav_home" id="m_nav_home">
-      <area shape="rect" coords="442,4,529,25" href=
-      "/engine/6/index.shtml" title=
-      "Community: Exchange advice in the forums and read running commentary"
-      alt=
-      "Community: Exchange advice in the forums and read running commentary" />
-      <area shape="rect" coords="344,4,431,25" href=
-      "/engine/4/index.shtml" title=
-      "Resources: Personal running log, calculators, links and other tools for runners"
-      alt=
-      "Resources: Personal running log, calculators, links and other tools for runners" />
-      <area shape="rect" coords="278,4,337,25" href=
-      "/engine/3/index.shtml" title=
-      "News: Running news from around the world" alt=
-      "News: Running news from around the world" />
-      <area shape="rect" coords="186,4,269,25" href=
-      "/engine/2/index.shtml" title=
-      "Training: Articles and advice about fitness, race training and injury prevention"
-      alt=
-      "Training: Articles and advice about fitness, race training and injury prevention" />
-      <area shape="rect" coords="69,4,177,25" href=
-      "/engine/1/index.shtml" title=
-      "Races/Results: Find upcoming races and past results" alt=
-      "Races/Results: Find upcoming races and past results" />
-      <area shape="rect" coords="0,4,59,25" href="/" title=
-      "Home: The Cool Running homepage" alt=
-      "Home: The Cool Running homepage" />
-    </map>
     <table border="0" cellspacing="0" cellpadding="0" align=
     "center" class="margin5">
       <tr>
@@ -88,20 +28,6 @@
           cellpadding="0">
             <tr>
               <td colspan="2" align="center">
-                <script type="text/javascript" src=
-                "/includes/active_cr_ads.js">
-</script> <script type="text/javascript">
-//<![CDATA[
-                CRAD.ad("leader","1_31", {"f":"race_results","sf1":"details"});
-                CRAD.webside("1_31", {"f":"race_results","sf1":"details"});
-                //]]>
-                </script> <script language="javascript1.1" type=
-                "text/javascript" src="/sc/tan_code.js">
-</script><script language="javascript">
-<![CDATA[
-                s_tan.channel="coolrunning";s_tan.pageName="coolrunning:running";s_tan.prop1="coolrunning:running";s_tan.prop2="coolrunning:running";s_tan.prop3="coolrunning:running";s_tan.prop4="";s_tan.prop5="";s_tan.prop6="";s_tan.prop7="activeendurance";s_tan.prop8="";s_tan.prop9="";s_tan.prop10="";s_tan.prop11="";s_tan.prop12="";s_tan.prop13="";s_tan.prop14="";s_tan.prop15="";s_tan.prop16="";s_tan.prop17="";s_tan.prop18="";s_tan.prop19="";s_tan.prop20="";s_tan.prop21="";s_tan.prop22="content";s_tan.prop23="";s_tan.prop30="";s_tan.prop31="";s_tan.prop32="";s_tan.prop33="";s_tan.prop34="";s_tan.prop35="";s_tan.eVar23="";s_tan.campaign="";s_tan.state="";s_tan.zip="";s_tan.events="";s_tan.products="";s_tan.purchaseID="";s_tan.hier1="coolrunning,running,nosubchannel";var s_code=s_tan.t();if(s_code)document.write(s_code);
-                ]]>
-                </script><br />
                 <a href="http://www.active.com/active"><img src=
                 "/templatepix/active_header.gif" width="728"
                 height="27" border="0" /></a>
@@ -137,102 +63,7 @@
                 cellpadding="0">
                   <tr>
                     <td colspan="2" bgcolor="#FFFFCC" valign="top"
-                    align="left" class="grayLeft">
-                      <img src=
-                      "/templatepix/events_subsection_label2.gif"
-                      width="141" height="85" alt="events" />
-                      <table border="0" cellpadding="5" width="139"
-                      cellspacing="0" align="center">
-                        <tr>
-                          <td>
-                            <a href="/engine/1/1_31/index.shtml"
-                            class="navigation">Massachusetts Event
-                            Spotlights</a>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            <a href="/eventcal/search/" class=
-                            "navigation">Find Events</a>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td bgcolor="#CCCC99">
-                            <a href="/engine/1/1_2/index.shtml"
-                            class="navigation">Find Results</a>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            <a href="/engine/5/5_1/index.shtml"
-                            class="navigation">Race Directors</a>
-                          </td>
-                        </tr>
-                      </table>
-                      <hr noshade="noshade" size="1" />
-                      <div class="margin5">
-                        <a href=
-                        "http://www.coolrunning.com/cgi-bin/moxiebin/cr_click.cgi?cam=36;sec=1_31;ban=3">
-                        <img src=
-                        "http://www.coolrunning.com/engine/ad_banners/38_3.gif"
-                        width="120" height="60" alt=
-                        "Three Races, 3-4-5 in Haverhill, Lawrence, Lowell, MA"
-                        title=
-                        "Three Races, 3-4-5 in Haverhill, Lawrence, Lowell, MA"
-                        border="0" /></a>
-                        <p>
-                          <a href=
-                          "http://www.coolrunning.com/cgi-bin/moxiebin/cr_click.cgi?cam=1601;sec=1_31;ban=2">
-                          <img src=
-                          "http://www.coolrunning.com/engine/ad_banners/417_2.gif"
-                          width="120" height="60" alt=
-                          "Presented by Jim Rhoades and Hustle UP Racing"
-                          title=
-                          "Presented by Jim Rhoades and Hustle UP Racing"
-                          border="0" /></a>
-                        </p>
-                        <p>
-                          <a href=
-                          "http://www.coolrunning.com/cgi-bin/moxiebin/cr_click.cgi?cam=1651;sec=1_31;ban=4">
-                          <img src=
-                          "http://www.coolrunning.com/engine/ad_banners/377_4.gif"
-                          width="120" height="60" alt=
-                          "Race includes an Atlantic Ocean plunge - brrrrrrr!"
-                          title=
-                          "Race includes an Atlantic Ocean plunge - brrrrrrr!"
-                          border="0" /></a>
-                        </p>
-                        <p>
-                          <a href=
-                          "http://www.coolrunning.com/cgi-bin/moxiebin/cr_click.cgi?cam=2093;sec=1_31;ban=4">
-                          <img src=
-                          "http://www.coolrunning.com/engine/ad_banners/577_4.jpg"
-                          width="120" height="60" alt="" title=""
-                          border="0" /></a>
-                        </p><a href=
-                        "/engine/5/5_1/index.shtml">Race directors:
-                        Promote your event</a><br />
-                        Discover how Cool Running can help
-                        you.<br />
-                        <br />
-                        <a href="/eventcal/entryForm.php">Add to
-                        our calendar</a><br />
-                        Submit your race to our event
-                        calendar.<br />
-                        <br />
-                        <a href="/results/resload.shtml">Submit
-                        race results</a><br />
-                        Add race results to our results
-                        section.<br />
-                        <br />
-                        <a href=
-                        "http://www.activenetwork.com/software/instant-ads.htm?cmp=26-800"
-                        target="_blank">Instant Ads</a><br />
-                        Pay-Per-Click Ads on Active.com
-                      </div><img src=
-                      "/templatepix/detail_nav_bottom.gif" width=
-                      "141" height="27" alt="" />
-                    </td>
+                    align="left" class="grayLeft"></td>
                   </tr>
                   <tr>
                     <td width="15" class="heavyLeft">
@@ -240,200 +71,7 @@
                       height="1" alt="" />
                     </td>
                     <td width="126" class="noBGimage" align=
-                    "center" valign="top">
-                      <a href=
-                      "http://www.coolrunning.com/cgi-bin/moxiebin/cr_click.cgi?cam=1414;sec=1_31;ban=8">
-                      <img src=
-                      "http://www.coolrunning.com/engine/ad_banners/102_8.gif"
-                      width="120" height="60" alt="" title=""
-                      border="0" /></a>
-                      <p>
-                        <a href=
-                        "http://www.coolrunning.com/cgi-bin/moxiebin/cr_click.cgi?cam=2052;sec=1_31;ban=2">
-                        <img src=
-                        "http://www.coolrunning.com/engine/ad_banners/572_2.gif"
-                        width="120" height="60" alt=
-                        "The best New Year's Day race ever!!"
-                        title="The best New Year's Day race ever!!"
-                        border="0" /></a>
-                      </p>
-                      <p>
-                        <a href=
-                        "http://www.coolrunning.com/cgi-bin/moxiebin/cr_click.cgi?cam=1693;sec=1_31;ban=16">
-                        <img src=
-                        "http://www.coolrunning.com/engine/ad_banners/106_16.gif"
-                        width="120" height="60" alt=
-                        "USATF Half Marathon Championship" title=
-                        "USATF Half Marathon Championship" border=
-                        "0" /></a>
-                      </p>
-                      <p>
-                        <a href=
-                        "http://www.coolrunning.com/cgi-bin/moxiebin/cr_click.cgi?cam=1687;sec=1_31;ban=6">
-                        <img src=
-                        "http://www.coolrunning.com/engine/ad_banners/436_6.gif"
-                        width="120" height="60" alt=
-                        "Touch the tundra!" title=
-                        "Touch the tundra!" border="0" /></a>
-                      </p>
-                      <p>
-                        <a href=
-                        "http://www.coolrunning.com/cgi-bin/moxiebin/cr_click.cgi?cam=2435;sec=1_31;ban=7">
-                        <img src=
-                        "http://www.coolrunning.com/engine/ad_banners/455_7.gif"
-                        width="120" height="60" alt=
-                        "The Best Spring Marathon" title=
-                        "The Best Spring Marathon" border=
-                        "0" /></a>
-                      </p>
-                      <p>
-                        <a href=
-                        "http://www.coolrunning.com/cgi-bin/moxiebin/cr_click.cgi?cam=2097;sec=1_31;ban=4">
-                        <img src=
-                        "http://www.coolrunning.com/engine/ad_banners/583_4.gif"
-                        width="120" height="60" alt=
-                        "The Sweetest Half" title=
-                        "The Sweetest Half" border="0" /></a>
-                      </p>
-                      <p>
-                        <a href=
-                        "http://www.coolrunning.com/cgi-bin/moxiebin/cr_click.cgi?cam=2454;sec=1_31;ban=13">
-                        <img src=
-                        "http://www.coolrunning.com/engine/ad_banners/445_13.gif"
-                        width="120" height="60" alt=
-                        "Run the original Irish Series" title=
-                        "Run the original Irish Series" border=
-                        "0" /></a>
-                      </p>
-                      <p>
-                        <a href=
-                        "http://www.coolrunning.com/cgi-bin/moxiebin/cr_click.cgi?cam=1676;sec=1_31;ban=5">
-                        <img src=
-                        "http://www.coolrunning.com/engine/ad_banners/442_5.gif"
-                        width="120" height="60" alt=
-                        "20th Annual Road Race" title=
-                        "20th Annual Road Race" border="0" /></a>
-                      </p>
-                      <p>
-                        <a href=
-                        "http://www.coolrunning.com/cgi-bin/moxiebin/cr_click.cgi?cam=2162;sec=1_31;ban=7">
-                        <img src=
-                        "http://www.coolrunning.com/engine/ad_banners/609_7.jpg"
-                        width="120" height="60" alt=
-                        "Mad River Marathon, Marathon Relay, Half Marathon"
-                        title=
-                        "Mad River Marathon, Marathon Relay, Half Marathon"
-                        border="0" /></a>
-                      </p>
-                      <p>
-                        <a href=
-                        "http://www.coolrunning.com/cgi-bin/moxiebin/cr_click.cgi?cam=1718;sec=1_31;ban=8">
-                        <img src=
-                        "http://www.coolrunning.com/engine/ad_banners/191_8.gif"
-                        width="120" height="60" alt="" title=""
-                        border="0" /></a>
-                      </p>
-                      <p>
-                        <a href=
-                        "http://www.coolrunning.com/cgi-bin/moxiebin/cr_click.cgi?cam=2510;sec=1_31;ban=2">
-                        <img src=
-                        "http://www.coolrunning.com/engine/ad_banners/649_2.gif"
-                        width="120" height="60" alt="" title=""
-                        border="0" /></a>
-                      </p>
-                      <p>
-                        <a href=
-                        "http://www.coolrunning.com/cgi-bin/moxiebin/cr_click.cgi?cam=2445;sec=1_31;ban=5">
-                        <img src=
-                        "http://www.coolrunning.com/engine/ad_banners/710_5.gif"
-                        width="120" height="60" alt=
-                        "5K and Karaoke Contest" title=
-                        "5K and Karaoke Contest" border="0" /></a>
-                      </p>
-                      <p>
-                        <a href=
-                        "http://www.coolrunning.com/cgi-bin/moxiebin/cr_click.cgi?cam=1454;sec=1_31;ban=8">
-                        <img src=
-                        "http://www.coolrunning.com/engine/ad_banners/384_8.gif"
-                        width="120" height="60" alt=
-                        "Run some of the most beautiful country roads in New Hampshire"
-                        title=
-                        "Run some of the most beautiful country roads in New Hampshire"
-                        border="0" /></a>
-                      </p>
-                      <p>
-                        <a href=
-                        "http://www.coolrunning.com/cgi-bin/moxiebin/cr_click.cgi?cam=2509;sec=1_31;ban=1">
-                        <img src=
-                        "http://www.coolrunning.com/engine/ad_banners/723_1.gif"
-                        width="120" height="60" alt="" title=""
-                        border="0" /></a>
-                      </p>
-                      <p>
-                        <a href=
-                        "http://www.coolrunning.com/cgi-bin/moxiebin/cr_click.cgi?cam=1669;sec=1_31;ban=10">
-                        <img src=
-                        "http://www.coolrunning.com/engine/ad_banners/107_10.gif"
-                        width="120" height="60" alt=
-                        "Includes a unique couples competition!"
-                        title=
-                        "Includes a unique couples competition!"
-                        border="0" /></a>
-                      </p>
-                      <p>
-                        <a href=
-                        "http://www.coolrunning.com/cgi-bin/moxiebin/cr_click.cgi?cam=1632;sec=1_31;ban=9">
-                        <img src=
-                        "http://www.coolrunning.com/engine/ad_banners/103_9.gif"
-                        width="120" height="60" alt=
-                        "A Boston Qualifier" title=
-                        "A Boston Qualifier" border="0" /></a>
-                      </p>
-                      <p>
-                        <a href=
-                        "http://www.coolrunning.com/cgi-bin/moxiebin/cr_click.cgi?cam=2370;sec=1_31;ban=1">
-                        <img src=
-                        "http://www.coolrunning.com/engine/ad_banners/602_1.gif"
-                        width="120" height="60" alt="" title=""
-                        border="0" /></a>
-                      </p>
-                      <p>
-                        <a href=
-                        "http://www.coolrunning.com/cgi-bin/moxiebin/cr_click.cgi?cam=2253;sec=1_31;ban=2">
-                        <img src=
-                        "http://www.coolrunning.com/engine/ad_banners/643_2.gif"
-                        width="120" height="60" alt="" title=""
-                        border="0" /></a>
-                      </p>
-                      <p>
-                        <a href=
-                        "http://www.coolrunning.com/cgi-bin/moxiebin/cr_click.cgi?cam=1681;sec=1_31;ban=3">
-                        <img src=
-                        "http://www.coolrunning.com/engine/ad_banners/444_3.gif"
-                        width="120" height="60" alt=
-                        "Seven races in the 2013 Smuttynose Will Run for Beer Series"
-                        title=
-                        "Seven races in the 2013 Smuttynose Will Run for Beer Series"
-                        border="0" /></a>
-                      </p>
-                      <p>
-                        <a href=
-                        "http://www.coolrunning.com/cgi-bin/moxiebin/cr_click.cgi?cam=2411;sec=1_31;ban=1">
-                        <img src=
-                        "http://www.coolrunning.com/engine/ad_banners/691_1.jpg"
-                        width="120" height="60" alt="" title=""
-                        border="0" /></a>
-                      </p>
-                      <p>
-                        <a href=
-                        "http://www.coolrunning.com/cgi-bin/moxiebin/cr_click.cgi?cam=1916;sec=1_31;ban=5">
-                        <img src=
-                        "http://www.coolrunning.com/engine/ad_banners/61_5.gif"
-                        width="120" height="60" alt=
-                        "Great seaside event!" title=
-                        "Great seaside event!" border="0" /></a>
-                      </p>
-                    </td>
+                    "center" valign="top"></td>
                   </tr>
                 </table>
               </td>
@@ -442,41 +80,10 @@
                 width="433">
                   <tr>
                     <td align="left" valign="top" bgcolor=
-                    "#003399">
-                      <p class="breadcrumbText">
-                        &gt; <a href="/index.shtml" class=
-                        "breadcrumbs">home</a> &gt; <a href=
-                        "/engine/1/index.shtml" class=
-                        "breadcrumbs">races/results</a> &gt;
-                        <a href="/engine/1/1_2/index.shtml" class=
-                        "breadcrumbs">find results</a> &gt;
-                        <a href="/results/12/ma.shtml" class=
-                        "breadcrumbs">massachusetts 2012 race
-                        results</a> &gt; 3rd. annual bulldog dash
-                      </p>
-                    </td>
+                    "#003399"></td>
                   </tr>
                   <tr>
                     <td align="left" valign="top">
-                      <table border="0" cellspacing="0"
-                      cellpadding="0" width="100%">
-                        <tr>
-                          <td align="left">
-                            <img src=
-                            "/templatepix/results_topleft.gif"
-                            width="17" height="17" alt="" />
-                          </td>
-                          <td>
-                            <img src="/templatepix/spacer.gif"
-                            width="305" height="1" />
-                          </td>
-                          <td align="right">
-                            <img src=
-                            "/templatepix/results_topright.gif"
-                            width="17" height="17" alt="" />
-                          </td>
-                        </tr>
-                      </table>
                       <div class="margin5">
                         <a href=
                         "/bin/res_load/res_print.cgi?r=12/ma/Nov24_3rdAnn_set1.shtml">

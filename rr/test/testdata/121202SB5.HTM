@@ -13,54 +13,6 @@
     <title>
       RUN with the VIKINGS 5K - December 2, 2012
     </title>
-    <script language="JavaScript">
-<![CDATA[
-    <!-- Begin
-    var NS4 = (document.layers);
-    var IE4 = (document.all);
-
-    var win = this;
-    var n   = 0;
-
-    function findInPage(str) {
-    var txt, i, found;
-    if (str == "")
-    return false;
-    if (NS4) {
-    if (!win.find(str))
-    while(win.find(str, false, true))
-    n++;
-    else
-    n++;
-    if (n == 0) alert(str + " was not found on this page.");
-    }
-    if (IE4) {
-    txt = win.document.body.createTextRange();
-    for (i = 0; i <= n && (found = txt.findText(str)) != false; i++) {
-    txt.moveStart("character", 1);
-    txt.moveEnd("textedit");
-    }
-    if (found) {
-    txt.moveStart("character", -1);
-    txt.findText(str);
-    txt.select();
-    txt.scrollIntoView();
-    n++;
-    }
-    else {
-    if (n > 0) {
-    n = 0;
-    findInPage(str);
-    }
-    else
-    alert(str + " was not found on this page.");
-    }
-    }
-    return false;
-    }
-    //  End -->
-    ]]>
-    </script>
   </head>
   <body bgcolor="#FFFFFF">
     <center>
@@ -117,42 +69,6 @@
 SPCL CODE: U=USATF, S=SB Res , T=Teacher 
                                                                                     AGE   GROUP     M/F     MASTER   SPCL
 <u>PLACE    TIME   BIB# NAME                     CITY/STATE            M/F AGE PACE   GROUP  PLACE    PLACE   M/F PLACE CODE</u></b>
-   1    17:17.3 0038 BRYAN COLHOUN            DAYTON               NJ M 16  05:34  15-19M 1/12     1/125                S  
-   2    17:27.8 0234 SCOTT SARNO              BEACH HAVEN          NJ M 44  05:37  40-44M 1/18     2/125     1/77          
-   3    17:33.8 0110 JACK MEDINA              LIVINGSTON           NJ M 25  05:39  25-29M 1/4      3/125                 T 
-   4    17:53.4 0205 BRADLEY KIHEENEY         NORTH BRUNSWICK      NJ M 17  05:46  15-19M 2/12     4/125                   
-   5    17:54.6 0213 AARON LASERNA            DAYTON               NJ M 17  05:46  15-19M 3/12     5/125                S  
-   6    18:06.8 0031 NICHOLAS CAULEY          MONMOUTH JUNCTION    NJ M 14  05:50  11-14M 1/13     6/125                S  
-   7    18:33.8 0195 CHRIS KELLY              SOMERSET             NJ M 41  05:59  40-44M 2/18     7/125     2/77          
-   8    18:54.1 0189 JOHN KANE                BRIDGEWATER          NJ M 54  06:05  50-54M 1/19     8/125     3/77          
-   9    18:55.3 0236 NRUNANCO MOULB           BOUND BROOK          NJ M 51  06:06  50-54M 2/19     9/125     4/77          
-  10    19:12.3 0042 JOSEPH COSGRAVE          KENDALL PARK         NJ M 16  06:11  15-19M 4/12     10/125               S  
-  11    19:35.9 0046 JIMMY DEMARCO            SPOTSWOOD            NJ M 25  06:19  25-29M 2/4      11/125                  
-  12    19:56.2 0003 MARC ALTERMAN            NORTH BRUNSWICK      NJ M 54  06:25  50-54M 3/19     12/125    5/77          
-  13    20:02.3 0074 DAVID JASKO              SPOTSWOOD            NJ M 39  06:27  35-39M 1/8      13/125              U   
-  14    20:07.4 0161 WALTER VALVERDE          NORTH PLAINFIELD     NJ M 41  06:29  40-44M 3/18     14/125    6/77          
-  15    20:13.7 0130 DONALD PORTILLO          SOUTH BOUND BROOK    NJ M 22  06:31  20-24M 1/1      15/125                  
-  16    20:14.8 0128 MATTHEW PELETIER         MONMOUTH JUNCTION    NJ M 17  06:31  15-19M 5/12     16/125               S  
-  17    20:15.2 0015 AMY BERNSTEIN            EAST WINDSOR         NJ F 33  06:31  30-34F 1/12     1/73                    
-  18    20:29.9 0238 TOM CHAMPBELL            CINNAMINSON          NJ M 42  06:36  40-44M 4/18     17/125    7/77          
-  19    20:32.6 0186 DAVID SCHATZ             MATAWAN              NJ M 48  06:37  45-49M 1/20     18/125    8/77          
-  20    20:37.0 0115 STEVEN NEGLIA            MONMOUTH JUNCTION    NJ M 30  06:39  30-34M 1/7      19/125               S  
-  21    20:47.3 0094 TROY LEHAN               PRINCETON            NJ M 15  06:42  15-19M 6/12     20/125               S  
-  22    21:00.8 0028 ETHAN BULL               HIGHLAND PARK        NJ M 13  06:46  11-14M 2/13     21/125                  
-  23    21:07.5 0207 JOHN BOGNAR              EAST BRUNSWICK       NJ M 13  06:48  11-14M 3/13     22/125                  
-  24    21:10.3 0199 NOLAN KUS                JACKSON              NJ M 10  06:49   1-10M 1/3      23/125                  
-  25    21:11.9 0079 MATTHEW JURO             KENDALL PARK         NJ M 16  06:50  15-19M 7/12     24/125               S  
-  26    21:17.0 0228 BRIAN MCDONOUGH          FARMINGDALE          NY M 31  06:51  30-34M 2/7      25/125                  
-  27    21:19.9 0124 ANUJ PANDYA              MONMOUTH JUNCTION    NJ M 45  06:52  45-49M 2/20     26/125    9/77       S  
-  28    21:26.0 0216 ERIC DAVIS               EDISON               NJ M 44  06:54  40-44M 5/18     27/125    10/77         
-  29    21:38.9 0105 ANGELA LYNCH             CRANFORD             NJ F 47  06:58  45-49F 1/13     2/73      1/38      U   
-  30    21:51.2       ** FINISHER HAD NO RUNNER NUMBER !!***
-  31    21:57.0 0154 JACK STAMER              LITTLE SILVER        NJ M 13  07:04  11-14M 4/13     28/125                  
-  32    22:02.7 0160 ROBERT TONA              MONMOUTH JUNCTION    NJ M 53  07:06  50-54M 4/19     29/125    11/77     US  
-  33    22:09.9 0230 CHRISTIE PATLA           EDISON               NJ F 44  07:08  40-44F 1/14     3/73      2/38          
-  34    22:10.3 0053 AKAASH DUPPATLA          EAST BRUNSWICK       NJ M 15  07:09  15-19M 8/12     30/125                  
-  35    22:14.4 0033 HARRISON CHIU            DAYTON               NJ M 12  07:10  11-14M 5/13     31/125               S  
-  36    22:17.2 0212 MARK PINELLI             WEEHAWKEN            NJ M 39  07:11  35-39M 2/8      32/125                  
   37    22:18.9 0208 MICHAEL CARR             SOMERSET             NJ M 66  07:11  65-69M 1/7      33/125    12/77         
   38    22:20.3 0169 MIKE WASHAKOWSKI         OCEAN                NJ M 60  07:12  60-64M 1/5      34/125    13/77     U   
   39    22:33.5 0135 WENDY REED               EAST BRUNSWICK       NJ F 43  07:16  40-44F 2/14     4/73      3/38      U   
@@ -223,99 +139,6 @@ SPCL CODE: U=USATF, S=SB Res , T=Teacher
  104    26:52.2 0068 JOHN GUIDO               NORTH BRUNSWICK      NJ M 37  08:40  35-39M 7/8      82/125                  
  105    26:53.9 0111 CHANDRASHEK MITTI        DAYTON               NJ M 40  08:40  40-44M 9/18     83/125    48/77      S  
  106    26:55.9 0156 MARK STRAWN              PISCATAWAY           NJ M 53  08:40  50-54M 13/19    84/125    49/77         
- 107    27:00.2 0001 BOBBI BINDER             DAYTON               NJ F 51  08:42  50-54F 3/6      22/73     10/38      S  
- 108    27:02.0 0229 NICOLE GROVES            MONMOUTH JUNCTION    NJ F 31  08:43  30-34F 3/12     23/73                S  
- 109    27:02.4 0181 ALYSSA RYAN              MONMOUTH JUNCTION    NJ F 14  08:43  11-14F 6/7      24/73                S  
- 110    27:06.8 0095 RENEE LEVIN              KENDALL PARK         NJ F 53  08:44  50-54F 4/6      25/73     11/38      S  
- 111    27:12.5 0049 MICHAEL DERER            KENDALL PARK         NJ M 65  08:46  65-69M 5/7      85/125    50/77      S  
- 112    27:17.2 0168 JUDITH WARD              SOMERSET             NJ F 53  08:48  50-54F 5/6      26/73     12/38     U   
- 113    27:45.4 0197 STEPHANIE DANIEL         MONMOUTH JUNCTION    NJ F 43  08:57  40-44F 5/14     27/73     13/38      S  
- 114    27:45.8 0196 JAKE DANIEL              MONMOUTH JUNCTION    NJ M 16  08:57  15-19M 10/12    86/125               S  
- 115    27:57.7 0200 FRANK KUKS               JACKSON              NJ M 50  09:00  50-54M 14/19    87/125    51/77         
- 116    27:58.5 0190 JOE DESMOND              KENDALL PARK         NJ M 52  09:01  50-54M 15/19    88/125    52/77      S  
- 117    28:01.8 0166 MARK VON BARGEN          KENDALL PARK         NJ M 47  09:02  45-49M 17/20    89/125    53/77      S  
- 118    28:06.4 0060 BARB FOELDES             KENDALL PARK         NJ F 46  09:03  45-49F 2/13     28/73     14/38      S  
- 119    28:07.4 0101 KEVIN LOESTER            KENDALL PARK         NJ M 26  09:04  25-29M 4/4      90/125               S  
- 120    28:09.0 0009 AZRA BAIG                PRINCETON            NJ F 40  09:04  40-44F 6/14     29/73     15/38      S  
- 121    28:19.6 0076 PRUDENCE JONES           NEW BRUNSWICK        NJ F 41  09:08  40-44F 7/14     30/73     16/38     U   
- 122    28:27.7 0225 SAMEER BHATIA            OLDWICK              NJ M 43  09:10  40-44M 10/18    91/125    54/77         
- 123    28:28.5 0019 BRYN BIJUR               KENDALL PARK         NJ M  9  09:10   1-10M 3/3      92/125               S  
- 124    28:29.5 0020 GAUTAM BIJUR             KENDALL PARK         NJ M 48  09:11  45-49M 18/20    93/125    55/77      S  
- 125    28:34.4 0085 KELLY KOCHING            NORTH BRUNSWICK      NJ F 32  09:12  30-34F 4/12     31/73                   
- 126    28:36.7 0083 DIANE KLECHA             JAMESBURG            NJ F 46  09:13  45-49F 3/13     32/73     17/38         
- 127    28:46.3 0174 KATIE ZAVODA             EAST BRUNSWICK       NJ F 23  09:16  20-24F 2/2      33/73                   
- 128    28:54.2 0093 JENNIFER LEGASPI         MONROE TOWNSHIP      NJ F 38  09:19  35-39F 2/7      34/73                   
- 129    28:57.9 0223 SODHAKAR KANAGALA        MILLTOWN             NJ M 42  09:20  40-44M 11/18    94/125    56/77         
- 130    28:59.7 0089 VALERIE KVATERNICK       KENDALL PARK         NJ F 46  09:20  45-49F 4/13     35/73     18/38      S  
- 131    29:03.1 0194 CATHERINE HOPPER         MONMOUTH JUNCTION    NJ F 47  09:22  45-49F 5/13     36/73     19/38      S  
- 132    29:10.7 0025 BRANDON BOTSCH           MONMOUTH JUNCTION    NJ M 15  09:24  15-19M 11/12    95/125               S  
- 133    29:15.8 0237 NOE CHAVES               BOUND BROOK          NJ M 69  09:26  65-69M 6/7      96/125    57/77         
- 134    29:16.7 0082 LAURA KALCK              EAST BRUNSWICK       NJ F 48  09:26  45-49F 6/13     37/73     20/38         
- 135    29:25.3 0047 DOT DEMENTOR             MILLTOWN             NJ F 59  09:29  55-59F 2/3      38/73     21/38         
- 136    29:30.5 0210 CARLO SOCIO              NORTH BRUNSWICK      NJ M 41  09:30  40-44M 12/18    97/125    58/77         
- 137    29:32.3 0175 HEATHER FENYK            NEW BRUNSWICK        NJ F 42  09:31  40-44F 8/14     39/73     22/38         
- 138    29:37.7 0180 KIM RYAN                 MONMOUTH JUNCTION    NJ F 46  09:33  45-49F 7/13     40/73     23/38      S  
- 139    29:41.4 0012 CHIRAG BALLANI           MONMOUTH JUNCTION    NJ M 11  09:34  11-14M 12/13    98/125               S  
- 140    29:41.8 0011 EDWARD BALEWITZ          KENDALL PARK         NJ M 40  09:34  40-44M 13/18    99/125    59/77      S  
- 141    29:42.2 0010 ALYNA BALEWITZ           KENDALL PARK         NJ F  9  09:34   1-10F 1/3      41/73                S  
- 142    29:42.6 0139 CHRISTOPHER RUSKIE       ROBBINSVILLE         NJ M 32  09:34  30-34M 3/7      100/125                 
- 143    29:48.0 0193 JOHN EZZO                KENDALL PARK         NJ M 45  09:36  45-49M 19/20    101/125   60/77      S  
- 144    29:50.9 0222 CHRIS BURNS              MARLBORO             NJ M 30  09:37  30-34M 4/7      102/125                 
- 145    29:52.4 0150 LOUISE SHENNARD          HIGHTSTOWN           NJ F 41  09:38  40-44F 9/14     42/73     24/38     U   
- 146    30:24.3 0155 MOE STERN                EDISON               NJ M 33  09:48  30-34M 5/7      103/125                 
- 147    30:43.6 0087 ELI KOMM                 EAST BRUNSWICK       NJ M 66  09:54  65-69M 7/7      104/125   61/77         
- 148    30:46.1 0138 MAUREEN RODGERS          KENDALL PARK         NJ F 36  09:55  35-39F 3/7      43/73                S  
- 149    30:46.8 0137 KEVIN RODGERS            KENDALL PARK         NJ M 39  09:55  35-39M 8/8      105/125              S  
- 150    31:16.0 0217 JANIE SALERNO            FRANKLIN PARK        NJ F 34  10:05  30-34F 5/12     44/73                   
- 151    31:16.6 0177 HEATHER PAQUET           NORTH BRUNSWICK      NJ F 27  10:05  25-29F 2/2      45/73                   
- 152    31:57.5 0117 PRASAD NERURKAR          SOUTH PLAINFIELD     NJ M 40  10:18  40-44M 14/18    106/125   62/77         
- 153    31:59.8 0231 CUNEYT ERDOGAN           MORGANVILLE          NJ M 50  10:19  50-54M 16/19    107/125   63/77         
- 154    32:03.7 0121 ANDREW O'HEARN           BRIDGEWATER          NJ M 51  10:20  50-54M 17/19    108/125   64/77     U   
- 155    32:05.6 0065 BARRY GLAZER             KENDALL PARK         NJ M 58  10:20  55-59M 3/5      109/125   65/77      S  
- 156    32:10.3 0123 WALTER OLSON             MIDDLETOWN           NJ M 64  10:22  60-64M 5/5      110/125   66/77         
- 157    32:15.0 0007 AMITA AVADHANI           KENDALL PARK         NJ F 46  10:24  45-49F 8/13     46/73     25/38      S  
- 158    32:46.5 0227 ROMINA SPINNICKLE        NORTH BRUNSWICK      NJ F 30  10:34  30-34F 6/12     47/73                   
- 159    32:48.7 0044 SAJANI CREAGH            NEW BRUNSWICK        NJ F 30  10:34  30-34F 7/12     48/73                   
- 160    32:52.0 0201 JENNIFER BURNS           HIGHTSTOWN           NJ F 41  10:36  40-44F 10/14    49/73     26/38         
- 161    32:52.7 0204 SANDY LIEITRA            SOMERSET             NJ F 44  10:36  40-44F 11/14    50/73     27/38         
- 162    32:54.8 0027 SEAN BRADY               KENDALL PARK         NJ M 56  10:36  55-59M 4/5      111/125   67/77      S  
- 163    33:04.4 0151 KATHY SMITH              MILLTOWN             NJ F 59  10:40  55-59F 3/3      51/73     28/38         
- 164    33:18.5 0220 THEOLA GARDNER           HILLSBOROUGH         NJ F 47  10:44  45-49F 9/13     52/73     29/38         
- 165    33:25.8 0102 STEPHEN LOESTER          PHILADELPHIA         PA M 32  10:46  30-34M 6/7      112/125                 
- 166    33:30.0 0171 LATOYA WHITE             EAST BRUNSWICK       NJ F 31  10:48  30-34F 8/12     53/73                   
- 167    33:32.9 0114 SEBASTIAN MULDER         NORTH BRUNSWICK      NJ M 55  10:49  55-59M 5/5      113/125   68/77         
- 168    33:35.9 0066 RAJ GOVINDAN             MONMOUTH JUNCTION    NJ M 41  10:50  40-44M 15/18    114/125   69/77      S  
- 169    34:28.8 0084 CINDY KLEIN              MONMOUTH JUNCTION    NJ F 49  11:07  45-49F 10/13    54/73     30/38      S  
- 170    34:30.4 0077 MICHAEL JU               MONMOUTH JUNCTION    NJ M 50  11:07  50-54M 18/19    115/125   70/77      S  
- 171    34:32.4 0069 NOEL HALUSKA             EDISON               NJ F 39  11:08  35-39F 4/7      55/73                   
- 172    34:54.3 0153 DAYA SOORYADAS           MONMOUTH JUNCTION    NJ F 35  11:15  35-39F 5/7      56/73                S  
- 173    35:01.1 0113 SAPANA MORDE             MONMOUTH JUNCTION    NJ F 36  11:17  35-39F 6/7      57/73                S  
- 174    35:15.0 0206 PAUL RODELL              EGG HARBOR CITY      NJ M 77  11:22  70-79M 2/3      116/125   71/77         
- 175    35:45.4 0219 JEANETTE CAFARO          FORDS                NJ F 31  11:31  30-34F 9/12     58/73                   
- 176    35:45.9 0221 JESSICIA BYRNES          NEW BRUNSWICK        NJ F 31  11:31  30-34F 10/12    59/73                   
- 177    36:14.0 0134 NEIL PROSHAN             PRINCETON            NJ M 78  11:41  70-79M 3/3      117/125   72/77         
- 178    36:14.8 0036 MARILYN CLARK            FRANKLIN PARK        NJ F 37  11:41  35-39F 7/7      60/73                   
- 179    36:30.3 0218 MARIENE FOX              NORTH BRUNSWICK      NJ F 46  11:46  45-49F 11/13    61/73     31/38         
- 180    37:01.8 0100 EILEEN LOESTER           KENDALL PARK         NJ F 61  11:56  60-64F 2/2      62/73     32/38      S  
- 181    37:04.0 0021 KIRA BIJUR               KENDALL PARK         NJ F  7  11:57   1-10F 2/3      63/73                S  
- 182    37:04.4 0022 SUSAN BIJUR              KENDALL PARK         NJ F 44  11:57  40-44F 12/14    64/73     33/38      S  
- 183    37:09.7 0008 SHASHI AVADHANI          KENDALL PARK         NJ M 49  11:59  45-49M 20/20    118/125   73/77      S  
- 184    38:05.7 0140 KAREN RUSSELL            MIDDLETOWN           NJ F 52  12:17  50-54F 6/6      65/73     34/38         
- 185    38:07.4 0192 JAMES WATSON             NORTH BRUNSWICK      NJ M 41  12:17  40-44M 16/18    119/125   74/77         
- 186    38:09.0 0211 ALICE MINKOV              HGLN AK             NJ F 10  12:18   1-10F 3/3      66/73                   
- 187    38:38.2 0052 STACEY DORDONI           EAST BRUNSWICK       NJ F 43  12:27  40-44F 13/14    67/73     35/38         
- 188    38:44.4 0239 SHERRY BURIK             PRINCETON            NJ F 45  12:29  45-49F 12/13    68/73     36/38      S  
- 189    39:37.8 0188 JOE SCILIANO             KENDALL PARK         NJ M 53  12:46  50-54M 19/19    120/125   75/77      S  
- 190    39:49.0 0063 JONATHAN GERMOSEN        NORTH BRUNSWICK      NJ M 11  12:50  11-14M 13/13    121/125                 
- 191    39:50.0 0064 RICH GERMOSEN            NORTH BRUNSWICK      NJ M 40  12:50  40-44M 17/18    122/125   76/77         
- 192    41:30.7 0078 MICHELLE JU              MONMOUTH JUNCTION    NJ F 45  13:23  45-49F 13/13    69/73     37/38      S  
- 193    42:07.7 0178 CASSANDRA LAJESKIE       MONMOUTH JUNCTION    NJ F 30  13:35  30-34F 11/12    70/73                S  
- 194    42:14.4 0226 CATHERIWE BARDAKH        EDGEWATER            NJ F 11  13:37  11-14F 7/7      71/73                   
- 195    42:57.7 0198 CRAIG DANIEL             MONMOUTH JUNCTION    NJ M 43  13:51  40-44M 18/18    123/125   77/77      S  
- 196    43:18.4 0173 DAN ZAVODA               EAST BRUNSWICK       NJ M 18  13:58  15-19M 12/12    124/125                 
- 197    46:50.9 0006 CELIA ARTHUR             FRENCHTOWN           NJ F 43  15:06  40-44F 14/14    72/73     38/38         
- 198    58:00.0 0118 ERIC NORRBOM             PLAINSBORO           NJ M 31  18:42  30-34M 7/7      125/125                 
- 199    58:00.0 0119 MELISSA NORRBOM          PLAINSBORO           NJ F 30  18:42  30-34F 12/12    73/73                   
 
 </pre>
     <hr />
