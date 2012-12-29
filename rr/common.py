@@ -14,12 +14,21 @@ import xml.dom.minidom
 
 import tidy
 
+user_agent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_8) "
+user_agent += "AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1025.45 "
+user_agent += "Safari/535.19"
+headers = {'User-Agent' : user_agent}
+
 def download_file(url, local_file):
-    """Download a URL to a local file."""
+    """
+    Download a URL to a local file.
+
+    """
     if sys.hexversion < 0x03000000:
         with open(local_file, 'wb') as f:
-            req = urllib2.urlopen(url)
-            html = req.read()
+            req = urllib2.Request(url, None, headers)
+            response = urllib2.urlopen(req)
+            html = response.read()
             f.write(html)
             f.close()
     else:
