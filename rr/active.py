@@ -2,6 +2,7 @@ import datetime
 import logging
 import os
 import re
+import urllib
 import xml.etree.cElementTree as ET
 
 import rr.common
@@ -20,18 +21,9 @@ class Active:
         downloaded_url:  URL retrieved from Active.com
         
     """
-    def __init__(self, start_date=None, stop_date=None, verbose=None,
-            radius=None, near=None, memb_list=None, race_list=None, output_file=None):
-        """Constructor for Active class.
-
-        Args:
-            start_date, stop_date:  date range for retrieving results
-            verbose:  how verbose to make the process.
-            states:  list of two-letter abbreviations of the states we wish to
-                search.
-            memb_list:  membership list
-            race_list:  file containing list of races.
-            output_file:  The output is collected here.
+    def __init__(self, **kwargs):
+        """
+        Constructor for Active class.
 
         Example:
             # You really should use this via the bin script.
@@ -39,22 +31,30 @@ class Active:
             >>> kwargs = {}
             >>> kwargs['start_date'] = datetime.datetime(2012,5,21)
             >>> kwargs['stop_date'] = datetime.datetime(2012,5,27)
-            >>> kwargs['states'] = ['ny', 'nj']
             >>> kwargs['memb_list'] = '/Users/jevans/rvrr/rvrr.csv'
             >>> kwargs['output_file'] = 'results.html'
-            >>> a = rr.active.Active(**kwargs)
+            >>> kwargs['location'] = 'New Brunswick, NJ'
+            >>> kwargs['radius'] = 75
+            >>> o = rr.active.Active(**kwargs)
+            >>> o.run()
 
         """
-        self.start_date = start_date
-        self.stop_date = stop_date
-        self.radius = radius
-        self.center = near
-        self.verbose = verbose
-        self.memb_list = memb_list
-        self.race_list = race_list
-        self.output_file = output_file
+        self.start_date = None
+        self.stop_date = None
+        self.location = None
+        self.radius = None
+        self.center = None
+        self.verbose = None
+        self.memb_list = None
+        self.race_list = None
+        self.output_file = None
+        self.__dict__.update(**kwargs)
 
-        self.base_url = 'http://results.active.com/search?'
+        self.base_url = 'http://results.active.com'
+
+        # This is the name of the file that keeps all of the high level results
+        # for the location.
+        self.master_file = 'geographic.html'
 
         # Need to remember the current URL so that we can reference it in the
         # output.
@@ -63,9 +63,12 @@ class Active:
         # Set the appropriate logging level.  Requires an exact
         # match of the level string value.
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.logger.setLevel( getattr(logging, verbose.upper()) )
+        self.logger.setLevel(getattr(logging, self.verbose.upper()))
 
     def run(self):
+        """
+        Load the membership list and run through all the results.
+        """
         names = rr.common.parse_membership_list(self.memb_list)
 
         # The names are actually in reverse order.
@@ -84,14 +87,6 @@ class Active:
         self.first_name_regex = first_name_regex
         self.last_name_regex = last_name_regex
 
-        self.download_command_fmt = 'wget --no-check-certificate '
-        self.download_command_fmt += '"'
-        self.download_command_fmt += '%s'
-        self.download_command_fmt += '"'
-        self.download_command_fmt += ' --output-document='
-        self.download_command_fmt += '%s'
-        self.download_command_fmt += ' -o /dev/null'
-
         self.compile_results()
         self.local_tidy(self.output_file)
 
@@ -99,12 +94,10 @@ class Active:
         """Have to get rid of facebook:like tags before calling our general
         tidy routine.
         """
-        #fp = open(html_file,'r',errors='ignore') 
         fp = open(html_file,'r')
         html = fp.read() 
         fp.close() 
         html = html.replace('fb:like','div') 
-        #fp = open(html_file,'w',encoding='ascii') 
         fp = open(html_file,'w')
         fp.write(html) 
         fp.close()
@@ -112,7 +105,8 @@ class Active:
         rr.common.local_tidy(html_file)
 
     def compile_results(self):
-        """Either download the requested results or go through the
+        """
+        Either download the requested results or go through the
         provided list.
         """
         self.initialize_output_file()
@@ -140,181 +134,130 @@ class Active:
         rr.common.pretty_print_xml(self.output_file)
 
     def compile_web_results(self):
-        """Download the requested results and compile them.
         """
-        for state in self.states:
-            self.download_state_master_file(state)
-            self.process_state_master_file(state)
-
-    def process_state_master_file(self, state):
-        """Compile results for the specified state.
-        We assume that we have the state file stored locally.
+        Download the requested results and compile them.
         """
-        local_state_file = state + '.html'
+        self.download_master_file()
+        self.process_master_file()
 
-        tree = ET.parse(local_state_file)
+    def process_master_file(self):
+        """
+        We assume that we have the master file stored locally.
+        """
+
+        tree = ET.parse(self.master_file)
         root = tree.getroot()
         root = rr.common.remove_namespace(root)
 
-        # Set up patterns to locate the elements.
-        trs = root.findall('.//body/div/div/div/table/tr/td/table/tr')
+        # Set up patterns to locate the result elements.
+        pattern = './/body/div/div/div/div/div/div'
+        results = root.findall(pattern)
 
-        # Set up the date pattern against which we
-        # pick out the races.
-        # The date pattern is [M]M/DD/YYYY
-        if self.start_date.month < 10:
-            date_pattern = self.start_date.strftime('%m')[1]
-        else:
-            date_pattern = self.start_date.strftime('%m')
+        for result in results:
+            children = result.getchildren()
 
-        date_pattern += '/'
-        date_pattern += '('
-        date_pattern += str(self.start_date.day)
-        for day in range(self.start_date.day + 1, self.stop_date.day + 1):
-            date_pattern += '|'
-            date_pattern += str(day)
-        date_pattern += ')'
-        date_pattern += '/'
-        date_pattern += self.start_date.strftime('%Y')
-        logging.debug('date pattern = %s' % date_pattern)
+            # Should be four children.  All the information is in the 2nd child.
+            race = children[1]
 
-        for tr in trs:
-            self.evaluate_row(state, tr, date_pattern)
+            # <div class="result-title">
+            #   <h5>
+            #     <a href="/events/85698">Ho Ho Ho Holiday 5K</a>
+            #   </h5>
+            #   <div class="result-sub-location"> Bethpage, NY </div>
+            # </div>
+            anchor = race.getchildren()[0].getchildren()[0]
+            race_name = re.sub('\n', '', anchor.text)
+            race_name = re.sub('  +', ' ', anchor.text)
+            self.logger.info("Looking at '%s' ..." % race_name)
+            self.process_event(anchor.get('href'))
 
-    def evaluate_row(self, state, tr, date_pattern):
+    def process_event(self, relative_event_url):
         """
-        We have a row from the state file.  Figure
-        out if there is anything useful in it.
+        We have the URL of an event.  Figure out if there is anything useful in
+        it.
         """
-        tds = tr.findall('.//td')
-        if len(tds) < 4:
-            return
+        import pdb; pdb.set_trace()
+        url = self.base_url + relative_event_url
+        self.logger.info('Downloading %s...' % url)
+        rr.common.download_file(url, 'event.html')
+        rr.common.local_tidy('event.html')
 
-        # 3rd TD element has the date.
-        if not re.search(date_pattern, tds[1].text):
-            return
-
-        # 4th TD element has the URL and race name.
-        a_nodes = tds[2].findall('.//a')
-        if len(a_nodes) == 0:
-            return
-
-        a = a_nodes[0]
-        logging.debug('Downloading %s on %s' % (a.text, tds[1].text))
-
-        url = self.base_url + '/' + a.get('href')
-        output_file = '%s_event.html' % state
-
-        download_command = 'wget --no-check-certificate '
-        download_command += '"'
-        download_command += url
-        download_command += '"'
-        download_command += ' --output-document='
-        download_command += output_file
-        download_command += ' -o /dev/null'
-        logging.debug(download_command)
-        os.system(download_command)
-        self.process_event(output_file, state)
-
-    def process_event(self, output_file, state):
-        """
-        We have a file that represents a single event within an
-        overall event, kind of like evaluating the Philadelphia Marathon
-        within the group of other events offered that day, like the Half
-        Marathon and 8K.
-        """
-        # Look for the div/div/ul/li/a patterns
-        rr.common.local_tidy(output_file)
-        tree = ET.parse(output_file)
-        root = tree.getroot()
+        root = ET.parse('event.html').getroot()
         root = rr.common.remove_namespace(root)
 
-        pattern = './/body/div/div/table/tr/td/div/div'
-        divs = root.findall(pattern)
-        a_s = divs[0].findall('.//a')
-        count = 0
-        for anode in a_s:
-            count += 1
-            self.process_event_node(anode, state, count)
+        # Look for the event overview.
+        pattern = './/body/div/div/div/div/div/nav'
+        nav = root.findall(pattern)
 
-    def process_event_node(self, a_node, state, count):
+        # Look at all of the children except the first.  That first URL is the
+        # event overview, which is where we are at now.
+        divs = nav[0].getchildren()
+        for div in divs[1:]:
+            anchor = div.getchildren()[0]
+            text = re.sub('\n', ' ', anchor.text)
+            self.logger.info('Looking at sub-event %s' % text)
+            self.process_sub_event(anchor.get('href'))
+
+
+    def process_sub_event(self, relative_url):
         """
         We have a single event node within the overall event, kind of like
         evaluating the Philadelphia Marathon within the group of other
         events offered that day, like the Half Marathon and 8K.
         """
-        href = a_node.get('href')
-        if href is None:
-            return
-        if href[0:4] == 'http':
-            # Only take relative urls.
-            logging.debug('Discarding %s' % href)
-            return
-        race_file = '%s_%d_result.html' % (state, count)
+        url = self.base_url + relative_url
+        self.logger.info('Downloading %s...' % url)
 
-        url = 'http://resultsarchive.active.com/pages/' + href
-        logging.debug('Downloading event result at %s' % url)
-        cmd = self.download_command_fmt % (url, race_file)
-        self.downloaded_url = url
-        logging.debug(cmd)
-        os.system(cmd)
-        self.local_tidy(race_file)
+        chunk_file = 'event_0000.html'
+        rr.common.download_file(url, chunk_file)
+        rr.common.local_tidy(chunk_file)
 
-        # Need to see if there could be more files.
-        root = ET.parse(race_file).getroot()
+        self.event_chunk_list = []
+        self.event_chunk_list.append(chunk_file)
+
+        last_chunk_file = chunk_file
+        while self.more_event_chunks(last_chunk_file):
+            url = self.get_chunk_url(last_chunk_file)
+            self.logger.info('Downloading %s...' % url)
+            current_chunk_file = "event_%04d.html" % len(self.event_chunk_list)
+            rr.common.download_file(url, current_chunk_file)
+            rr.common.local_tidy(current_chunk_file)
+
+            self.event_chunk_list.append(current_chunk_file)
+            last_chunk_file = current_chunk_file
+
+        complete_results_file = self.concatenate_chunks()
+        self.compile_native_active_results(complete_results_file)
+
+    def get_chunk_url(self, chunk_file):
+        """
+        Results for native active race results format seem to only come in
+        chunks of 100.  If there is another chunk, it will be indicated 
+        down at the bottom of the file.
+        """
+        root = ET.parse(chunk_file).getroot()
         root = rr.common.remove_namespace(root)
-        pattern = './/body/div/div/div/div/div'
-        divs = root.findall(pattern)
-        if len(divs) < 8:
-            logging.debug('Discarding %s, not ACTIVE format.' % href)
-            return
 
-        # Should be the 8th div
-        # <div class="left">
-        #     displaying: 1 - 656 of 656
-        # </div>
-        tokens = divs[7].text.rstrip().split(' ')
-        num_runners = int(tokens[-1])
+        pattern = './/body/div/div/div/div/section/div/table/tfoot/tr/td/div'
+        div = root.findall(pattern)
 
-        # If the number of runners is greater than the
-        # default (25), then re-retrieve the page with
-        # that number of runners.
-        if num_runners > 25:
-            url += '&numPerPage=%d' % num_runners
-            logging.debug('Downloading event result at %s' % url)
-            cmd = self.download_command_fmt % (url, race_file)
-            logging.debug(cmd)
-            os.system(cmd)
-            self.local_tidy(race_file)
+        # The last child will have an href attribute if there is another chunk.
+        next = div[0].getchildren()[-1]
+        href = next.get('href')
+        url = self.base_url + href
+        return url
 
-        #self.comile_race_results(race_file)
-        # body/div/div/div/table/tr
-        root = ET.parse(race_file).getroot()
-        root = rr.common.remove_namespace(root)
-        pattern = './/body/div/div/div/table/tr'
-        trs = root.findall(pattern)
-
-        results = []
-        for tr in trs[1:]:
-            try:
-                tds = tr.getchildren()
-                fname_text = tds[1].getchildren()[0].getchildren()[0].text
-                lname_text = tds[2].getchildren()[0].getchildren()[0].text
-                for idx in range(0, len(self.first_name_regex)):
-                    fregex = self.first_name_regex[idx]
-                    lregex = self.last_name_regex[idx]
-                    if fregex.search(fname_text) and lregex.search(lname_text):
-                        tr = self.scrub_tr(tr)
-                        results.append(tr)
-            except IndexError:
-                # This exception is thrown usually if the TD element is empty
-                continue
-
-        if len(results) > 0:
-            # Insert the header.
-            results.insert(0, self.scrub_tr(trs[0]))
-
-            self.insert_race_results(results, race_file)
+    def more_event_chunks(self, chunk_file):
+        """
+        Results for native active race results format seem to only come in
+        chunks of 100.  If there is another chunk, it will be indicated 
+        down at the bottom of the file.
+        """
+        try:
+            self.get_chunk_url(chunk_file)
+            return True
+        except:
+            return False
 
     def scrub_tr(self, tr):
         """
@@ -434,34 +377,42 @@ class Active:
                 return(True)
         return(False)
 
-    def download_state_master_file(self, state):
+    def download_master_file(self):
         """
-        Download results for the specified state.
+        Download results according to the geographic location.
 
         The URL will have the pattern
 
-        [BASE_URL]/eventSearch.jsp?stateID=[ID]
+        http://results.active.com/search?utf8=%E2%9C%93
+            &search%5Bquery%5D=
+            &search%5Bsource%5D=event
+            &search%5Blocation%5D=Boston%2C+MA
+            &search%5Bradius%5D=100
+            &search%5Bstart_date%5D=2012-12-01
+            &search%5Bend_date%5D=2012-12-230
 
-        [BASE_URL]/eventSearch.jsp?fromDate=05%2F01%2F2012
-             &toDate=05%2F24%2F2012&stateID=35&sportID=1
         """
-        logging.debug('Processing %s...' % state)
-        local_state_file = state + '.html'
-        url = self.base_url + '/eventSearch.jsp'
-        url += '?stateID=%s' % state_map[state]
-        url += '&fromDate=%02d%%2F%02d%%2F%04d' % (self.start_date.month,
-                self.start_date.day, self.start_date.year)
-        url += '&toDate=%02d%%2F%02d%%2F%04d' % (self.stop_date.month, self.stop_date.day, self.stop_date.year)
-        logging.debug('Downloading %s.' % url)
+        self.logger.debug('Retrieving races in geographic range...')
+        url = self.base_url + '/search?'
+        url += 'utf8=%E2%9C%93'
 
-        download_command = 'wget --no-check-certificate '
-        download_command += '"' + url + '"'
-        download_command += ' --output-document='
-        download_command += local_state_file
-        download_command += ' -o /dev/null'
-        logging.debug(download_command)
-        os.system(download_command)
-        self.local_tidy(local_state_file)
+        # Percent-encoding at work here.
+        query = urllib.urlencode({'[query]': ''})
+        source = urllib.urlencode({'[source]': 'event'})
+        location = urllib.urlencode({'[location]': self.location})
+        radius = urllib.urlencode({'[radius]': str(self.radius)})
+        start = urllib.urlencode({'[start_date]':
+            self.start_date.strftime('%Y-%m-%d')})
+        stop = urllib.urlencode({'[end_date]':
+            self.stop_date.strftime('%Y-%m-%d')})
+
+        url += '&search' + '&search'.join([query, source, location, radius,
+            start, stop])
+
+        self.logger.debug('Downloading %s.' % url)
+        rr.common.download_file(url, self.master_file)
+
+        self.local_tidy(self.master_file)
 
     def compile_local_results(self):
         """
