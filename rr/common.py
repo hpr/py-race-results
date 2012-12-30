@@ -17,6 +17,7 @@ import tidy
 user_agent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_8) "
 user_agent += "AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1025.45 "
 user_agent += "Safari/535.19"
+#user_agent = "Wget/1.14 (darwin10.8.0)"
 headers = {'User-Agent' : user_agent}
 
 def download_file(url, local_file):
