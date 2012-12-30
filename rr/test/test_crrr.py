@@ -1,6 +1,7 @@
 import datetime
 import os
 import pkg_resources
+import shutil
 import tempfile
 import unittest
 import xml.etree.cElementTree as ET
@@ -14,18 +15,32 @@ class TestCoolRunning(unittest.TestCase):
     """
     def setUp(self):
 
+        # Make copies of the test files as fixtures BEFORE we change into a
+        # scratch directory.
+
         # This test file is a regular, run-of-the-mill results
         # file typical of those uploaded to CoolRunning.
-        self.vanilla_crrr_file = pkg_resources.resource_filename(
+        self.vanilla_crrr_file = tempfile.NamedTemporaryFile(delete=False,
+                suffix=".shtml").name
+        filename = pkg_resources.resource_filename(
                     rr.__name__,
                     "test/testdata/Nov24_3rdAnn_set1.shtml")
+        shutil.copyfile(filename, self.vanilla_crrr_file)
 
         # This file has an XHTML format commonly used when the
         # Cape Cod Road Runners report a result.
-        self.cape_cod_road_runners_file = pkg_resources.resource_filename(
-                    rr.__name__,
-                    "test/testdata/Jan8_CapeCo_set1.shtml")
+        self.ccrr_file = tempfile.NamedTemporaryFile(delete=False,
+                suffix=".shtml").name
+        filename = pkg_resources.resource_filename(rr.__name__,
+                "test/testdata/Jan8_CapeCo_set1.shtml")
+        shutil.copyfile(filename, self.ccrr_file)
 
+        # We should do all our testing in a temporary directory.
+        self.old_directory = os.getcwd()
+        self.scratch_directory = tempfile.mkdtemp()
+        os.chdir(self.scratch_directory)
+
+        # Create other fixtures that are easy to clean up later.
         self.membership_file = tempfile.NamedTemporaryFile(delete=False,
                 suffix=".txt").name
         self.racelist_file = tempfile.NamedTemporaryFile(delete=False,
@@ -35,17 +50,25 @@ class TestCoolRunning(unittest.TestCase):
         self.populate_membership_file()
 
     def tearDown(self):
+
+        # Remove the scratch work directory.
+        os.chdir(self.old_directory)
+        shutil.rmtree(self.scratch_directory)
+
         os.unlink(self.membership_file)
         os.unlink(self.racelist_file)
+        os.unlink(self.vanilla_crrr_file)
+        os.unlink(self.ccrr_file)
         if os.path.exists(self.results_file):
             os.unlink(self.results_file)
 
-    def populate_racelist_file(self, rfile):
+    def populate_racelist_file(self, race_files):
         """
         Put a test race into a racelist file.
         """
         with open(self.racelist_file, 'w') as fp:
-            fp.write(rfile)
+            for race_file in race_files:
+                fp.write(race_file)
 
     def populate_membership_file(self):
         """
@@ -61,7 +84,7 @@ class TestCoolRunning(unittest.TestCase):
         """
         Test compiling race results from a list of local files.
         """
-        self.populate_racelist_file(self.vanilla_crrr_file)
+        self.populate_racelist_file([self.vanilla_crrr_file])
         o = rr.crrr(verbose='critical',
                 memb_list=self.membership_file,
                 race_list=self.racelist_file,
@@ -79,8 +102,7 @@ class TestCoolRunning(unittest.TestCase):
         Test compiling race results from a list of local files.
         The HTML profile is used by Cape Cod Road Runners.
         """
-        rfile = self.cape_cod_road_runners_file
-        self.populate_racelist_file(rfile)
+        self.populate_racelist_file([self.ccrr_file])
         o = rr.crrr(verbose='critical',
                 memb_list=self.membership_file,
                 race_list=self.racelist_file,
@@ -99,7 +121,6 @@ class TestCoolRunning(unittest.TestCase):
         """
         Verify that we can get results from the web.
         """
-        self.populate_membership_file()
         start_date = datetime.datetime(2012, 12, 9)
         stop_date = datetime.datetime(2012, 12, 10)
         o = rr.crrr(verbose='critical',
