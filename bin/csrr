@@ -5,38 +5,53 @@ import datetime
 import rr.common
 
 # --ml cannot be used with -m, or -y
-the_description='Process Coolrunning race results'
+the_description = 'Process Compuscore race results'
 parser = argparse.ArgumentParser(description=the_description)
 group = parser.add_mutually_exclusive_group()
-parser.add_argument('-m', '--month', dest='month',
+parser.add_argument('-y', '--year',
+        dest='year',
+        default=datetime.date.today().year,
+        help='year')
+parser.add_argument('-m', '--month',
+        dest='month',
         default=datetime.date.today().month,
-        choices=['janfeb','march','april','may','june',
-                'july','aug','sept','october','novdec'],
+        choices=range(1, 13),
+        type=int,
         help='month')
-parser.add_argument('-o', '--output', dest='output_file',
-        default='results.html', 
-        help='output file, default is results.html') 
-parser.add_argument('-v', '--verbose', 
-        dest='verbose', 
+group.add_argument('-d', '--day',
+        dest='day',
+        default=[datetime.date.today().day, datetime.date.today().day],
+        nargs=2,
+        help='day range')
+parser.add_argument('-v', '--verbose',
+        dest='verbose',
         choices=['debug', 'info', 'warning', 'error', 'critical'],
-        default='info', 
+        default='info',
         help='verbosity level, default is "info"')
-parser.add_argument('-y', '--year', dest='year',
-        default=datetime.date.today().year, help='year')
+parser.add_argument('-o', '--output',
+        dest='output_file',
+        default='results.html',
+        help='output file, default is results.html')
 parser.add_argument('--ml', dest='membership_list',
         help='membership list', required=True)
-group.add_argument('--rl', dest='race_list', 
+group.add_argument('--rl', dest='race_list',
         help='race list')
 
 args = parser.parse_args()
 
+year = int(args.year)
+month = int(args.month)
+day = args.day
+
+start_date = datetime.date(year, month, int(day[0]))
+stop_date = datetime.date(year, month, int(day[1]))
+
 o = rr.csrr(
-        year        = args.year,
-        month       = args.month,
-        memb_list   = args.membership_list,
-        race_list   = args.race_list,
-        output_file = args.output_file,
-        verbose     = args.verbose,
+        start_date=start_date,
+        stop_date=stop_date,
+        memb_list=args.membership_list,
+        race_list=args.race_list,
+        output_file=args.output_file,
+        verbose=args.verbose,
         )
 o.run()
-

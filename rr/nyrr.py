@@ -3,6 +3,7 @@ import xml.etree.cElementTree as ET
 
 from . import common as rrcommon
 
+
 class nyrr:
     """
     Handles race results from New York Road Runners website.
@@ -39,8 +40,8 @@ class nyrr:
         """
         This page has the URLs for the recent results.
         """
-        import pdb; pdb.set_trace()
-        url = 'http://web2.nyrrc.org/cgi-bin/start.cgi/aes-programs/results/resultsarchive.htm'
+        url = 'http://web2.nyrrc.org'
+        url += '/cgi-bin/start.cgi/aes-programs/results/resultsarchive.htm'
         rrcommon.download_file(url, 'index.html')
 
         # Parse out the list of "Most Recent Races"
@@ -51,5 +52,3 @@ class nyrr:
         matched the input date range.
         """
         pass
-
-

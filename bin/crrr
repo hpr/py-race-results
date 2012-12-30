@@ -10,40 +10,40 @@ import rr
 the_description = 'Process Coolrunning race results'
 parser = argparse.ArgumentParser(description=the_description)
 group = parser.add_mutually_exclusive_group()
-group.add_argument('-d', '--day', 
-        dest='day', 
-        nargs=2, 
-        help='day range')
-parser.add_argument('-v', '--verbose', 
-        dest='verbose', 
-        choices=['debug', 'info', 'warning', 'error', 'critical'],
-        default='info', 
-        help='verbosity level, default is "info"')
-parser.add_argument('-m', '--month', 
-        dest='month', 
-        default=datetime.date.today().month, 
-        choices=range(1,13), 
-        type=int, 
-        help='month')
-parser.add_argument('-o', '--output', 
-        dest='output_file', 
-        default='results.html', 
-        help='output file, default is results.html') 
-parser.add_argument('-s', '--states', 
-        dest='states', 
-        nargs='+', 
-        default=['ma'], 
-        help='state, default is ma') 
-parser.add_argument('-y', '--year', 
-        dest='year', 
-        default=datetime.date.today().year, 
+parser.add_argument('-y', '--year',
+        dest='year',
+        default=datetime.date.today().year,
         help='year')
-parser.add_argument('--ml', 
-        dest='membership_list', 
-        help='membership list', 
+parser.add_argument('-m', '--month',
+        dest='month',
+        default=datetime.date.today().month,
+        choices=range(1, 13),
+        type=int,
+        help='month')
+group.add_argument('-d', '--day',
+        dest='day',
+        nargs=2,
+        help='day range')
+parser.add_argument('-v', '--verbose',
+        dest='verbose',
+        choices=['debug', 'info', 'warning', 'error', 'critical'],
+        default='info',
+        help='verbosity level, default is "info"')
+parser.add_argument('-o', '--output',
+        dest='output_file',
+        default='results.html',
+        help='output file, default is results.html')
+parser.add_argument('-s', '--states',
+        dest='states',
+        nargs='+',
+        default=['ma'],
+        help='state, default is ma')
+parser.add_argument('--ml',
+        dest='membership_list',
+        help='membership list',
         required=True)
-group.add_argument('--rl', 
-        dest='race_list', 
+group.add_argument('--rl',
+        dest='race_list',
         help='race list')
 args = parser.parse_args()
 
@@ -56,15 +56,15 @@ if args.day is not None:
     stop_date = datetime.date(year, month, int(day[1]))
 else:
     start_date = None
-    stop_date  = None
+    stop_date = None
 
 o = rr.crrr(
-        start_date  = start_date,
-        stop_date   = stop_date,
-        memb_list   = args.membership_list,
-        race_list   = args.race_list,
-        output_file = args.output_file,
-        states      = args.states,
-        verbose     = args.verbose
+        start_date=start_date,
+        stop_date=stop_date,
+        memb_list=args.membership_list,
+        race_list=args.race_list,
+        output_file=args.output_file,
+        states=args.states,
+        verbose=args.verbose
         )
 o.run()

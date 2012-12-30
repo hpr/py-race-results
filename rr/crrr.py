@@ -9,15 +9,14 @@ import re
 import sys
 import xml.etree.cElementTree as ET
 
-import rr
+from .common import RaceResults
 
 
-class crrr:
+class crrr(RaceResults):
     """
     Class for handling CoolRunning Race Results.
     """
-    def __init__(self, start_date=None, stop_date=None, verbose=None,
-            states=['ma'], memb_list=None, race_list=None, output_file=None):
+    def __init__(self, states=['ma'], **kwargs):
         """
         base_url:
         memb_list:  membership list
@@ -25,33 +24,25 @@ class crrr:
         output_file:  final race results file
         verbose:  how much output to produce
         """
-        self.start_date = start_date
-        self.stop_date = stop_date
+        RaceResults.__init__(self)
+        self.__dict__.update(**kwargs)
         self.states = states
-        self.memb_list = memb_list
-        self.race_list = race_list
-        self.output_file = output_file
 
         self.base_url = 'http://www.coolrunning.com'
 
-        # Need to remember the current URL.
-        self.downloaded_url = None
-
-        # Set the appropriate logging level.  Requires an exact
-        # match of the level string value.
-        self.logger = logging.getLogger(self.__class__.__name__)
-        self.logger.setLevel(getattr(logging, verbose.upper()))
+        # Set the appropriate logging level.
+        self.logger.setLevel(getattr(logging, self.verbose.upper()))
 
     def run(self):
         self.load_membership_list()
         self.compile_results()
-        rr.common.local_tidy(self.output_file)
+        self.local_tidy(self.output_file)
 
     def load_membership_list(self):
         """
         Construct regular expressions for each person in the membership list.
         """
-        names = rr.common.parse_membership_list(self.memb_list)
+        names = self.parse_membership_list()
         first_name_regex = []
         last_name_regex = []
         for j in range(len(names.first)):
@@ -92,7 +83,7 @@ class crrr:
         link.set('type', 'text/css')
         ET.SubElement(ofile, 'body')
         ET.ElementTree(ofile).write(self.output_file)
-        rr.pretty_print_xml(self.output_file)
+        self.pretty_print_xml(self.output_file)
 
     def compile_web_results(self):
         """
@@ -143,7 +134,7 @@ class crrr:
 
         tree = ET.parse(local_state_file)
         root = tree.getroot()
-        root = rr.common.remove_namespace(root)
+        root = self.remove_namespace(root)
 
         anchor_pattern = './/a'
         anchors = root.findall(anchor_pattern)
@@ -176,7 +167,7 @@ class crrr:
             except:
                 raise
             root = tree.getroot()
-            root = rr.common.remove_namespace(root)
+            root = self.remove_namespace(root)
 
             inner_anchors = root.findall(anchor_pattern)
 
@@ -217,7 +208,7 @@ class crrr:
 
         tree = ET.parse(race_file)
         root = tree.getroot()
-        rr.common.remove_namespace(root)
+        self.remove_namespace(root)
         nodes = root.findall(pattern)
 
         r = []
@@ -246,7 +237,7 @@ class crrr:
             raise
 
         root = tree.getroot()
-        rr.common.remove_namespace(root)
+        self.remove_namespace(root)
         nodes = root.findall(pattern)
         if len(nodes) > 0:
             return True
@@ -273,7 +264,7 @@ class crrr:
             raise
 
         root = tree.getroot()
-        rr.common.remove_namespace(root)
+        self.remove_namespace(root)
         nodes = root.findall(pattern)
         if len(nodes) > 0:
             return True
@@ -289,7 +280,7 @@ class crrr:
 
         tree = ET.parse(race_file)
         root = tree.getroot()
-        rr.common.remove_namespace(root)
+        self.remove_namespace(root)
 
         trs = root.findall(pattern)
 
@@ -307,13 +298,13 @@ class crrr:
                 fregex = self.first_name_regex[idx]
                 lregex = self.last_name_regex[idx]
                 if fregex.search(runner_name) and lregex.search(runner_name):
-                    tr = rr.common.remove_namespace(tr)
+                    #tr = rr.common.remove_namespace(tr)
                     results.append(tr)
 
         if len(results) > 0:
             # Prepend the header.
-            tr = rr.common.remove_namespace(trs[0])
-            results.insert(0, tr)
+            #tr = rr.common.remove_namespace(trs[0])
+            results.insert(0, trs[0])
             self.insert_race_results_ccrr(results, race_file)
 
     def compile_race_results(self, race_file):
@@ -344,7 +335,7 @@ class crrr:
         # The H1 tag comes from the only H1 tag in the race file.
         tree = ET.parse(race_file)
         root = tree.getroot()
-        root = rr.common.remove_namespace(root)
+        root = self.remove_namespace(root)
         pattern = './/h1'
         source_h1 = root.findall(pattern)[0]
 
@@ -403,7 +394,7 @@ class crrr:
         pre.set('class', 'actual_results')
 
         root = ET.parse(race_file).getroot()
-        root = rr.common.remove_namespace(root)
+        root = self.remove_namespace(root)
         banner = self.parse_banner(root)
 
         text = '\n'
@@ -484,8 +475,8 @@ class crrr:
         fmt = 'http://www.coolrunning.com/results/%s/%s'
         url = fmt % (self.start_date.strftime('%y'), local_state_file)
         self.logger.info('Downloading %s.' % url)
-        rr.common.download_file(url, local_state_file)
-        rr.common.local_tidy(local_state_file)
+        self.download_file(url, local_state_file)
+        self.local_tidy(local_state_file)
 
     def download_race(self, anchor, inner_url=False, state=''):
         """
@@ -502,10 +493,10 @@ class crrr:
         url = 'http://www.coolrunning.com/%s' % href
         local_file = href.split('/')[-1]
         self.logger.info('Downloading %s...' % url)
-        rr.common.download_file(url, local_file)
+        self.download_file(url, local_file)
         self.downloaded_url = url
         try:
-            rr.common.local_tidy(local_file)
+            self.local_tidy(local_file)
         except IOError:
             fmt = 'Encountered an error processing %s, skipping it.'
             self.logger.debug(fmt % local_file)
@@ -521,7 +512,7 @@ class crrr:
             try:
                 self.logger.info('Processing file %s' % line)
                 race_file = line.rstrip()
-                rr.common.local_tidy(race_file)
+                self.local_tidy(race_file)
                 self.compile_race_results(race_file)
             except IOError:
                 fmt = 'Encountered an error processing %s, skipping it.'

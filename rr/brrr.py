@@ -8,10 +8,10 @@ import re
 import warnings
 import xml.etree.cElementTree as ET
 
-import rr
+from .common import RaceResults
 
 
-class brrr:
+class brrr(RaceResults):
     """
     Process races found on BestRace.com.
 
@@ -28,32 +28,23 @@ class brrr:
     """
 
     def __init__(self, **kwargs):
-        self.start_date = None
-        self.stop_date = None
-        self.memb_list = None
-        self.race_list = None
-        self.output_file = None
-        self.verbose = 'info'
+        RaceResults.__init__(self)
         self.__dict__.update(**kwargs)
 
-        self.downloaded_url = None
-
-        # Set the appropriate logging level.  Requires an exact
-        # match of the level string value.
-        self.logger = logging.getLogger(self.__class__.__name__)
+        # Set the appropriate logging level.
         self.logger.setLevel(getattr(logging, self.verbose.upper()))
 
     def run(self):
         self.load_membership_list()
         self.compile_results()
         # Make the output human-readable.
-        rr.common.local_tidy(self.output_file)
+        RaceResults.local_tidy(self, self.output_file)
 
     def load_membership_list(self):
         """
         Construct regular expressions for each person in the membership list.
         """
-        names = rr.common.parse_membership_list(self.memb_list)
+        names = self.parse_membership_list()
         first_name_regex = []
         last_name_regex = []
         for j in range(len(names.first)):
@@ -82,12 +73,11 @@ class brrr:
         html = fp.read()
         fp.close()
         html = html.replace(':colorscheme', '')
-        #fp = open(html_file,'w',encoding='ascii')
         fp = open(html_file, 'w')
         fp.write(html)
         fp.close()
 
-        rr.common.local_tidy(html_file)
+        RaceResults.local_tidy(self, html_file)
 
     def compile_results(self):
         """
@@ -124,7 +114,7 @@ class brrr:
         link.set('type', 'text/css')
         body = ET.SubElement(ofile, 'body')
         ET.ElementTree(ofile).write(self.output_file)
-        rr.common.pretty_print_xml(self.output_file)
+        self.pretty_print_xml(self.output_file)
 
     def compile_web_results(self):
         """
@@ -157,7 +147,7 @@ class brrr:
 
         tree = ET.parse(local_file)
         root = tree.getroot()
-        root = rr.common.remove_namespace(root)
+        root = self.remove_namespace(root)
 
         anchors = root.findall('.//a')
         for anchor in anchors:
@@ -194,7 +184,7 @@ class brrr:
 
         tree = ET.parse(race_file)
         root = tree.getroot()
-        root = rr.common.remove_namespace(root)
+        root = self.remove_namespace(root)
         source_title = root.findall('.//title')[0]
 
         h1 = ET.Element('h1')
@@ -276,7 +266,7 @@ class brrr:
         fmt = 'http://www.bestrace.com/%sschedule.html'
         url = fmt % self.start_date.strftime('%Y')
         self.logger.info('Downloading %s.' % url)
-        rr.common.download_file(url, 'index.html')
+        self.download_file(url, 'index.html')
         self.local_tidy('index.html')
 
     def download_race(self, url):
@@ -285,9 +275,9 @@ class brrr:
         """
         local_file = url.split('/')[-1]
         self.logger.info('Downloading %s...' % local_file)
-        rr.common.download_file(url, local_file)
+        self.download_file(url, local_file)
         self.downloaded_url = url
-        rr.common.local_tidy(local_file)
+        self.local_tidy(local_file)
         return(local_file)
 
     def compile_local_results(self):

@@ -4,6 +4,7 @@ import unittest
 
 import rr
 
+
 @unittest.skip("Cannot connect.")
 class TestNYRR(unittest.TestCase):
 
@@ -23,15 +24,15 @@ class TestNYRR(unittest.TestCase):
         """
         Put some names into a faux membership file.
         """
-        with open(self.membership_file,'w') as fp:
+        with open(self.membership_file, 'w') as fp:
             fp.write('SCHEID,JUSTIN\n')
 
     def test_web_download(self):
         """
         Verify that we can get results from the web.
         """
-        start_date = datetime.datetime(2012,12,14)
-        stop_date = datetime.datetime(2012,12,15)
+        start_date = datetime.datetime(2012, 12, 14)
+        stop_date = datetime.datetime(2012, 12, 15)
         o = rr.nyrr(verbose='critical',
                 memb_list=self.membership_file,
                 output_file=self.results_file,
@@ -47,4 +48,3 @@ class TestNYRR(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

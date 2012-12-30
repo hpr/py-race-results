@@ -4,42 +4,53 @@ import re
 import sys
 import xml.etree.cElementTree as ET
 
+from .common import RaceResults
 import rr
 
 logging.basicConfig()
 
+# Need to match the month of the search window to the month strings that
+# Compuscore uses.
+monthstrs = {
+        1: 'janfeb',
+        2: 'janfeb',
+        3: 'march',
+        4: 'april',
+        5: 'may',
+        6: 'june',
+        7: 'july',
+        8: 'aug',
+        9: 'sept',
+        10: 'oct',
+        11: 'novdec',
+        12: 'novdec',
+        }
 
-class csrr:
+
+class csrr(RaceResults):
     def __init__(self, **kwargs):
         """
-        month:  month in which to look for results
-        year:  year in which to look for results
         memb_list:  membership list
         race_list:  file containing list of races
         output_file:  final race results file
         verbose:  how much output to produce
         """
-        self.year = None
-        self.month = None
-        self.memb_list = None
-        self.race_list = None
-        self.output_file = None
-        self.verbose = 'info'
+        RaceResults.__init__(self)
         self.__dict__.update(**kwargs)
+
+        self.monthstr = monthstrs[self.start_date.month]
 
         # Need to remember the current URL.
         self.downloaded_url = None
 
-        # Set the appropriate logging level.  Requires an exact
-        # match of the level string value.
-        self.logger = logging.getLogger(self.__class__.__name__)
+        # Set the appropriate logging level.
         self.logger.setLevel(getattr(logging, self.verbose.upper()))
 
     def run(self):
         """
         Load the membership list and run through all the results.
         """
-        names = rr.common.parse_membership_list(self.memb_list)
+        names = self.parse_membership_list()
 
         # The names are actually in reverse order.
         fname = names.last
@@ -63,7 +74,7 @@ class csrr:
         self.last_name_regex = last_name_regex
 
         self.compile_results()
-        rr.common.local_tidy(self.output_file)
+        self.local_tidy(self.output_file)
 
     def compile_results(self):
         """
@@ -94,7 +105,7 @@ class csrr:
 
         ET.ElementTree(ofile).write(self.output_file)
 
-        rr.common.pretty_print_xml(self.output_file)
+        self.pretty_print_xml(self.output_file)
 
     def compile_web_results(self):
         """
@@ -107,11 +118,13 @@ class csrr:
         """
         Compile results.
         """
-        pattern = 'http://www.compuscore.com/cs%s/%s' % (self.year, self.month)
+        year = self.start_date.year
+        monthstr = monthstrs[self.start_date.month]
+        pattern = 'http://www.compuscore.com/cs%s/%s' % (year, monthstr)
 
         tree = ET.parse('index.htm')
         root = tree.getroot()
-        root = rr.common.remove_namespace(root)
+        root = self.remove_namespace(root)
 
         anchor_pattern = './/a'
         anchors = root.findall(anchor_pattern)
@@ -120,9 +133,9 @@ class csrr:
             if re.match(pattern, href):
                 local_file = href.split('/')[-1]
                 self.logger.info('Downloading %s...' % local_file)
-                rr.common.download_file(href, local_file)
+                self.download_file(href, local_file)
                 self.downloaded_url = href
-                rr.common.local_tidy(local_file)
+                self.local_tidy(local_file)
                 self.compile_race_results(local_file)
 
     def compile_race_results(self, race_file):
@@ -152,7 +165,7 @@ class csrr:
         # The H2 tag comes from the only H1 tag in the race file.
         tree = ET.parse(race_file)
         root = tree.getroot()
-        root = rr.common.remove_namespace(root)
+        root = self.remove_namespace(root)
         pattern = './/h2'
         source_h2 = root.findall(pattern)[0]
 
@@ -191,13 +204,13 @@ class csrr:
 
         tree = ET.parse(self.output_file)
         root = tree.getroot()
-        root = rr.common.remove_namespace(root)
+        root = self.remove_namespace(root)
         body = root.findall('.//body')[0]
         body.append(div)
 
         ET.ElementTree(root).write(self.output_file)
 
-        rr.common.local_tidy(self.output_file)
+        self.local_tidy(self.output_file)
 
     def parse_banner(self, root):
         """
@@ -240,10 +253,10 @@ class csrr:
 
         """
         url = 'http://compuscore.com/cs%s/%s/index.htm'
-        url %= (self.year, self.month)
+        url %= (self.start_date.year, self.monthstr)
         self.logger.info('Downloading %s.' % url)
-        rr.common.download_file(url, 'index.htm')
-        rr.common.local_tidy('index.htm')
+        self.download_file(url, 'index.htm')
+        self.local_tidy('index.htm')
 
     def compile_local_results(self):
         """
@@ -252,5 +265,5 @@ class csrr:
         for line in open(self.race_list):
             line = line.rstrip()
             self.logger.info('Processing %s...' % line)
-            rr.common.local_tidy(line)
+            self.local_tidy(line)
             self.compile_race_results(line)

@@ -7,6 +7,7 @@ import xml.etree.cElementTree as ET
 
 import rr.common
 
+
 class Active:
     """
     Class for retrieving and processing race results from Active.com.
@@ -19,7 +20,6 @@ class Active:
         output_file:  The output is collected here.
         base_url:  all URLs from active.com derive from this
         downloaded_url:  URL retrieved from Active.com
-        
     """
     def __init__(self, **kwargs):
         """
@@ -80,26 +80,26 @@ class Active:
         for j in range(len(fname)):
             # For the regular expression, the first and last names are each
             # stored in separate XML elements, so the regular expressions need
-            # only contain the names themselves.  
-            first_name_regex.append(re.compile(fname[j],re.IGNORECASE))
-            last_name_regex.append(re.compile(lname[j],re.IGNORECASE))
-        
+            # only contain the names themselves.
+            first_name_regex.append(re.compile(fname[j], re.IGNORECASE))
+            last_name_regex.append(re.compile(lname[j], re.IGNORECASE))
+
         self.first_name_regex = first_name_regex
         self.last_name_regex = last_name_regex
 
         self.compile_results()
         self.local_tidy(self.output_file)
 
-    def local_tidy(self,html_file):
+    def local_tidy(self, html_file):
         """Have to get rid of facebook:like tags before calling our general
         tidy routine.
         """
-        fp = open(html_file,'r')
-        html = fp.read() 
-        fp.close() 
-        html = html.replace('fb:like','div') 
-        fp = open(html_file,'w')
-        fp.write(html) 
+        fp = open(html_file, 'r')
+        html = fp.read()
+        fp.close()
+        html = html.replace('fb:like', 'div')
+        fp = open(html_file, 'w')
+        fp.write(html)
         fp.close()
 
         rr.common.local_tidy(html_file)
@@ -156,7 +156,8 @@ class Active:
         for result in results:
             children = result.getchildren()
 
-            # Should be four children.  All the information is in the 2nd child.
+            # Should be four children.  All the information is in the 2nd
+            # child.
             race = children[1]
 
             # <div class="result-title">
@@ -176,7 +177,6 @@ class Active:
         We have the URL of an event.  Figure out if there is anything useful in
         it.
         """
-        import pdb; pdb.set_trace()
         url = self.base_url + relative_event_url
         self.logger.info('Downloading %s...' % url)
         rr.common.download_file(url, 'event.html')
@@ -197,7 +197,6 @@ class Active:
             text = re.sub('\n', ' ', anchor.text)
             self.logger.info('Looking at sub-event %s' % text)
             self.process_sub_event(anchor.get('href'))
-
 
     def process_sub_event(self, relative_url):
         """
@@ -232,7 +231,7 @@ class Active:
     def get_chunk_url(self, chunk_file):
         """
         Results for native active race results format seem to only come in
-        chunks of 100.  If there is another chunk, it will be indicated 
+        chunks of 100.  If there is another chunk, it will be indicated
         down at the bottom of the file.
         """
         root = ET.parse(chunk_file).getroot()
@@ -250,7 +249,7 @@ class Active:
     def more_event_chunks(self, chunk_file):
         """
         Results for native active race results format seem to only come in
-        chunks of 100.  If there is another chunk, it will be indicated 
+        chunks of 100.  If there is another chunk, it will be indicated
         down at the bottom of the file.
         """
         try:

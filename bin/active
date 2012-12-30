@@ -13,44 +13,44 @@ import rr
 the_description = 'Process Coolrunning race results'
 parser = argparse.ArgumentParser(description=the_description)
 group = parser.add_mutually_exclusive_group()
-parser.add_argument('-y', '--year', 
-        dest='year', 
-        default=datetime.date.today().year, 
+parser.add_argument('-y', '--year',
+        dest='year',
+        default=datetime.date.today().year,
         help='year')
-parser.add_argument('-m', '--month', 
-        dest='month', 
-        default=datetime.date.today().month, 
-        choices=range(1,13), 
-        type=int, 
+parser.add_argument('-m', '--month',
+        dest='month',
+        default=datetime.date.today().month,
+        choices=range(1, 13),
+        type=int,
         help='month')
-group.add_argument('-d', '--day', 
-        dest='day', 
-        nargs=2, 
+group.add_argument('-d', '--day',
+        dest='day',
+        nargs=2,
         help='day range')
-parser.add_argument('-v', '--verbose', 
-        dest='verbose', 
+parser.add_argument('-v', '--verbose',
+        dest='verbose',
         choices=['debug', 'info', 'warning', 'error', 'critical'],
-        default='info', 
+        default='info',
         help='verbosity level, default is "info"')
-parser.add_argument('-o', '--output', 
-        dest='output_file', 
-        default='results.html', 
-        help='output file, default is results.html') 
-parser.add_argument('-l', '--location', 
-        dest='location', 
+parser.add_argument('-o', '--output',
+        dest='output_file',
+        default='results.html',
+        help='output file, default is results.html')
+parser.add_argument('-l', '--location',
+        dest='location',
         default='New Brunswick, NJ',
         help='near where?  Default is "New Brunswick, NJ"')
-parser.add_argument('-r', '--radius', 
-        dest='radius', 
+parser.add_argument('-r', '--radius',
+        dest='radius',
         default=100,
         type=int,
         help='within how many miles radius?')
-parser.add_argument('--ml', 
-        dest='membership_list', 
-        help='membership list', 
+parser.add_argument('--ml',
+        dest='membership_list',
+        help='membership list',
         required=True)
-group.add_argument('--rl', 
-        dest='race_list', 
+group.add_argument('--rl',
+        dest='race_list',
         help='race list')
 args = parser.parse_args()
 
@@ -67,13 +67,13 @@ else:
     start_date = stop_date + datetime.timedelta(days=-7)
 
 obj = rr.active.Active(
-        start_date  = start_date,
-        stop_date   = stop_date,
-        memb_list   = args.membership_list,
-        race_list   = args.race_list,
-        output_file = args.output_file,
-        radius      = args.radius,
-        location    = args.location,
-        verbose     = args.verbose
+        start_date=start_date,
+        stop_date=stop_date,
+        memb_list=args.membership_list,
+        race_list=args.race_list,
+        output_file=args.output_file,
+        radius=args.radius,
+        location=args.location,
+        verbose=args.verbose
         )
 obj.run()
