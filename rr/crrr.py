@@ -20,9 +20,6 @@ class crrr:
             states=['ma'], memb_list=None, race_list=None, output_file=None):
         """
         base_url:
-        day:  range of days in which to look for results
-        month:  month in which to look for results
-        year:  year in which to look for results
         memb_list:  membership list
         race_list:  file containing list of races
         output_file:  final race results file
