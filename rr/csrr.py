@@ -28,7 +28,7 @@ monthstrs = {
         }
 
 
-class csrr(RaceResults):
+class CompuScore(RaceResults):
     def __init__(self, **kwargs):
         """
         memb_list:  membership list

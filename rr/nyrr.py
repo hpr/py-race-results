@@ -4,7 +4,7 @@ import xml.etree.cElementTree as ET
 from . import common as rrcommon
 
 
-class nyrr:
+class NewYorkRR:
     """
     Handles race results from New York Road Runners website.
     """

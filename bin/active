@@ -6,7 +6,7 @@ Module for processing Active.com races.
 import argparse
 import datetime
 
-import rr
+from rr import Active
 
 # --rl cannot be used with -d, -m, or -y
 # But -y and -m have defaults.
@@ -66,7 +66,7 @@ else:
     stop_date = datetime.datetime.now()
     start_date = stop_date + datetime.timedelta(days=-7)
 
-obj = rr.active.Active(
+obj = Active(
         start_date=start_date,
         stop_date=stop_date,
         memb_list=args.membership_list,

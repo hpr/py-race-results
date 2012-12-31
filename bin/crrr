@@ -3,7 +3,7 @@
 import argparse
 import datetime
 
-import rr
+from rr import CoolRunning
 
 # -ml cannot be used with -d, -m, or -y
 # But -y and -m have defaults.
@@ -58,7 +58,7 @@ else:
     start_date = None
     stop_date = None
 
-o = rr.crrr(
+o = CoolRunning(
         start_date=start_date,
         stop_date=stop_date,
         memb_list=args.membership_list,

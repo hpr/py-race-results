@@ -67,7 +67,7 @@ class TestBestRace(unittest.TestCase):
     def test_racelist(self):
         self.populate_membership_file()
         self.populate_racelist_file([self.viking_race_file])
-        o = rr.brrr(verbose='critical',
+        o = rr.BestRace(verbose='critical',
                 memb_list=self.membership_file,
                 race_list=self.racelist_file,
                 output_file=self.results_file)
@@ -86,7 +86,7 @@ class TestBestRace(unittest.TestCase):
         self.populate_membership_file()
         start_date = datetime.datetime(2012, 12, 9)
         stop_date = datetime.datetime(2012, 12, 10)
-        o = rr.brrr(verbose='critical',
+        o = rr.BestRace(verbose='critical',
                 memb_list=self.membership_file,
                 output_file=self.results_file,
                 start_date=start_date,

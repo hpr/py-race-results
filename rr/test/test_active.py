@@ -5,7 +5,7 @@ import tempfile
 import unittest
 import xml.etree.cElementTree as ET
 
-import rr
+from rr import Active
 
 
 @unittest.skip('Does not download all results')
@@ -64,7 +64,7 @@ class TestActive(unittest.TestCase):
         self.populate_membership_file()
         start_date = datetime.datetime(2010, 7, 10)
         stop_date = datetime.datetime(2010, 7, 10)
-        o = rr.Active(verbose='critical',
+        o = Active(verbose='critical',
                 memb_list=self.membership_file,
                 output_file=self.results_file,
                 start_date=start_date,

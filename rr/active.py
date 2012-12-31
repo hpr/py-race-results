@@ -27,7 +27,7 @@ class Active:
 
         Example:
             # You really should use this via the bin script.
-            >>> import datetime, rr
+            >>> from rr import Active
             >>> kwargs = {}
             >>> kwargs['start_date'] = datetime.datetime(2012,5,21)
             >>> kwargs['stop_date'] = datetime.datetime(2012,5,27)
@@ -35,7 +35,7 @@ class Active:
             >>> kwargs['output_file'] = 'results.html'
             >>> kwargs['location'] = 'New Brunswick, NJ'
             >>> kwargs['radius'] = 75
-            >>> o = rr.active.Active(**kwargs)
+            >>> o = Active(**kwargs)
             >>> o.run()
 
         """

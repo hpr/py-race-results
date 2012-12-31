@@ -76,7 +76,7 @@ class TestCompuscore(unittest.TestCase):
         """
         self.populate_membership_file()
         self.populate_racelist_file([self.redcross_file])
-        obj = rr.csrr(verbose='critical',
+        obj = rr.CompuScore(verbose='critical',
                 start_date=datetime.datetime.now(),
                 stop_date=datetime.datetime.now(),
                 memb_list=self.membership_file,
@@ -94,7 +94,7 @@ class TestCompuscore(unittest.TestCase):
         Verify that we can get results from the web.
         """
         self.populate_membership_file()
-        obj = rr.csrr(verbose='critical',
+        obj = rr.CompuScore(verbose='critical',
                 start_date=datetime.datetime(2012, 1, 1),
                 stop_date=datetime.datetime(2012, 2, 28),
                 memb_list=self.membership_file,

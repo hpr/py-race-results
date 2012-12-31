@@ -12,7 +12,7 @@ import xml.etree.cElementTree as ET
 from .common import RaceResults
 
 
-class crrr(RaceResults):
+class CoolRunning(RaceResults):
     """
     Class for handling CoolRunning Race Results.
     """

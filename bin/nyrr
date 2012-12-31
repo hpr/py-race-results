@@ -2,7 +2,7 @@
 
 import argparse
 import datetime
-import rr.common
+from rr import NewYorkRR
 
 # --ml cannot be used with -m, or -y
 the_description = 'Process NYRR race results'
@@ -46,7 +46,7 @@ day = args.day
 start_date = datetime.date(year, month, int(day[0]))
 stop_date = datetime.date(year, month, int(day[1]))
 
-o = rr.nyrr(
+o = NewYorkRR(
         start_date=start_date,
         stop_date=stop_date,
         memb_list=args.membership_list,

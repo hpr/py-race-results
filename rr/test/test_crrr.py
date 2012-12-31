@@ -85,7 +85,7 @@ class TestCoolRunning(unittest.TestCase):
         Test compiling race results from a list of local files.
         """
         self.populate_racelist_file([self.vanilla_crrr_file])
-        o = rr.crrr(verbose='critical',
+        o = rr.CoolRunning(verbose='critical',
                 memb_list=self.membership_file,
                 race_list=self.racelist_file,
                 output_file=self.results_file)
@@ -103,7 +103,7 @@ class TestCoolRunning(unittest.TestCase):
         The HTML profile is used by Cape Cod Road Runners.
         """
         self.populate_racelist_file([self.ccrr_file])
-        o = rr.crrr(verbose='critical',
+        o = rr.CoolRunning(verbose='critical',
                 memb_list=self.membership_file,
                 race_list=self.racelist_file,
                 output_file=self.results_file)
@@ -123,7 +123,7 @@ class TestCoolRunning(unittest.TestCase):
         """
         start_date = datetime.datetime(2012, 12, 9)
         stop_date = datetime.datetime(2012, 12, 10)
-        o = rr.crrr(verbose='critical',
+        o = rr.CoolRunning(verbose='critical',
                 memb_list=self.membership_file,
                 output_file=self.results_file,
                 start_date=start_date,

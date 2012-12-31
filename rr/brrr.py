@@ -11,7 +11,7 @@ import xml.etree.cElementTree as ET
 from .common import RaceResults
 
 
-class brrr(RaceResults):
+class BestRace(RaceResults):
     """
     Process races found on BestRace.com.
 
