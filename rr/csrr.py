@@ -1,3 +1,4 @@
+import datetime
 import logging
 import os
 import re
@@ -116,7 +117,9 @@ class csrr(RaceResults):
 
     def process_master_file(self):
         """
-        Compile results.
+        Parse the "master" file containing an entire month's worth of races.
+        Pick out the URLs of the race results and process each.  We cannot
+        easily restrict based on the time frame here.
         """
         year = self.start_date.year
         monthstr = monthstrs[self.start_date.month]
@@ -136,7 +139,47 @@ class csrr(RaceResults):
                 self.download_file(href, local_file)
                 self.downloaded_url = href
                 self.local_tidy(local_file)
-                self.compile_race_results(local_file)
+                if self.race_date_in_range(local_file):
+                    self.compile_race_results(local_file)
+                else:
+                    self.logger.info('Skipping %s (not in range)...' % local_file)
+
+
+    def race_date_in_range(self, race_file):
+        """
+        Determine if the race file took place in the specified date range.
+        """
+        tree = ET.parse(race_file)
+        root = tree.getroot()
+        root = self.remove_namespace(root)
+
+        # The date is in a single H3 element under to BODY element.
+        h3 = root.findall('.//h3')
+        if len(h3) != 1:
+            self.logger.warning('Unable to locate race date.')
+            # Return True, force it to be parsed anyway.
+            return True
+
+        date_text = h3[0].text
+
+        # The race date should read something like
+        #     "    Race Date:11-03-12   "
+        pat = '\s*Race\sDate:(?P<month>\d{2})-(?P<day>\d{2})-(?P<year>\d{2})\s*'
+        m = re.match(pat, date_text)
+        if m is None:
+            self.logger.warning('Unable to parse the race date.')
+            # Return True, force it to be parsed anyway.
+            return True
+
+        # NOW we get to see if the race is in the proper time frame or not.
+        dt = datetime.date(2000 + int(m.group('year')),
+                int(m.group('month')),
+                int(m.group('day')))
+
+        if self.start_date <= dt and dt <= self.stop_date:
+            return True
+        else:
+            return False
 
     def compile_race_results(self, race_file):
         """
