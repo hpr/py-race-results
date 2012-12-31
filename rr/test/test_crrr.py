@@ -75,10 +75,10 @@ class TestCoolRunning(unittest.TestCase):
         Put some names into a faux membership file.
         """
         with open(self.membership_file, 'w') as fp:
-            fp.write('CALEB,GARTNER\n')
-            fp.write('SEAN,SPALDING\n')
-            fp.write('JOHN,BANNER\n')
-            fp.write('MIKE,NORTON\n')
+            fp.write('GARTNER,CALEB\n')
+            fp.write('SPALDING,SEAN\n')
+            fp.write('BANNER,JOHN\n')
+            fp.write('NORTON,MIKE\n')
 
     def test_racelist(self):
         """

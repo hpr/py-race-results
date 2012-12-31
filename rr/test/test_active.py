@@ -33,7 +33,7 @@ class TestActive(unittest.TestCase):
         """
         with open(self.membership_file, 'w') as fp:
             fp.write('STRAWN,MARK\n')
-            fp.write('MICHAEL,CARR\n')
+            fp.write('CARR,MICHAEL\n')
 
     def test_racelist(self):
         self.assertTrue(False)

@@ -48,8 +48,8 @@ class RaceResults:
         last_name = []
         last_name_regex = []
         for row in mlreader:
-            fname = row[0]
-            lname = row[1]
+            lname = row[0]
+            fname = row[1]
             first_name.append(fname)
             last_name.append(lname)
 

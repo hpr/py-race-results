@@ -53,9 +53,8 @@ class CompuScore(RaceResults):
         """
         names = self.parse_membership_list()
 
-        # The names are actually in reverse order.
-        fname = names.last
-        lname = names.first
+        fname = names.first
+        lname = names.last
 
         first_name_regex = []
         last_name_regex = []
