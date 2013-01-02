@@ -129,8 +129,8 @@ class TestCompuscore(unittest.TestCase):
         """
         self.populate_membership_file(self.membership_list)
         obj = rr.CompuScore(verbose='critical',
-                start_date=datetime.datetime(2012, 1, 1),
-                stop_date=datetime.datetime(2012, 2, 28),
+                start_date=datetime.date(2012, 1, 1),
+                stop_date=datetime.date(2012, 2, 28),
                 memb_list=self.membership_file,
                 output_file=self.results_file)
         obj.run()
@@ -139,6 +139,30 @@ class TestCompuscore(unittest.TestCase):
         root = obj.remove_namespace(root)
         p = root.findall('.//div/pre')
         self.assertTrue("Joanna Stevens" in p[0].text)
+
+    def test_empty_results_because_of_date(self):
+        """
+        Verify that if there are no results in the given date range, the output
+        file will have no results.
+
+        This is issue 15.
+
+        Billy Foster is in results for the 1st, in the CJRRC Hangover 5K Run.
+        """
+        self.populate_membership_file(['FOSTER,BILLY\n'])
+        obj = rr.CompuScore(verbose='critical',
+                start_date=datetime.date(2013, 1, 2),
+                stop_date=datetime.date(2013, 1, 2),
+                memb_list=self.membership_file,
+                output_file=self.results_file)
+        obj.run()
+
+        # "no results" means that the body of the output file is empty.
+        tree = ET.parse(self.results_file)
+        root = tree.getroot()
+        root = obj.remove_namespace(root)
+        body = root.findall('.//body')
+        self.assertEqual(len(body[0].getchildren()), 0)
 
 
 if __name__ == "__main__":

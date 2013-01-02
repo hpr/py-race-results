@@ -164,7 +164,7 @@ class CompuScore(RaceResults):
 
         # The race date should read something like
         #     "    Race Date:11-03-12   "
-        pat = '\s*Race\sDate:(?P<month>\d{2})-(?P<day>\d{2})-(?P<year>\d{2})\s*'
+        pat = '\s*Race\sDate:(?P<month>\d{1,2})-(?P<day>\d{2})-(?P<year>\d{2})\s*'
         m = re.match(pat, date_text)
         if m is None:
             self.logger.warning('Unable to parse the race date.')
