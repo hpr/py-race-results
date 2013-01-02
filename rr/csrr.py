@@ -39,7 +39,8 @@ class CompuScore(RaceResults):
         RaceResults.__init__(self)
         self.__dict__.update(**kwargs)
 
-        self.monthstr = monthstrs[self.start_date.month]
+        if self.start_date is not None:
+            self.monthstr = monthstrs[self.start_date.month]
 
         # Need to remember the current URL.
         self.downloaded_url = None
