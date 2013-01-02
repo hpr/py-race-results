@@ -15,18 +15,12 @@ class TestBestRace(unittest.TestCase):
     """
     def setUp(self):
 
-        # Make copies of the test files as fixtures BEFORE we change into a
-        # scratch directory.
+        # Make copies of the test files as fixtures.
         self.viking_race_file = tempfile.NamedTemporaryFile(delete=False,
                 suffix=".htm").name
         filename = pkg_resources.resource_filename(rr.__name__,
                 "test/testdata/121202SB5.HTM")
         shutil.copyfile(filename, self.viking_race_file)
-
-        # We should do all our testing in a temporary directory.
-        self.old_directory = os.getcwd()
-        self.scratch_directory = tempfile.mkdtemp()
-        os.chdir(self.scratch_directory)
 
         # Create other fixtures that are easy to clean up later.
         self.membership_file = tempfile.NamedTemporaryFile(delete=False,
@@ -37,10 +31,6 @@ class TestBestRace(unittest.TestCase):
                 suffix=".txt").name
 
     def tearDown(self):
-        # Remove the scratch work directory.
-        os.chdir(self.old_directory)
-        shutil.rmtree(self.scratch_directory)
-
         # Remove other test fixtures.
         os.unlink(self.membership_file)
         os.unlink(self.racelist_file)

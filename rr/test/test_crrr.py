@@ -15,9 +15,6 @@ class TestCoolRunning(unittest.TestCase):
     """
     def setUp(self):
 
-        # Make copies of the test files as fixtures BEFORE we change into a
-        # scratch directory.
-
         # This test file is a regular, run-of-the-mill results
         # file typical of those uploaded to CoolRunning.
         self.vanilla_crrr_file = tempfile.NamedTemporaryFile(delete=False,
@@ -35,11 +32,6 @@ class TestCoolRunning(unittest.TestCase):
                 "test/testdata/Jan8_CapeCo_set1.shtml")
         shutil.copyfile(filename, self.ccrr_file)
 
-        # We should do all our testing in a temporary directory.
-        self.old_directory = os.getcwd()
-        self.scratch_directory = tempfile.mkdtemp()
-        os.chdir(self.scratch_directory)
-
         # Create other fixtures that are easy to clean up later.
         self.membership_file = tempfile.NamedTemporaryFile(delete=False,
                 suffix=".txt").name
@@ -50,10 +42,6 @@ class TestCoolRunning(unittest.TestCase):
         self.populate_membership_file()
 
     def tearDown(self):
-
-        # Remove the scratch work directory.
-        os.chdir(self.old_directory)
-        shutil.rmtree(self.scratch_directory)
 
         os.unlink(self.membership_file)
         os.unlink(self.racelist_file)
