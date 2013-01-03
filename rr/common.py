@@ -4,6 +4,7 @@ import logging
 import tidy
 import urllib2
 import xml.dom.minidom
+import xml.etree.cElementTree as ET
 
 
 class RaceResults:
@@ -118,3 +119,15 @@ class RaceResults:
             html = response.read()
             f.write(html)
             f.close()
+
+    def insert_race_results(self, results):
+        """
+        Insert HTML-ized results into the output file.
+        """
+        tree = ET.parse(self.output_file)
+        root = tree.getroot()
+        root = self.remove_namespace(root)
+        body = root.findall('.//body')[0]
+        body.append(results)
+        ET.ElementTree(root).write(self.output_file)
+        self.local_tidy(self.output_file)

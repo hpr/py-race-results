@@ -7,7 +7,11 @@ if sys.hexversion < 0x02070000:
 else:
     import unittest
 
+
 def runtests():
+    """
+    Run all tests via discovery mechanism.
+    """
     loader = unittest.TestLoader()
 
     # Not sure if this is the best way to do this?

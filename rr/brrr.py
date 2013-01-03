@@ -163,18 +163,19 @@ class BestRace(RaceResults):
         """
         Go through a single race file and collect results.
         """
-        r = []
+        results = []
         for rline in open(race_file):
             line = rline.rstrip()
             if self.match_against_membership(line):
-                r.append(line)
+                results.append(line)
 
-        if len(r) > 0:
-            self.insert_race_results(r, race_file)
+        if len(results) > 0:
+            results = self.webify_results(race_file, results)
+            self.insert_race_results(results)
 
-    def insert_race_results(self, result, race_file):
+    def webify_results(self, race_file, results_lst):
         """
-        Insert results into the output file.
+        Take the list of results and turn it into output HTML.
         """
         div = ET.Element('div')
         div.set('class', 'race')
@@ -202,21 +203,12 @@ class BestRace(RaceResults):
         pre = ET.Element('pre')
         pre.set('class', 'actual_results')
 
-        banner = self.parse_banner(root)
+        banner_text = self.parse_banner(root)
 
-        text = '\n'
-        for line in result:
-            text += line + '\n'
-
-        pre.text = banner + text
+        pre.text = banner_text + '\n'.join(results_lst)
         div.append(pre)
 
-        tree = ET.parse(self.output_file)
-        root = tree.getroot()
-        body = root.findall('.//body')[0]
-        body.append(div)
-
-        ET.ElementTree(root).write(self.output_file)
+        return div
 
     def parse_banner(self, root):
         """Retrieve the banner from the race file.
@@ -242,6 +234,7 @@ class BestRace(RaceResults):
             else:
                 banner += line + '\n'
 
+        banner += '\n'
         return(banner)
 
     def match_against_membership(self, line):

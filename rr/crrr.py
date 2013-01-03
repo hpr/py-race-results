@@ -201,8 +201,7 @@ class CoolRunning(RaceResults):
 
     def compile_vanilla_results(self, race_file):
         """
-        Compile race results for CoolRunning races posted inXML pattern
-        2 format.
+        Compile race results for vanilla CoolRunning races.
         """
         pattern = './/body/table/tr/td/table/tr/td/table/tr/td/div/pre'
 
@@ -211,15 +210,14 @@ class CoolRunning(RaceResults):
         self.remove_namespace(root)
         nodes = root.findall(pattern)
 
-        r = []
+        results = []
         for node in nodes:
             text = ET.tostring(node)
             for line in text.split('\n'):
                 if self.match_against_membership(line):
-                    r.append(line)
+                    results.append(line)
 
-        if len(r) > 0:
-            self.insert_race_results(r, race_file)
+        return results
 
     def is_vanilla_pattern(self, race_file):
         """
@@ -275,6 +273,9 @@ class CoolRunning(RaceResults):
         """
         This is the format generally used by Cape Cod
         Road Runners.
+
+        Return value:
+            List of <TR> elements, each row containing an individual result.
         """
         pattern = './/body/table/tr/td/table/tr/td/table/tr/td/div/table/tr'
 
@@ -298,26 +299,31 @@ class CoolRunning(RaceResults):
                 fregex = self.first_name_regex[idx]
                 lregex = self.last_name_regex[idx]
                 if fregex.search(runner_name) and lregex.search(runner_name):
-                    #tr = rr.common.remove_namespace(tr)
                     results.append(tr)
 
         if len(results) > 0:
             # Prepend the header.
-            #tr = rr.common.remove_namespace(trs[0])
             results.insert(0, trs[0])
-            self.insert_race_results_ccrr(results, race_file)
+
+        return results
 
     def compile_race_results(self, race_file):
         """
         Go through a race file and collect results.
-        body table tr td table tr td table tr td div TABLE TR
         """
+        html = None
         if self.is_vanilla_pattern(race_file):
-            self.logger.debug('XML pattern 2')
-            self.compile_vanilla_results(race_file)
+            self.logger.debug('Vanilla Coolrunning pattern')
+            results = self.compile_vanilla_results(race_file)
+            if len(results) > 0:
+                html = self.webify_vanilla_results(results, race_file)
+                self.insert_race_results(html)
         elif self.is_ccrr_pattern(race_file):
-            self.logger.debug('XML pattern 1')
-            self.compile_ccrr_race_results(race_file)
+            self.logger.debug('Cape Cod Road Runners pattern')
+            results = self.compile_ccrr_race_results(race_file)
+            if len(results) > 0:
+                html = self.webify_ccrr_results(results, race_file)
+                self.insert_race_results(html)
         else:
             self.logger.warning('Unknown pattern.')
 
@@ -369,10 +375,13 @@ class CoolRunning(RaceResults):
 
         return(div)
 
-    def insert_race_results_ccrr(self, results, race_file):
+    def webify_ccrr_results(self, results, race_file):
         """
-        Insert CoolRunning results into the output file.
-        This works for CCRR races.
+        Turn the list of results into full HTML.
+        This works for Cape Cod Road Runners formatted results.
+
+        Return value:
+            "finished" HTML for the race.
         """
         div = self.construct_common_div(race_file)
 
@@ -382,9 +391,9 @@ class CoolRunning(RaceResults):
                 table.append(tr)
 
         div.append(table)
-        self.insert_common_div(div)
+        return div
 
-    def insert_race_results(self, result, race_file):
+    def webify_vanilla_results(self, result_lst, race_file):
         """
         Insert CoolRunning results into the output file.
         """
@@ -395,28 +404,12 @@ class CoolRunning(RaceResults):
 
         root = ET.parse(race_file).getroot()
         root = self.remove_namespace(root)
-        banner = self.parse_banner(root)
+        banner_text = self.parse_banner(root)
 
-        text = '\n'
-        for line in result:
-            text += line + '\n'
-
-        pre.text = banner + text
+        pre.text = banner_text + '\n'.join(result_lst)
         div.append(pre)
 
-        self.insert_common_div(div)
-
-    def insert_common_div(self, div):
-        """
-        The DIV element has been completely construct, so
-        now we just put it into the output file.
-        """
-        tree = ET.parse(self.output_file)
-        root = tree.getroot()
-        body = root.findall('.//body')[0]
-        body.append(div)
-
-        ET.ElementTree(root).write(self.output_file)
+        return div
 
     def parse_banner(self, root):
         """
@@ -447,6 +440,7 @@ class CoolRunning(RaceResults):
         if re.search('<.*?>', banner) is not None:
             return('')
         else:
+            banner += '\n'
             return(banner)
 
     def match_against_membership(self, line):
