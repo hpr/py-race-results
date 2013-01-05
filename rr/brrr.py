@@ -92,30 +92,6 @@ class BestRace(RaceResults):
             # Get race results
             self.compile_local_results()
 
-    def initialize_output_file(self):
-        """
-        Construct a skeleton of the results of parsing race results from
-        BestRace.
-
-        <html>
-            <head>
-                <link rel='stylesheet' href='rr.css' type='text/css'/>
-                <body>
-                    STUFF TO GO HERE
-                </body>
-            </head>
-        </html>
-        """
-        ofile = ET.Element('html')
-        head = ET.SubElement(ofile, 'head')
-        link = ET.SubElement(head, 'link')
-        link.set('rel', 'stylesheet')
-        link.set('href', 'rr.css')
-        link.set('type', 'text/css')
-        body = ET.SubElement(ofile, 'body')
-        ET.ElementTree(ofile).write(self.output_file)
-        self.pretty_print_xml(self.output_file)
-
     def compile_web_results(self):
         """
         Download the requested results and compile them.
