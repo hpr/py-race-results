@@ -32,6 +32,14 @@ class TestCoolRunning(unittest.TestCase):
                 "test/testdata/Jan8_CapeCo_set1.shtml")
         shutil.copyfile(filename, self.ccrr_file)
 
+        # This file format (used by Colonial Road Runners) has IE-specific
+        # elements that TIDY does not properly string.
+        self.colonialrr_file = tempfile.NamedTemporaryFile(delete=False,
+                suffix=".shtml").name
+        filename = pkg_resources.resource_filename(rr.__name__,
+                "test/testdata/Dec30_Coloni_set1.shtml")
+        shutil.copyfile(filename, self.colonialrr_file)
+
         # Create other fixtures that are easy to clean up later.
         self.membership_file = tempfile.NamedTemporaryFile(delete=False,
                 suffix=".txt").name
@@ -104,6 +112,22 @@ class TestCoolRunning(unittest.TestCase):
         # real result).
         p = root.findall('.//div/table/tr/td')
         self.assertTrue("MIKE NORTON" in p[12].text)
+
+    def test_misaligned_columns(self):
+        """
+        TIDY will not properly strip some IE-specific elements such as 
+
+        <![if supportMisalignedColumns]>
+        <![endif]>
+
+        It needs to be stripped out.
+        """
+        self.populate_racelist_file([self.colonialrr_file])
+        o = rr.CoolRunning()
+        o.local_tidy(self.colonialrr_file)
+
+        # The test succeeds if the file can be parsed.
+        ET.parse(self.colonialrr_file)
 
     def test_web_download(self):
         """
