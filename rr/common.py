@@ -62,6 +62,10 @@ class RaceResults:
         """
         Tidy up the HTML.
         """
+        html = open(html_file, 'r').read()
+        html = html.replace('<![if supportMisalignedColumns]>', '')
+        html = html.replace('<![endif]>', '')
+
         options = dict(output_xhtml=1,
                 add_xml_decl=1,
                 indent=1,
@@ -72,9 +76,6 @@ class RaceResults:
                 tidy_mark=1,
                 hide_comments=True,
                 new_inline_tags='fb:like')
-        fp = open(html_file)
-        html = fp.read()
-        fp.close()
         thtml = tidy.parseString(html, **options)
 
         fp = open(html_file, 'w')
@@ -118,7 +119,6 @@ class RaceResults:
             response = urllib2.urlopen(req)
             html = response.read()
             f.write(html)
-            f.close()
 
     def insert_race_results(self, results):
         """
