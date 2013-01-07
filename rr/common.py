@@ -127,6 +127,7 @@ class RaceResults:
 
         <html>
             <head>
+                <link href="rr.css" type="text/css" />
             </head>
             <body>
                 STUFF TO GO HERE
@@ -135,6 +136,10 @@ class RaceResults:
         """
         ofile = ET.Element('html')
         head = ET.SubElement(ofile, 'head')
+        link = ET.SubElement(head, 'link')
+        link.set('rel', 'stylesheet')
+        link.set('href', 'rr.css')
+        link.set('type', 'text/css')
         body = ET.SubElement(ofile, 'body')
         ET.ElementTree(ofile).write(self.output_file)
         self.pretty_print_xml(self.output_file)
