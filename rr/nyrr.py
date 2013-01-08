@@ -1,31 +1,24 @@
 import logging
+import os
 import xml.etree.cElementTree as ET
 
-from . import common as rrcommon
+from .common import RaceResults
 
 
-class NewYorkRR:
+class NewYorkRR(RaceResults):
     """
     Handles race results from New York Road Runners website.
     """
     def __init__(self, **kwargs):
         """
         """
-        self.start_date = None
-        self.stop_date = None
-        self.memb_list = None
-        self.race_list = None
-        self.output_file = None
-        self.verbose = 'info'
-
+        RaceResults.__init__(self)
         self.__dict__.update(**kwargs)
 
         # Need to remember the current URL.
         self.downloaded_url = None
 
-        # Set the appropriate logging level.  Requires an exact
-        # match of the level string value.
-        self.logger = logging.getLogger(self.__class__.__name__)
+        # Set the appropriate logging level.
         self.logger.setLevel(getattr(logging, self.verbose.upper()))
 
     def run(self):
@@ -36,13 +29,24 @@ class NewYorkRR:
         self.process_master_page()
         self.process_events()
 
+    def download_file(self, url, localfile):
+        """
+        Override the usual URL download, as URLLIB2 seems to fail.  
+        """
+        fmt = 'wget "%s" --output-document %s -o /dev/null'
+        cmd = fmt % (url, localfile)
+        os.system(cmd)
+        pass
+
     def process_master_page(self):
         """
         This page has the URLs for the recent results.
         """
         url = 'http://web2.nyrrc.org'
         url += '/cgi-bin/start.cgi/aes-programs/results/resultsarchive.htm'
-        rrcommon.download_file(url, 'index.html')
+        self.download_file(url, 'resultsarchive.html')
+        import pdb; pdb.set_trace()
+        self.local_tidy('resultsarchive.html')
 
         # Parse out the list of "Most Recent Races"
 
