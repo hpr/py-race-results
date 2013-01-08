@@ -5,10 +5,9 @@ import re
 import urllib
 import xml.etree.cElementTree as ET
 
-import rr.common
+from .common import RaceResults
 
-
-class Active:
+class Active(RaceResults):
     """
     Class for retrieving and processing race results from Active.com.
 
@@ -39,15 +38,7 @@ class Active:
             >>> o.run()
 
         """
-        self.start_date = None
-        self.stop_date = None
-        self.location = None
-        self.radius = None
-        self.center = None
-        self.verbose = None
-        self.memb_list = None
-        self.race_list = None
-        self.output_file = None
+        RaceResults.__init__(self)
         self.__dict__.update(**kwargs)
 
         self.base_url = 'http://results.active.com'
@@ -60,16 +51,14 @@ class Active:
         # output.
         self.downloaded_url = None
 
-        # Set the appropriate logging level.  Requires an exact
-        # match of the level string value.
-        self.logger = logging.getLogger(self.__class__.__name__)
+        # Set the appropriate logging level.
         self.logger.setLevel(getattr(logging, self.verbose.upper()))
 
     def run(self):
         """
         Load the membership list and run through all the results.
         """
-        names = rr.common.parse_membership_list(self.memb_list)
+        names = self.parse_membership_list()
 
         # The names are actually in reverse order.
         fname = names.last
@@ -89,20 +78,6 @@ class Active:
 
         self.compile_results()
         self.local_tidy(self.output_file)
-
-    def local_tidy(self, html_file):
-        """Have to get rid of facebook:like tags before calling our general
-        tidy routine.
-        """
-        fp = open(html_file, 'r')
-        html = fp.read()
-        fp.close()
-        html = html.replace('fb:like', 'div')
-        fp = open(html_file, 'w')
-        fp.write(html)
-        fp.close()
-
-        rr.common.local_tidy(html_file)
 
     def compile_results(self):
         """
@@ -129,7 +104,7 @@ class Active:
 
         tree = ET.parse(self.master_file)
         root = tree.getroot()
-        root = rr.common.remove_namespace(root)
+        root = self.remove_namespace(root)
 
         # Set up patterns to locate the result elements.
         pattern = './/body/div/div/div/div/div/div'
@@ -161,11 +136,11 @@ class Active:
         """
         url = self.base_url + relative_event_url
         self.logger.info('Downloading %s...' % url)
-        rr.common.download_file(url, 'event.html')
-        rr.common.local_tidy('event.html')
+        self.download_file(url, 'event.html')
+        self.local_tidy('event.html')
 
         root = ET.parse('event.html').getroot()
-        root = rr.common.remove_namespace(root)
+        root = self.remove_namespace(root)
 
         # Look for the event overview.
         pattern = './/body/div/div/div/div/div/nav'
@@ -190,8 +165,8 @@ class Active:
         self.logger.info('Downloading %s...' % url)
 
         chunk_file = 'event_0000.html'
-        rr.common.download_file(url, chunk_file)
-        rr.common.local_tidy(chunk_file)
+        self.download_file(url, chunk_file)
+        self.local_tidy(chunk_file)
 
         self.event_chunk_list = []
         self.event_chunk_list.append(chunk_file)
@@ -391,7 +366,7 @@ class Active:
             start, stop])
 
         self.logger.debug('Downloading %s.' % url)
-        rr.common.download_file(url, self.master_file)
+        self.download_file(url, self.master_file)
 
         self.local_tidy(self.master_file)
 
