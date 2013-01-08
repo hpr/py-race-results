@@ -11,11 +11,20 @@ RaceResults is a Python package for downloading and parsing race
 results from certain road racing web sites.  It should primarily
 be run from the command line.
 
-Requirements (macports)
------------------------
-* Python 2.7
-* tidy (20120821):  for libtidy
-* py27-utidylib 0.2
+Requirements
+------------
+
+Mac
+==============
+I would strongly advise using MacPorts to get a usable version of
+Python.  The system version of Python on Snow Leopard (10.6) will
+not work out-of-the-box.  The required minimum ports are
+
+* python27
+* tidy
+* py27-utidylib
+
+RaceResults does not yet work with Python versions 3.0 or above.
 
 Quick installation
 ------------------
@@ -25,11 +34,12 @@ should be all that is required (you should customize for your system)::
 
     $ [sudo] python setup.py install --prefix=/Users/jevans/p
 
-On my machine, this creates a ``/Users/jevans/p/bin`` directory that you should add to
-your **PATH** environment variable (not your **PYTHONPATH**!).  It also
-creates a ``/Users/jevans/p/lib/python2.7/site-packages`` directory, and this is something
-that you should add to your **PYTHONPATH** environment variable (not
-to your **PATH**!).  Got it?
+On my machine, this creates a ``/Users/jevans/p/bin`` directory
+that you should add to your **PATH** environment variable (not your
+**PYTHONPATH**!).  It also creates a
+``/Users/jevans/p/lib/python2.7/site-packages`` directory, and this
+is something that you should add to your **PYTHONPATH** environment
+variable (not to your **PATH**!).  Got it?
 
 Example Use Case:
 -----------------
