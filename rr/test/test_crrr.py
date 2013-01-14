@@ -29,7 +29,7 @@ class TestCoolRunning(unittest.TestCase):
         self.ccrr_file = tempfile.NamedTemporaryFile(delete=False,
                 suffix=".shtml").name
         filename = pkg_resources.resource_filename(rr.__name__,
-                "test/testdata/Jan8_CapeCo_set1.shtml")
+                "test/testdata/Jan6_CapeCo_set1.shtml")
         shutil.copyfile(filename, self.ccrr_file)
 
         # This file format (used by Colonial Road Runners) has IE-specific
@@ -111,7 +111,7 @@ class TestCoolRunning(unittest.TestCase):
         # Mike Northon shows up in the 2nd TR row (the first
         # real result).
         p = root.findall('.//div/table/tr/td')
-        self.assertTrue("MIKE NORTON" in p[12].text)
+        self.assertTrue("MIKE NORTON" in p[9].text)
 
     def test_misaligned_columns(self):
         """
