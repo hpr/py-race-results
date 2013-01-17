@@ -126,13 +126,8 @@ class RaceResults:
             params:  POST parameters to supply 
         """
         # cookie support needed for NYRR results.
-        print("\n")
-        print("URL:  %s" % url)
         if self.cj is None:
             self.cj = cookielib.LWPCookieJar()
-        else:
-            for index, cookie in enumerate(self.cj):
-                print("%d :: %s" % (index, cookie))
         cookie_processor = urllib2.HTTPCookieProcessor(self.cj)
         opener = urllib2.build_opener(cookie_processor)
         urllib2.install_opener(opener)
