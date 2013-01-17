@@ -32,17 +32,17 @@ Quick installation
 There's no need to compile anything, so the following command 
 should be all that is required (you should customize for your system)::
 
-    $ [sudo] python setup.py install --prefix=/Users/jevans/p
+    $ [sudo] python setup.py install --prefix=/path/to/install
 
-On my machine, this creates a ``/Users/jevans/p/bin`` directory
+On my machine, this creates a ``/path/to/install/bin`` directory
 that you should add to your **PATH** environment variable (not your
-**PYTHONPATH**!).  It also creates a
-``/Users/jevans/p/lib/python2.7/site-packages`` directory, and this
+**PYTHONPATH**!).  If it does not already exist, it also creates a
+``/path/to/install/lib/python2.7/site-packages`` directory, and this
 is something that you should add to your **PYTHONPATH** environment
 variable (not to your **PATH**!).  Got it?
 
-Example Use Case:
------------------
+Example Use Cases:
+------------------
 
 CoolRunning
 ===========
@@ -75,6 +75,16 @@ the state in which the race took place, so there is no need for the
 ``-s`` option::
 
     $ brrr -m 1 -d 1 31 -o results.html --ml ~/ftc/ftc.csv
+
+
+New York Road Runners
+=====================
+
+Suppose you wish to process race results from the New York Road
+Runners web site.  The ``nyrr`` script is what you want.  It works
+similar to ``brrr`` and ``crrr``, but it is limited to only the
+most recent races.  It also will not work for any other team than
+Raritan Valley Road Runners (**RARI**).
 
 
 CompuScore
