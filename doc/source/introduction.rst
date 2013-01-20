@@ -82,9 +82,13 @@ New York Road Runners
 
 Suppose you wish to process race results from the New York Road
 Runners web site.  The ``nyrr`` script is what you want.  It works
-similar to ``brrr`` and ``crrr``, but it is limited to only the
-most recent races.  It also will not work for any other team than
-Raritan Valley Road Runners (**RARI**).
+similar to ``brrr`` and ``crrr``, but you must supply a "team code"
+instead of supplying a membership list.  This means that your club
+runners have to register for the race with your specific team code.  
+To get all the results for Raritan Valley Road runners for the month
+of January in 2013, you would use the following::
+
+    $ nyrr -y 2013 -m 1 -d 1 31 -t RARI -o results.html 
 
 
 CompuScore
