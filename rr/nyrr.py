@@ -25,21 +25,6 @@ class NewYorkRR(RaceResults):
         # Set the appropriate logging level.
         self.logger.setLevel(getattr(logging, self.verbose.upper()))
 
-        # The page for POSTing the search needs POST params.
-        post_params = {}
-        post_params['search.method'] = 'search.team'
-        post_params['input.lname'] = ''
-        post_params['input.fname'] = ''
-        post_params['input.bib'] = ''
-        post_params['overalltype'] = 'All'
-        post_params['input.agegroup.m'] = '12 to 19'
-        post_params['input.agegroup.f'] = '12 to 19'
-        post_params['teamgender'] = ''
-        post_params['team_code'] = 'RARI'
-        post_params['items.display'] = '500'
-        post_params['AESTIVACVNLIST'] = 'overalltype,input.agegroup.m,input.agegroup.f,teamgender,team_code'
-        self.params = urllib.urlencode(post_params)
-
     def run(self):
         """
         This page has the URLs for the recent results.
@@ -52,7 +37,33 @@ class NewYorkRR(RaceResults):
         local_file = 'resultsarchive.html'
         self.download_file(url, local_file)
 
-        # This is not valid HTML.  Need to get rid of some bad FORMs.
+        # There are two forms used for searches.  The one that we want (list all
+        # the results for an entire year) is the 2nd on that this regex
+        # retrieves.
+        html = open(local_file).read()
+        regex = re.compile(r"""<form
+                               \s+name="(?P<name>\w+)"
+                               \s+method=post
+                               \s+action=(?P<action>\S+)
+                               .*\s""", re.VERBOSE)
+        m = regex.findall(html)
+        if len(m) != 2:
+            msg = "resultsarchive did not yield right number of results."
+            raise RuntimeError(msg)
+        url = m[0][1]
+
+        # The page for POSTing the search needs POST params.
+        post_params = {}
+        post_params['NYRRYEAR'] = str(self.start_date.year)
+        post_params['AESTIVACVNLIST'] = 'NYRRYEAR'
+        params = urllib.urlencode(post_params)
+
+        # Download the race list page for the specified year
+        local_file = 'nyrrraces.html'
+        self.download_file(url, local_file, params)
+
+        # This is not valid HTML.  Need to get rid of some bad FORMs, 
+        # none of which are needed.
         html = open(local_file).read()
         html = html.replace('form','div')
         with open(local_file,'w') as f:
@@ -60,17 +71,21 @@ class NewYorkRR(RaceResults):
 
         self.local_tidy(local_file)
 
-        # Parse out the list of "Most Recent Races".  They are all in a
+        # Parse out the list of races.  They are all in a
         # particular table.
         tree = ET.parse(local_file)
         root = self.remove_namespace(tree.getroot())
         tables = root.findall('.//table')
-        table = tables[5]
+
+        table = tables[7]
 
         # This is awful, all the entries are in a single table element.
+        # The TD element has a P element, which has the list that we want.
         tds = table.findall('.//td')
         td = tds[0]
-        links = [link for link in td.getchildren() if link.tag == 'a']
+        ps = td.findall('.//p')
+        p = ps[0]
+        links = [link for link in p.getchildren() if link.tag == 'a']
 
         if len(links) == 0:
             raise RuntimeError("No links found.  Please manually verify.")
@@ -90,10 +105,10 @@ class NewYorkRR(RaceResults):
 
 
     def process_event(self, url):
+        """We have the URL of a single event.  The URL does not lead to the
+        results, however, it leads to a search page.
         """
-        We have the url of a single event.
-        """
-        local_file = 'race.html'
+        local_file = 'event_search.html'
         self.download_file(url, local_file)
         self.local_tidy(local_file)
 
@@ -102,11 +117,33 @@ class NewYorkRR(RaceResults):
         root = self.remove_namespace(tree.getroot())
         form = root.findall('.//form')[0]
 
-        # Download the search page for this particular event.
+        # The page for POSTing the search needs POST params.
+        post_params = {}
+        post_params['search.method'] = 'search.team'
+        post_params['input.lname'] = ''
+        post_params['input.fname'] = ''
+        post_params['input.bib'] = ''
+        post_params['overalltype'] = 'All'
+        post_params['input.agegroup.m'] = '12 to 19'
+        post_params['input.agegroup.f'] = '12 to 19'
+        post_params['teamgender'] = ''
+        post_params['team_code'] = self.team
+        post_params['items.display'] = '500'
+        post_params['AESTIVACVNLIST'] = 'overalltype,input.agegroup.m,input.agegroup.f,teamgender,team_code'
+        params = urllib.urlencode(post_params)
+
+        # Provide all the search parameters for this race.  This includes, most
+        # importantly, the team code, i.e. RARI for Raritan Valley Road Runners.
         url = form.get('action')
         local_file = 'nyrrresult.html'
-        self.download_file(url, local_file, self.params)
+        self.download_file(url, local_file, params)
         self.local_tidy(local_file)
+
+        # If there were no results for the specified team, then the html will
+        # contain some red text to the effect of "Your search returns no match."
+        html = open(local_file).read()
+        if re.search("Your search returns no match.", html) is not None:
+            return
 
         # So now we have a result.  Parse it for the result table.
         root = ET.parse(local_file).getroot()
