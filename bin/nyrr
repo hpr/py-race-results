@@ -32,8 +32,10 @@ parser.add_argument('-o', '--output',
         dest='output_file',
         default='results.html',
         help='output file, default is results.html')
-parser.add_argument('--ml', dest='membership_list',
-        help='membership list', required=True)
+parser.add_argument('--team', 
+        dest='team',
+        default='RARI',
+        help='team code (i.e. "RARI")')
 group.add_argument('--rl', dest='race_list',
         help='race list')
 
@@ -49,7 +51,7 @@ stop_date = datetime.date(year, month, int(day[1]))
 o = NewYorkRR(
         start_date=start_date,
         stop_date=stop_date,
-        memb_list=args.membership_list,
+        team=args.team,
         race_list=args.race_list,
         output_file=args.output_file,
         verbose=args.verbose,

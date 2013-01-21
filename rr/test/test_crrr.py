@@ -15,9 +15,6 @@ class TestCoolRunning(unittest.TestCase):
     """
     def setUp(self):
 
-        # Make copies of the test files as fixtures BEFORE we change into a
-        # scratch directory.
-
         # This test file is a regular, run-of-the-mill results
         # file typical of those uploaded to CoolRunning.
         self.vanilla_crrr_file = tempfile.NamedTemporaryFile(delete=False,
@@ -32,13 +29,16 @@ class TestCoolRunning(unittest.TestCase):
         self.ccrr_file = tempfile.NamedTemporaryFile(delete=False,
                 suffix=".shtml").name
         filename = pkg_resources.resource_filename(rr.__name__,
-                "test/testdata/Jan8_CapeCo_set1.shtml")
+                "test/testdata/Jan6_CapeCo_set1.shtml")
         shutil.copyfile(filename, self.ccrr_file)
 
-        # We should do all our testing in a temporary directory.
-        self.old_directory = os.getcwd()
-        self.scratch_directory = tempfile.mkdtemp()
-        os.chdir(self.scratch_directory)
+        # This file format (used by Colonial Road Runners) has IE-specific
+        # elements that TIDY does not properly string.
+        self.colonialrr_file = tempfile.NamedTemporaryFile(delete=False,
+                suffix=".shtml").name
+        filename = pkg_resources.resource_filename(rr.__name__,
+                "test/testdata/Dec30_Coloni_set1.shtml")
+        shutil.copyfile(filename, self.colonialrr_file)
 
         # Create other fixtures that are easy to clean up later.
         self.membership_file = tempfile.NamedTemporaryFile(delete=False,
@@ -50,10 +50,6 @@ class TestCoolRunning(unittest.TestCase):
         self.populate_membership_file()
 
     def tearDown(self):
-
-        # Remove the scratch work directory.
-        os.chdir(self.old_directory)
-        shutil.rmtree(self.scratch_directory)
 
         os.unlink(self.membership_file)
         os.unlink(self.racelist_file)
@@ -115,7 +111,23 @@ class TestCoolRunning(unittest.TestCase):
         # Mike Northon shows up in the 2nd TR row (the first
         # real result).
         p = root.findall('.//div/table/tr/td')
-        self.assertTrue("MIKE NORTON" in p[12].text)
+        self.assertTrue("MIKE NORTON" in p[9].text)
+
+    def test_misaligned_columns(self):
+        """
+        TIDY will not properly strip some IE-specific elements such as 
+
+        <![if supportMisalignedColumns]>
+        <![endif]>
+
+        It needs to be stripped out.
+        """
+        self.populate_racelist_file([self.colonialrr_file])
+        o = rr.CoolRunning()
+        o.local_tidy(self.colonialrr_file)
+
+        # The test succeeds if the file can be parsed.
+        ET.parse(self.colonialrr_file)
 
     def test_web_download(self):
         """

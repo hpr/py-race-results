@@ -1,9 +1,11 @@
 import collections
+import cookielib
 import csv
 import logging
 import tidy
 import urllib2
 import xml.dom.minidom
+import xml.etree.cElementTree as ET
 
 
 class RaceResults:
@@ -33,6 +35,15 @@ class RaceResults:
         # This may be overridden by a subclass run time.
         self.downloaded_url = None
 
+        # Not clear if this works or not.
+        user_agent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_8) "
+        user_agent += "AppleWebKit/535.19 (KHTML, like Gecko) "
+        user_agent += "Chrome/18.0.1025.45 "
+        user_agent += "Safari/535.19"
+        self.user_agent = user_agent
+
+        self.cj = None
+
     def parse_membership_list(self):
         """
         Assume a comma-delimited membership list, last name first,
@@ -61,6 +72,10 @@ class RaceResults:
         """
         Tidy up the HTML.
         """
+        html = open(html_file, 'r').read()
+        html = html.replace('<![if supportMisalignedColumns]>', '')
+        html = html.replace('<![endif]>', '')
+
         options = dict(output_xhtml=1,
                 add_xml_decl=1,
                 indent=1,
@@ -71,9 +86,6 @@ class RaceResults:
                 tidy_mark=1,
                 hide_comments=True,
                 new_inline_tags='fb:like')
-        fp = open(html_file)
-        html = fp.read()
-        fp.close()
         thtml = tidy.parseString(html, **options)
 
         fp = open(html_file, 'w')
@@ -103,18 +115,62 @@ class RaceResults:
 
         return(doc)
 
-    def download_file(self, url, local_file):
+    def download_file(self, url, local_file, params=None):
         """
         Download a URL to a local file.
+
+        Args
+        ----
+            url:  The URL to retrieve
+            local_file:  Name of the file where we will store the web page.
+            params:  POST parameters to supply 
         """
-        user_agent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_8) "
-        user_agent += "AppleWebKit/535.19 (KHTML, like Gecko) "
-        user_agent += "Chrome/18.0.1025.45 "
-        user_agent += "Safari/535.19"
-        headers = {'User-Agent': user_agent}
+        # cookie support needed for NYRR results.
+        if self.cj is None:
+            self.cj = cookielib.LWPCookieJar()
+        cookie_processor = urllib2.HTTPCookieProcessor(self.cj)
+        opener = urllib2.build_opener(cookie_processor)
+        urllib2.install_opener(opener)
+
+        headers = {'User-Agent': self.user_agent}
+        req = urllib2.Request(url, None, headers)
+        response = urllib2.urlopen(req, params)
+        html = response.read()
         with open(local_file, 'wb') as f:
-            req = urllib2.Request(url, None, headers)
-            response = urllib2.urlopen(req)
-            html = response.read()
             f.write(html)
-            f.close()
+
+    def initialize_output_file(self):
+        """
+        Construct a skeleton of the results of parsing race results from
+        BestRace.
+
+        <html>
+            <head>
+                <link href="rr.css" type="text/css" />
+            </head>
+            <body>
+                STUFF TO GO HERE
+            </body>
+        </html>
+        """
+        ofile = ET.Element('html')
+        head = ET.SubElement(ofile, 'head')
+        link = ET.SubElement(head, 'link')
+        link.set('rel', 'stylesheet')
+        link.set('href', 'rr.css')
+        link.set('type', 'text/css')
+        body = ET.SubElement(ofile, 'body')
+        ET.ElementTree(ofile).write(self.output_file)
+        self.pretty_print_xml(self.output_file)
+
+    def insert_race_results(self, results):
+        """
+        Insert HTML-ized results into the output file.
+        """
+        tree = ET.parse(self.output_file)
+        root = tree.getroot()
+        root = self.remove_namespace(root)
+        body = root.findall('.//body')[0]
+        body.append(results)
+        ET.ElementTree(root).write(self.output_file)
+        self.local_tidy(self.output_file)
