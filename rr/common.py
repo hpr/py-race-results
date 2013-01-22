@@ -1,4 +1,5 @@
 import collections
+import cookielib
 import csv
 import logging
 import tidy
@@ -33,6 +34,15 @@ class RaceResults:
 
         # This may be overridden by a subclass run time.
         self.downloaded_url = None
+
+        # Not clear if this works or not.
+        user_agent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_8) "
+        user_agent += "AppleWebKit/535.19 (KHTML, like Gecko) "
+        user_agent += "Chrome/18.0.1025.45 "
+        user_agent += "Safari/535.19"
+        self.user_agent = user_agent
+
+        self.cj = None
 
     def parse_membership_list(self):
         """
@@ -105,19 +115,28 @@ class RaceResults:
 
         return(doc)
 
-    def download_file(self, url, local_file):
+    def download_file(self, url, local_file, params=None):
         """
         Download a URL to a local file.
+
+        Args
+        ----
+            url:  The URL to retrieve
+            local_file:  Name of the file where we will store the web page.
+            params:  POST parameters to supply 
         """
-        user_agent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_8) "
-        user_agent += "AppleWebKit/535.19 (KHTML, like Gecko) "
-        user_agent += "Chrome/18.0.1025.45 "
-        user_agent += "Safari/535.19"
-        headers = {'User-Agent': user_agent}
+        # cookie support needed for NYRR results.
+        if self.cj is None:
+            self.cj = cookielib.LWPCookieJar()
+        cookie_processor = urllib2.HTTPCookieProcessor(self.cj)
+        opener = urllib2.build_opener(cookie_processor)
+        urllib2.install_opener(opener)
+
+        headers = {'User-Agent': self.user_agent}
+        req = urllib2.Request(url, None, headers)
+        response = urllib2.urlopen(req, params)
+        html = response.read()
         with open(local_file, 'wb') as f:
-            req = urllib2.Request(url, None, headers)
-            response = urllib2.urlopen(req)
-            html = response.read()
             f.write(html)
 
     def initialize_output_file(self):

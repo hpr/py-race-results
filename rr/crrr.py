@@ -278,7 +278,7 @@ class CoolRunning(RaceResults):
             if len(tds) < 3:
                 continue
 
-            runner_name = tds[2].text
+            runner_name = tds[1].text
             if runner_name is None:
                 continue
             for idx in range(0, len(self.first_name_regex)):
