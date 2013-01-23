@@ -8,6 +8,14 @@ import xml.etree.cElementTree as ET
 
 from .common import RaceResults
 
+def clean_race_name(text):
+    """Clean up white space."""
+    # Strip out newlines.
+    text = re.sub('\n', '', text)
+    # Collapse sequences of two or more spaces with just a single space.
+    text = re.sub('\s+', ' ', text)
+    return text
+
 
 class Active(RaceResults):
     """
@@ -124,9 +132,8 @@ class Active(RaceResults):
             #   <div class="result-sub-location"> Bethpage, NY </div>
             # </div>
             anchor = race.getchildren()[0].getchildren()[0]
-            race_name = re.sub('\n', '', anchor.text)
-            race_name = re.sub('  +', ' ', anchor.text)
-            self.logger.info("Looking at '%s' ..." % race_name)
+            self.logger.info("Looking at '%s' ..." %
+                    clean_race_name(anchor.text))
             self.process_event(anchor.get('href'))
 
     def process_event(self, relative_event_url):
@@ -151,8 +158,8 @@ class Active(RaceResults):
         # event overview, which is where we are at now.
         for div in divs[1:]:
             anchor = div.getchildren()[0]
-            text = re.sub('\n', ' ', anchor.text)
-            self.logger.info('Looking at sub-event %s' % text)
+            self.logger.info("Looking at sub-event '%s' ..." %
+                    clean_race_name(anchor.text))
             self.process_sub_event(anchor.get('href'))
 
     def process_sub_event(self, relative_url):
@@ -161,11 +168,11 @@ class Active(RaceResults):
         evaluating the Philadelphia Marathon within the group of other
         events offered that day, like the Half Marathon and 8K.
         """
-        race_url = self.base_url + relative_url
-        self.logger.info('Downloading %s...' % race_url)
+        self.downloaded_url = self.base_url + relative_url
+        self.logger.info('Downloading %s...' % self.downloaded_url)
 
-        local_file = 'event_0000.html'
-        self.download_file(race_url, local_file)
+        local_file = 'sub_event.html'
+        self.download_file(self.downloaded_url, local_file)
         self.local_tidy(local_file)
 
         # <form accept-charset="UTF-8"
@@ -183,17 +190,122 @@ class Active(RaceResults):
                                \s+method=\s*"get"
                                \s+name=\s*"table_search"
                                >""", re.VERBOSE)
-        html = open('event_0000.html').read()
+        html = open(local_file).read()
         m = regex.search(html)
-        if m is None:
-            self.logger.info("Found nothing")
+        if m is not None:
+            self.process_csv_form(local_file, m.group('action'))
             return
 
+        # Next, see if the results are already hard-coded into the file.
+        # <pre id="raw-file">
+        root = ET.parse(local_file).getroot()
+        root = self.remove_namespace(root)
+        pres = root.findall('.//pre[@id]')
+        if len(pres) == 1:
+            self.process_raw_file(local_file, pres[0].text)
+            return
+
+        self.logger.info("Unhandled sub event situation")
+
+    def process_raw_file(self, source_file, text):
+        """Process results where the have been embedded raw into the HTML."""
+        results = []
+        for line in text.split('\n'):
+            for frst, lst in zip(self.first_name_regex, self.last_name_regex):
+                firstname_m = frst.search(line)
+                lastname_m = lst.search(line)
+                if firstname_m is not None and lastname_m is not None:
+                    results.append(line)
+
+        if len(results) == 0:
+            return
+
+        # Ok construct the webified output.
+        div = ET.Element('div')
+        div.set('class', 'race')
+
+        root = ET.parse(source_file).getroot()
+        root = self.remove_namespace(root)
+
+        titles = root.findall('.//title')
+        h2 = ET.Element('h2')
+        h2.text = titles[0].text
+        div.append(h2)
+
+        provenance_div = self.set_provenance()
+        div.append(provenance_div)
+
+        pre = ET.Element('pre')
+        pre.text = '\n'.join(results)
+        div.append(pre)
+
+        self.insert_race_results(div)
+
+    def process_csv_form(self, source_file, relative_url):
+        """Process CSV form URL.
+
+        Process results to be retrieve as a CSV file along with some extra CGI
+        form actions.
+        """
         # Download the CSV file.
-        url = "http://results.active.com"
-        url += m.group('action') + ".csv?per_page=100000"
+        url = ("http://results.active.com" + relative_url +
+               ".csv?per_page=100000")
         self.download_file(url, "event.csv")
 
+        trs = self.process_csv_file('event.csv')
+        if len(trs) == 0:
+            # No results were found.
+            self.logger.info("No member results found.")
+            return
+
+        table = ET.Element('table')
+        for tr in trs:
+            table.append(tr)
+
+        # Construct the HTML for the results.
+        # Append the title and the provenance.
+        root = ET.parse(source_file).getroot()
+        root = self.remove_namespace(root)
+
+        div = ET.Element('div')
+        div.set('class', 'race')
+
+        titles = root.findall('.//title')
+        h2 = ET.Element('h2')
+        h2.text = titles[0].text
+        div.append(h2)
+
+        provenance_div = self.set_provenance()
+        div.append(provenance_div)
+
+        div.append(table)
+
+        self.insert_race_results(div)
+
+    def set_provenance(self):
+        """Create a DIV containing a link to the original result."""
+        pdiv = ET.Element('div')
+        pdiv.set('class', 'provenance')
+        span = ET.Element('span')
+        span.text = 'Complete results at'
+        pdiv.append(span)
+        anchor = ET.Element('a')
+        anchor.set('href', self.downloaded_url)
+        anchor.text = 'Active.com'
+        pdiv.append(anchor)
+        span = ET.Element('span')
+        span.text = '.'
+        pdiv.append(span)
+        return pdiv
+
+    def process_csv_file(self, csv_file):
+        """
+        Process CSV file into HTML if any results are found.
+
+        Returns:
+            List of ElementTree TR elements representing a row of valid race
+            results.  If the list is [], then no results were found.
+        """
         trs = []
         for row in csv.reader(open('event.csv')):
             # the 3rd row item has the name for us to search.
@@ -210,43 +322,19 @@ class Active(RaceResults):
                     trs.append(tr)
 
         if len(trs) == 0:
-            return
+            return trs
 
-        table = ET.Element('table')
-        for item in trs:
-            table.append(tr)
+        # Append the first row as a header with TH elements.
+        reader = csv.reader(open('event.csv'))
+        row = next(reader)
+        tr = ET.Element('tr')
+        for item in row:
+            th = ET.Element('th')
+            th.text = item
+            tr.append(th)
+        trs.append(tr)
 
-        # Construct the HTML for the results.
-        # Append the title and the provenance.
-        root = ET.parse('event_0000.html').getroot()
-        root = self.remove_namespace(root)
-
-        titles = root.findall('.//title')
-        div = ET.Element('div')
-        div.set('class', 'race')
-
-        h2 = ET.Element('h2')
-        h2.text = titles[0].text
-        div.append(h2)
-
-        # Append the URL from whence we came..
-        pdiv = ET.Element('div')
-        pdiv.set('class', 'provenance')
-        span = ET.Element('span')
-        span.text = 'Complete results at'
-        pdiv.append(span)
-        anchor = ET.Element('a')
-        anchor.set('href', race_url)
-        anchor.text = 'Active.com'
-        pdiv.append(anchor)
-        span = ET.Element('span')
-        span.text = '.'
-        pdiv.append(span)
-        div.append(pdiv)
-
-        div.append(table)
-
-        self.insert_race_results(div)
+        return trs
 
     def download_master_file(self):
         """
