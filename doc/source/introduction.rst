@@ -95,11 +95,21 @@ CompuScore
 ==========
 
 CompuScore is similar to BestRace in that it does not store results
-with respect to the state in which the race took place.  But the
-dates are a bit funky (checkout CompuScore and look at the URLs,
-you will see)::
+with respect to the state in which the race took place::
 
-    $ csrr -m janfeb -o results.html --ml ~/ftc/ftc.csv
+    $ csrr -y 2013 -m 1 -o results.html --ml ~/ftc/ftc.csv
+
+
+Active.com
+==========
+
+Processing results from Active.com is limited to such web pages
+that offer downloads of CSV results.  It also requires the user to
+provide a "city, state" location in conjunction with a search radius
+in miles around that city.  To get results within 100 miles of New
+Brunswick, NJ, one would type the following::
+
+    $ active -y 2013 -m 1 -d 1 31 -o results.html -l "New Brunswick, NJ" -r 100 --ml ~/ftc/ftc.csv
 
 
 Membership File
