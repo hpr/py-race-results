@@ -103,13 +103,16 @@ with respect to the state in which the race took place::
 Active.com
 ==========
 
-Processing results from Active.com is limited to such web pages
-that offer downloads of CSV results.  It also requires the user to
-provide a "city, state" location in conjunction with a search radius
-in miles around that city.  To get results within 100 miles of New
-Brunswick, NJ, one would type the following::
+Processing results from Active.com works for two cases:
 
-    $ active -y 2013 -m 1 -d 1 31 -o results.html -l "New Brunswick, NJ" -r 100 --ml ~/ftc/ftc.csv
+  - results pages offering CSV downloads
+  - results pages embedding the raw results within **PRE** tags
+
+It also requires the user to provide a "city, state" location in
+conjunction with a search radius in miles around that city.  To get
+results within 100 miles of Boston, MA, one would type the following::
+
+    $ active -y 2013 -m 1 -d 1 31 -o results.html -l "Boston, MAT" -r 100 --ml ~/ftc/ftc.csv
 
 
 Membership File
