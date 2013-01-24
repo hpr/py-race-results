@@ -287,7 +287,7 @@ class Active(RaceResults):
         pdiv = ET.Element('div')
         pdiv.set('class', 'provenance')
         span = ET.Element('span')
-        span.text = 'Complete results at'
+        span.text = 'Complete results at '
         pdiv.append(span)
         anchor = ET.Element('a')
         anchor.set('href', self.downloaded_url)
@@ -324,15 +324,16 @@ class Active(RaceResults):
         if len(trs) == 0:
             return trs
 
-        # Append the first row as a header with TH elements.
-        reader = csv.reader(open('event.csv'))
-        row = next(reader)
-        tr = ET.Element('tr')
-        for item in row:
-            th = ET.Element('th')
-            th.text = item
-            tr.append(th)
-        trs.append(tr)
+        # Prepend the first row as a header with TH elements.
+        with open('event.csv') as cvsfile:
+            reader = csv.reader(cvsfile)
+            row = next(reader)
+            tr = ET.Element('tr')
+            for item in row:
+                th = ET.Element('th')
+                th.text = item
+                tr.append(th)
+            trs.insert(0,tr)
 
         return trs
 
