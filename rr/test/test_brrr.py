@@ -64,8 +64,7 @@ class TestBestRace(unittest.TestCase):
         o.run()
         tree = ET.parse(self.results_file)
         root = tree.getroot()
-        NS = 'http://www.w3.org/1999/xhtml'
-        p = root.findall('.//{%s}div/{%s}pre' % (NS, NS))
+        p = root.findall('.//div/pre')
         self.assertTrue("MICHAEL CARR" in p[0].text)
         self.assertTrue("MARK STRAWN" in p[0].text)
 
@@ -82,10 +81,8 @@ class TestBestRace(unittest.TestCase):
                 start_date=start_date,
                 stop_date=stop_date)
         o.run()
-        tree = ET.parse(self.results_file)
-        root = tree.getroot()
-        NS = 'http://www.w3.org/1999/xhtml'
-        p = root.findall('.//{%s}div/{%s}pre' % (NS, NS))
+        root = ET.parse(self.results_file).getroot()
+        p = root.findall('.//div/pre')
         self.assertTrue("MARK STRAWN" in p[0].text)
 
 
