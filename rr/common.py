@@ -2,7 +2,8 @@ import collections
 import cookielib
 import csv
 import logging
-import tidy
+#import tidy
+from bs4 import BeautifulSoup
 import urllib2
 import xml.dom.minidom
 import xml.etree.cElementTree as ET
@@ -72,24 +73,25 @@ class RaceResults:
         """
         Tidy up the HTML.
         """
-        html = open(html_file, 'r').read()
-        html = html.replace('<![if supportMisalignedColumns]>', '')
-        html = html.replace('<![endif]>', '')
+        #html = open(html_file, 'r').read()
+        #options = dict(output_xhtml=1,
+        #        add_xml_decl=1,
+        #        indent=1,
+        #        numeric_entities=True,
+        #        drop_proprietary_attributes=True,
+        #        bare=True,
+        #        word_2000=True,
+        #        tidy_mark=1,
+        #        hide_comments=True,
+        #        new_inline_tags='fb:like')
+        #thtml = tidy.parseString(html, **options)
 
-        options = dict(output_xhtml=1,
-                add_xml_decl=1,
-                indent=1,
-                numeric_entities=True,
-                drop_proprietary_attributes=True,
-                bare=True,
-                word_2000=True,
-                tidy_mark=1,
-                hide_comments=True,
-                new_inline_tags='fb:like')
-        thtml = tidy.parseString(html, **options)
+        markup = open(html_file).read()
+        soup = BeautifulSoup(markup, "lxml")
 
-        fp = open(html_file, 'w')
-        thtml.write(fp)
+        import codecs
+        fp = codecs.open(html_file, encoding='utf-8', mode='w')
+        fp.write(soup.prettify())
         fp.close()
 
     def pretty_print_xml(self, xml_file):
@@ -123,7 +125,7 @@ class RaceResults:
         ----
             url:  The URL to retrieve
             local_file:  Name of the file where we will store the web page.
-            params:  POST parameters to supply 
+            params:  POST parameters to supply
         """
         # cookie support needed for NYRR results.
         if self.cj is None:

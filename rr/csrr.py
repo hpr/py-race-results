@@ -3,29 +3,28 @@ import logging
 import os
 import re
 import sys
+
+from bs4 import BeautifulSoup
 import xml.etree.cElementTree as ET
 
 from .common import RaceResults
-import rr
 
 logging.basicConfig()
 
 # Need to match the month of the search window to the month strings that
 # Compuscore uses.
-monthstrs = {
-        1: 'janfeb',
-        2: 'janfeb',
-        3: 'march',
-        4: 'april',
-        5: 'may',
-        6: 'june',
-        7: 'july',
-        8: 'aug',
-        9: 'sept',
-        10: 'oct',
-        11: 'novdec',
-        12: 'novdec',
-        }
+monthstrs = {1: 'janfeb',
+             2: 'janfeb',
+             3: 'march',
+             4: 'april',
+             5: 'may',
+             6: 'june',
+             7: 'july',
+             8: 'aug',
+             9: 'sept',
+             10: 'oct',
+             11: 'novdec',
+             12: 'novdec', }
 
 
 class CompuScore(RaceResults):
@@ -104,12 +103,9 @@ class CompuScore(RaceResults):
         monthstr = monthstrs[self.start_date.month]
         pattern = 'http://www.compuscore.com/cs%s/%s' % (year, monthstr)
 
-        tree = ET.parse('index.htm')
-        root = tree.getroot()
-        root = self.remove_namespace(root)
-
-        anchor_pattern = './/a'
-        anchors = root.findall(anchor_pattern)
+        markup = open('index.htm').read()
+        root = BeautifulSoup(markup, 'lxml')
+        anchors = root.find_all('a')
         for anchor in anchors:
             href = anchor.get('href')
             if re.match(pattern, href):
@@ -127,12 +123,11 @@ class CompuScore(RaceResults):
         """
         Determine if the race file took place in the specified date range.
         """
-        tree = ET.parse(race_file)
-        root = tree.getroot()
-        root = self.remove_namespace(root)
+        markup = open(race_file).read()
+        root = BeautifulSoup(markup, 'lxml')
 
         # The date is in a single H3 element under to BODY element.
-        h3 = root.findall('.//h3')
+        h3 = root.find_all('h3')
         if len(h3) != 1:
             self.logger.warning('Unable to locate race date.')
             # Return True, force it to be parsed anyway.

@@ -6,6 +6,8 @@ import urllib
 import urllib2
 import xml.etree.cElementTree as ET
 
+from bs4 import BeautifulSoup
+
 from .common import RaceResults
 
 
@@ -37,8 +39,8 @@ class NewYorkRR(RaceResults):
         local_file = 'resultsarchive.html'
         self.download_file(url, local_file)
 
-        # There are two forms used for searches.  The one that we want (list all
-        # the results for an entire year) is the 2nd on that this regex
+        # There are two forms used for searches.  The one that we want (list
+        # all the results for an entire year) is the 2nd on that this regex
         # retrieves.
         html = open(local_file).read()
         regex = re.compile(r"""<form
@@ -62,11 +64,11 @@ class NewYorkRR(RaceResults):
         local_file = 'nyrrraces.html'
         self.download_file(url, local_file, params)
 
-        # This is not valid HTML.  Need to get rid of some bad FORMs, 
+        # This is not valid HTML.  Need to get rid of some bad FORMs,
         # none of which are needed.
         html = open(local_file).read()
-        html = html.replace('form','div')
-        with open(local_file,'w') as f:
+        html = html.replace('form', 'div')
+        with open(local_file, 'w') as f:
             f.write(html)
 
         self.local_tidy(local_file)
@@ -96,13 +98,12 @@ class NewYorkRR(RaceResults):
             race_date = re.sub('\s', '', link.tail)
             race_date = datetime.datetime.strptime(race_date, "%m/%d/%y")
             race_date = datetime.date(race_date.year, race_date.month,
-                    race_date.day)
-            if self.start_date <= race_date and race_date <= self.stop_date: 
+                                      race_date.day)
+            if self.start_date <= race_date and race_date <= self.stop_date:
                 self.logger.info("Keeping %s" % race_name)
                 self.process_event(url)
             else:
                 self.logger.info("Skipping %s" % race_name)
-
 
     def process_event(self, url):
         """We have the URL of a single event.  The URL does not lead to the
@@ -113,9 +114,9 @@ class NewYorkRR(RaceResults):
         self.local_tidy(local_file)
 
         # There should be a single form.
-        tree = ET.parse(local_file)
-        root = self.remove_namespace(tree.getroot())
-        form = root.findall('.//form')[0]
+        markup = open(local_file).read()
+        root = BeautifulSoup(markup, 'lxml')
+        form = root.find_all('form')[0]
 
         # The page for POSTing the search needs POST params.
         post_params = {}
@@ -129,18 +130,22 @@ class NewYorkRR(RaceResults):
         post_params['teamgender'] = ''
         post_params['team_code'] = self.team
         post_params['items.display'] = '500'
-        post_params['AESTIVACVNLIST'] = 'overalltype,input.agegroup.m,input.agegroup.f,teamgender,team_code'
+        post_params['AESTIVACVNLIST'] = 'overalltype,input.agegroup.m,'
+        post_params['AESTIVACVNLIST'] += 'input.agegroup.f,teamgender'
+        post_params['AESTIVACVNLIST'] += 'team_code'
         params = urllib.urlencode(post_params)
 
         # Provide all the search parameters for this race.  This includes, most
-        # importantly, the team code, i.e. RARI for Raritan Valley Road Runners.
+        # importantly, the team code, i.e. RARI for Raritan Valley Road
+        # Runners.
         url = form.get('action')
         local_file = 'nyrrresult.html'
         self.download_file(url, local_file, params)
         self.local_tidy(local_file)
 
         # If there were no results for the specified team, then the html will
-        # contain some red text to the effect of "Your search returns no match."
+        # contain some red text to the effect of "Your search returns no
+        # match."
         html = open(local_file).read()
         if re.search("Your search returns no match.", html) is not None:
             return
@@ -187,19 +192,18 @@ class NewYorkRR(RaceResults):
 
         # Append the URL from whence we came..
         pdiv = ET.Element('div')
-        pdiv.set('class', 'provenance') 
+        pdiv.set('class', 'provenance')
         span = ET.Element('span')
         span.text = 'Results courtesy of '
         pdiv.append(span)
         anchor = ET.Element('a')
-        anchor.set('href','http://www.nyrr.org')
+        anchor.set('href', 'http://www.nyrr.org')
         anchor.text = 'New York Road Runners'
         pdiv.append(anchor)
         span = ET.Element('span')
         span.text = '.'
         pdiv.append(span)
         div.append(pdiv)
-
 
         # And finally, append the race results.
         div.append(table)
@@ -214,7 +218,7 @@ class NewYorkRR(RaceResults):
         new_table.set('border', '1')
 
         new_tr = ET.Element('tr')
-        new_tr.set('bgcolor','#EEEEEE')
+        new_tr.set('bgcolor', '#EEEEEE')
 
         trs = old_table.getchildren()
         tr = trs[0]
@@ -240,6 +244,3 @@ class NewYorkRR(RaceResults):
             new_table.append(tr)
 
         return(new_table)
-
-
-

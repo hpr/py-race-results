@@ -6,7 +6,10 @@ import re
 import urllib
 import xml.etree.cElementTree as ET
 
+from bs4 import BeautifulSoup
+
 from .common import RaceResults
+
 
 def clean_race_name(text):
     """Clean up white space."""
@@ -108,22 +111,12 @@ class Active(RaceResults):
         """
         We assume that we have the master file stored locally.
         """
-        tree = ET.parse(self.master_file)
-        root = tree.getroot()
-        root = self.remove_namespace(root)
+        markup = open(self.master_file).read()
+        root = BeautifulSoup(markup, 'lxml')
+        divs = [div for div in root.find_all('div') if div.has_key('class') and
+                div.get('class') == ['result-title']]
 
-        # Set up patterns to locate the result elements.
-        pattern = './/body/div/div/div/div/div/div'
-        results = root.findall(pattern)
-
-        for result in results:
-            children = result.getchildren()
-
-            # Should be four children.  All the information is in the 2nd
-            # child.
-            if len(children) == 0:
-                continue
-            race = children[1]
+        for result in divs:
 
             # <div class="result-title">
             #   <h5>
@@ -131,9 +124,10 @@ class Active(RaceResults):
             #   </h5>
             #   <div class="result-sub-location"> Bethpage, NY </div>
             # </div>
-            anchor = race.getchildren()[0].getchildren()[0]
+            anchors = result.findAll('a')
+            anchor = anchors[0]
             self.logger.info("Looking at '%s' ..." %
-                    clean_race_name(anchor.text))
+                             clean_race_name(anchor.text))
             self.process_event(anchor.get('href'))
 
     def process_event(self, relative_event_url):
@@ -159,7 +153,7 @@ class Active(RaceResults):
         for div in divs[1:]:
             anchor = div.getchildren()[0]
             self.logger.info("Looking at sub-event '%s' ..." %
-                    clean_race_name(anchor.text))
+                             clean_race_name(anchor.text))
             self.process_sub_event(anchor.get('href'))
 
     def process_sub_event(self, relative_url):
@@ -188,7 +182,6 @@ class Active(RaceResults):
                                \s+class=\s*"inline-block"
                                \s+id=\s*"table_search"
                                \s+method=\s*"get"
-                               \s+name=\s*"table_search"
                                >""", re.VERBOSE)
         html = open(local_file).read()
         m = regex.search(html)
@@ -333,7 +326,7 @@ class Active(RaceResults):
                 th = ET.Element('th')
                 th.text = item
                 tr.append(th)
-            trs.insert(0,tr)
+            trs.insert(0, tr)
 
         return trs
 

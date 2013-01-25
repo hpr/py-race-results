@@ -86,10 +86,8 @@ class TestCoolRunning(unittest.TestCase):
                 race_list=self.racelist_file,
                 output_file=self.results_file)
         o.run()
-        tree = ET.parse(self.results_file)
-        root = tree.getroot()
-        NS = 'http://www.w3.org/1999/xhtml'
-        p = root.findall('.//{%s}div/{%s}pre' % (NS, NS))
+        root = ET.parse(self.results_file).getroot()
+        p = root.findall('.//div/pre')
         self.assertTrue("Caleb Gartner" in p[0].text)
         self.assertTrue("Sean Spalding" in p[0].text)
 

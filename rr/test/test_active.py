@@ -42,9 +42,9 @@ class TestActive(unittest.TestCase):
         stop_date = datetime.date(2013, 1, 31)
         o = Active(verbose='critical',
                 output_file=self.results_file,
-                memb_list=self.membership_file,
                 location="New Brunswick, NJ",
                 radius="100",
+                memb_list=self.membership_file,
                 start_date=start_date,
                 stop_date=stop_date)
         o.run()
