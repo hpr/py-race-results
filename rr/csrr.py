@@ -60,12 +60,10 @@ class CompuScore(RaceResults):
         first_name_regex = []
         last_name_regex = []
         for j in range(len(fname)):
-            # For the regular expression, surround the name with
-            # at least one white space character.  That way we cut
-            # down on a lot of false positives, e.g. "Ed Ford" does
-            # not cause every fricking person from "New Bedford" to
-            # match.  Here's an example line to match.
+            # Example to match:
+            #
             #   '60.Gene Gugliotta       North Plainfiel,NJ 53 M U '
+            #
             pattern = '\.' + fname[j] + '\s'
             first_name_regex.append(re.compile(pattern, re.IGNORECASE))
             pattern = '\s' + lname[j] + '\s'
@@ -88,25 +86,6 @@ class CompuScore(RaceResults):
             self.compile_web_results()
         else:
             self.compile_local_results()
-
-    def initialize_output_file(self):
-        """
-        Construct an HTML skeleton.
-        """
-        ofile = ET.Element('html')
-
-        head = ET.SubElement(ofile, 'head')
-
-        link = ET.SubElement(head, 'link')
-        link.set('rel', 'stylesheet')
-        link.set('href', 'rr.css')
-        link.set('type', 'text/css')
-
-        body = ET.SubElement(ofile, 'body')
-
-        ET.ElementTree(ofile).write(self.output_file)
-
-        self.pretty_print_xml(self.output_file)
 
     def compile_web_results(self):
         """
@@ -142,8 +121,7 @@ class CompuScore(RaceResults):
                 if self.race_date_in_range(local_file):
                     self.compile_race_results(local_file)
                 else:
-                    self.logger.info('Skipping %s (not in range)...' % local_file)
-
+                    self.logger.info('Date not in range...')
 
     def race_date_in_range(self, race_file):
         """
@@ -164,17 +142,19 @@ class CompuScore(RaceResults):
 
         # The race date should read something like
         #     "    Race Date:11-03-12   "
-        pat = '\s*Race\sDate:(?P<month>\d{1,2})-(?P<day>\d{2})-(?P<year>\d{2})\s*'
+        pat = '\s*Race\sDate:(?P<mo>\d{1,2})-(?P<dd>\d{2})-(?P<yy>\d{2})\s*'
         m = re.match(pat, date_text)
         if m is None:
+            # We could not parse the race date, so force this racefile to be
+            # searched, just in case.
             self.logger.warning('Unable to parse the race date.')
-            # Return True, force it to be parsed anyway.
             return True
 
         # NOW we get to see if the race is in the proper time frame or not.
-        dt = datetime.date(2000 + int(m.group('year')),
-                int(m.group('month')),
-                int(m.group('day')))
+        year = 2000 + int(m.group('yy'))
+        month = int(m.group('mo'))
+        day = int(m.group('dd'))
+        dt = datetime.date(year, month, day)
 
         if self.start_date <= dt and dt <= self.stop_date:
             return True
@@ -185,18 +165,19 @@ class CompuScore(RaceResults):
         """
         Go through a race file and collect results.
         """
-        r = []
+        results = []
         for rline in open(race_file):
             line = rline.rstrip()
             if self.match_against_membership(line):
-                r.append(line)
+                results.append(line)
 
-        if len(r) > 0:
-            self.insert_race_results(r, race_file)
+        if len(results) > 0:
+            results = self.webify_results(race_file, results)
+            self.insert_race_results(results)
 
-    def insert_race_results(self, result, race_file):
+    def webify_results(self, race_file, results):
         """
-        Insert CoolRunning results into the output file.
+        Take the list of results and turn it into output HTML.
         """
         div = ET.Element('div')
         div.set('class', 'race')
@@ -204,26 +185,18 @@ class CompuScore(RaceResults):
         hr.set('class', 'race_header')
         div.append(hr)
 
-        # The H2 tag has the race name.
-        # The H2 tag comes from the only H1 tag in the race file.
+        # The single H2 element in the file has the race name.
         tree = ET.parse(race_file)
         root = tree.getroot()
         root = self.remove_namespace(root)
         pattern = './/h2'
-        source_h2 = root.findall(pattern)[0]
+        race_name_element = root.findall(pattern)[0]
+        div.append(race_name_element)
 
-        h1 = ET.Element('h1')
-        h1.text = source_h2.text
-        div.append(h1)
-
-        # The first H3 tag has the location and date.
-        # The H3 tag comes from the only H2 tag in the race file.
+        # The single H3 element in the file has the race date.
         pattern = './/h3'
-        source_h3 = root.findall(pattern)[0]
-
-        h2 = ET.Element('h2')
-        h2.text = source_h3.text
-        div.append(h2)
+        race_date_element = root.findall(pattern)[0]
+        div.append(race_date_element)
 
         # Append the URL if possible.
         if self.downloaded_url is not None:
@@ -233,27 +206,15 @@ class CompuScore(RaceResults):
             p = ET.XML(text)
             div.append(p)
 
+        # Append the actual race results.  Consists of the column headings
+        # (banner) plus the individual results.
         pre = ET.Element('pre')
         pre.set('class', 'actual_results')
-
-        banner = self.parse_banner(root)
-
-        text = '\n'
-        for line in result:
-            text += line + '\n'
-
-        pre.text = banner + text
+        banner_text = self.parse_banner(root)
+        pre.text = banner_text + '\n'.join(results)
         div.append(pre)
 
-        tree = ET.parse(self.output_file)
-        root = tree.getroot()
-        root = self.remove_namespace(root)
-        body = root.findall('.//body')[0]
-        body.append(div)
-
-        ET.ElementTree(root).write(self.output_file)
-
-        self.local_tidy(self.output_file)
+        return div
 
     def parse_banner(self, root):
         """
@@ -272,11 +233,12 @@ class CompuScore(RaceResults):
             self.logger.warning('Could not locate all of the banner.')
             text = ''
 
+        text += '\n'
         return(text)
 
     def match_against_membership(self, line):
         """
-        We have a line of text from the URL.  Match it against the
+        We have a line of text from the race file.  Match it against the
         membership list.
         """
         for idx in range(0, len(self.first_name_regex)):

@@ -1,3 +1,4 @@
+import csv
 import datetime
 import logging
 import os
@@ -5,10 +6,18 @@ import re
 import urllib
 import xml.etree.cElementTree as ET
 
-import rr.common
+from .common import RaceResults
+
+def clean_race_name(text):
+    """Clean up white space."""
+    # Strip out newlines.
+    text = re.sub('\n', '', text)
+    # Collapse sequences of two or more spaces with just a single space.
+    text = re.sub('\s+', ' ', text)
+    return text
 
 
-class Active:
+class Active(RaceResults):
     """
     Class for retrieving and processing race results from Active.com.
 
@@ -39,15 +48,7 @@ class Active:
             >>> o.run()
 
         """
-        self.start_date = None
-        self.stop_date = None
-        self.location = None
-        self.radius = None
-        self.center = None
-        self.verbose = None
-        self.memb_list = None
-        self.race_list = None
-        self.output_file = None
+        RaceResults.__init__(self)
         self.__dict__.update(**kwargs)
 
         self.base_url = 'http://results.active.com'
@@ -60,16 +61,14 @@ class Active:
         # output.
         self.downloaded_url = None
 
-        # Set the appropriate logging level.  Requires an exact
-        # match of the level string value.
-        self.logger = logging.getLogger(self.__class__.__name__)
+        # Set the appropriate logging level.
         self.logger.setLevel(getattr(logging, self.verbose.upper()))
 
     def run(self):
         """
         Load the membership list and run through all the results.
         """
-        names = rr.common.parse_membership_list(self.memb_list)
+        names = self.parse_membership_list()
 
         # The names are actually in reverse order.
         fname = names.last
@@ -90,48 +89,13 @@ class Active:
         self.compile_results()
         self.local_tidy(self.output_file)
 
-    def local_tidy(self, html_file):
-        """Have to get rid of facebook:like tags before calling our general
-        tidy routine.
-        """
-        fp = open(html_file, 'r')
-        html = fp.read()
-        fp.close()
-        html = html.replace('fb:like', 'div')
-        fp = open(html_file, 'w')
-        fp.write(html)
-        fp.close()
-
-        rr.common.local_tidy(html_file)
-
     def compile_results(self):
         """
         Either download the requested results or go through the
         provided list.
         """
         self.initialize_output_file()
-        if self.race_list is None:
-            self.compile_web_results()
-        else:
-            self.compile_local_results()
-
-    def initialize_output_file(self):
-        """Construct an HTML skeleton.
-        """
-        ofile = ET.Element('html')
-
-        head = ET.SubElement(ofile, 'head')
-
-        link = ET.SubElement(head, 'link')
-        link.set('rel', 'stylesheet')
-        link.set('href', 'rr.css')
-        link.set('type', 'text/css')
-
-        ET.SubElement(ofile, 'body')
-
-        ET.ElementTree(ofile).write(self.output_file)
-
-        rr.common.pretty_print_xml(self.output_file)
+        self.compile_web_results()
 
     def compile_web_results(self):
         """
@@ -144,10 +108,9 @@ class Active:
         """
         We assume that we have the master file stored locally.
         """
-
         tree = ET.parse(self.master_file)
         root = tree.getroot()
-        root = rr.common.remove_namespace(root)
+        root = self.remove_namespace(root)
 
         # Set up patterns to locate the result elements.
         pattern = './/body/div/div/div/div/div/div'
@@ -158,6 +121,8 @@ class Active:
 
             # Should be four children.  All the information is in the 2nd
             # child.
+            if len(children) == 0:
+                continue
             race = children[1]
 
             # <div class="result-title">
@@ -167,9 +132,8 @@ class Active:
             #   <div class="result-sub-location"> Bethpage, NY </div>
             # </div>
             anchor = race.getchildren()[0].getchildren()[0]
-            race_name = re.sub('\n', '', anchor.text)
-            race_name = re.sub('  +', ' ', anchor.text)
-            self.logger.info("Looking at '%s' ..." % race_name)
+            self.logger.info("Looking at '%s' ..." %
+                    clean_race_name(anchor.text))
             self.process_event(anchor.get('href'))
 
     def process_event(self, relative_event_url):
@@ -179,23 +143,23 @@ class Active:
         """
         url = self.base_url + relative_event_url
         self.logger.info('Downloading %s...' % url)
-        rr.common.download_file(url, 'event.html')
-        rr.common.local_tidy('event.html')
+        self.download_file(url, 'event.html')
+        self.local_tidy('event.html')
 
         root = ET.parse('event.html').getroot()
-        root = rr.common.remove_namespace(root)
+        root = self.remove_namespace(root)
 
         # Look for the event overview.
         pattern = './/body/div/div/div/div/div/nav'
         nav = root.findall(pattern)
+        divs = nav[0].getchildren()
 
         # Look at all of the children except the first.  That first URL is the
         # event overview, which is where we are at now.
-        divs = nav[0].getchildren()
         for div in divs[1:]:
             anchor = div.getchildren()[0]
-            text = re.sub('\n', ' ', anchor.text)
-            self.logger.info('Looking at sub-event %s' % text)
+            self.logger.info("Looking at sub-event '%s' ..." %
+                    clean_race_name(anchor.text))
             self.process_sub_event(anchor.get('href'))
 
     def process_sub_event(self, relative_url):
@@ -204,177 +168,174 @@ class Active:
         evaluating the Philadelphia Marathon within the group of other
         events offered that day, like the Half Marathon and 8K.
         """
-        url = self.base_url + relative_url
-        self.logger.info('Downloading %s...' % url)
+        self.downloaded_url = self.base_url + relative_url
+        self.logger.info('Downloading %s...' % self.downloaded_url)
 
-        chunk_file = 'event_0000.html'
-        rr.common.download_file(url, chunk_file)
-        rr.common.local_tidy(chunk_file)
+        local_file = 'sub_event.html'
+        self.download_file(self.downloaded_url, local_file)
+        self.local_tidy(local_file)
 
-        self.event_chunk_list = []
-        self.event_chunk_list.append(chunk_file)
+        # <form accept-charset="UTF-8"
+        #       action="/events/blah-blah-blah"
+        #       class="inline-block"
+        #       id="table_search"
+        #       method="get">
+        #
+        # Match all the forms that download a CSV file.
+        regex = re.compile(r"""<form
+                               \s+accept-charset=\s*"UTF-8"
+                               \s+action=\s*"(?P<action>[\w/-]+)"
+                               \s+class=\s*"inline-block"
+                               \s+id=\s*"table_search"
+                               \s+method=\s*"get"
+                               \s+name=\s*"table_search"
+                               >""", re.VERBOSE)
+        html = open(local_file).read()
+        m = regex.search(html)
+        if m is not None:
+            self.process_csv_form(local_file, m.group('action'))
+            return
 
-        last_chunk_file = chunk_file
-        while self.more_event_chunks(last_chunk_file):
-            url = self.get_chunk_url(last_chunk_file)
-            self.logger.info('Downloading %s...' % url)
-            current_chunk_file = "event_%04d.html" % len(self.event_chunk_list)
-            rr.common.download_file(url, current_chunk_file)
-            rr.common.local_tidy(current_chunk_file)
+        # Next, see if the results are already hard-coded into the file.
+        # <pre id="raw-file">
+        root = ET.parse(local_file).getroot()
+        root = self.remove_namespace(root)
+        pres = root.findall('.//pre[@id]')
+        if len(pres) == 1:
+            self.process_raw_file(local_file, pres[0].text)
+            return
 
-            self.event_chunk_list.append(current_chunk_file)
-            last_chunk_file = current_chunk_file
+        self.logger.info("Unhandled sub event situation")
 
-        complete_results_file = self.concatenate_chunks()
-        self.compile_native_active_results(complete_results_file)
-
-    def get_chunk_url(self, chunk_file):
-        """
-        Results for native active race results format seem to only come in
-        chunks of 100.  If there is another chunk, it will be indicated
-        down at the bottom of the file.
-        """
-        root = ET.parse(chunk_file).getroot()
-        root = rr.common.remove_namespace(root)
-
-        pattern = './/body/div/div/div/div/section/div/table/tfoot/tr/td/div'
-        div = root.findall(pattern)
-
-        # The last child will have an href attribute if there is another chunk.
-        next = div[0].getchildren()[-1]
-        href = next.get('href')
-        url = self.base_url + href
-        return url
-
-    def more_event_chunks(self, chunk_file):
-        """
-        Results for native active race results format seem to only come in
-        chunks of 100.  If there is another chunk, it will be indicated
-        down at the bottom of the file.
-        """
-        try:
-            self.get_chunk_url(chunk_file)
-            return True
-        except:
-            return False
-
-    def scrub_tr(self, tr):
-        """
-        We need to strip the unnecessary stuff.
-        <td>
-            <b>
-            <a href="junk">stuff</a>
-            </b>
-        </td>
-        """
-        tds = tr.getchildren()
-        clean_tr = ET.Element('tr')
-        for td in tds:
-            ch = td.getchildren()
-            ahrefs = td.findall('.//b/a')
-            ahrefs2 = td.findall('.//a')
-            if (len(ahrefs) != 0):
-                clean_td = ET.Element('td')
-                clean_td.text = ch[0].getchildren()[0].text
-            elif (len(ahrefs2) != 0):
-                clean_td = ET.Element('td')
-                clean_td.text = ch[0].text
-            else:
-                # OK as-is.  Nothing to scrub.
-                clean_td = td
-
-            clean_tr.append(clean_td)
-        return(clean_tr)
-
-    def compile_race_results(self, race_file):
-        """
-        Go through a race file and collect results.
-        """
+    def process_raw_file(self, source_file, text):
+        """Process results where the have been embedded raw into the HTML."""
         results = []
-        for rline in open(race_file):
-            line = rline.rstrip()
-            if self.match_against_membership(line):
-                results.append(line)
+        for line in text.split('\n'):
+            for frst, lst in zip(self.first_name_regex, self.last_name_regex):
+                firstname_m = frst.search(line)
+                lastname_m = lst.search(line)
+                if firstname_m is not None and lastname_m is not None:
+                    results.append(line)
 
-        if len(results) > 0:
-            self.insert_race_results(results, race_file)
+        if len(results) == 0:
+            return
 
-    def insert_race_results(self, results, race_file):
-        """
-        Insert Active results into the output file.
-        """
+        # Ok construct the webified output.
         div = ET.Element('div')
         div.set('class', 'race')
-        hr = ET.Element('hr')
-        hr.set('class', 'race_header')
-        div.append(hr)
 
-        # The race name is in the HEAD.
-        root = ET.parse(race_file).getroot()
-        root = rr.common.remove_namespace(root)
-        head = root.getchildren()[0]
+        root = ET.parse(source_file).getroot()
+        root = self.remove_namespace(root)
 
-        # The location is also in the head.
-        meta = head.getchildren()[12]
-        location = meta.get('content')
-        meta = head.getchildren()[13]
-        location += ', ' + meta.get('content')
-
-        h1 = ET.Element('h1')
-        h1.text = head.getchildren()[3].get('content')
-        div.append(h1)
-
+        titles = root.findall('.//title')
         h2 = ET.Element('h2')
-        h2.text = location
+        h2.text = titles[0].text
         div.append(h2)
 
-        # Append the URL if possible.
-        if self.downloaded_url is not None:
-            url_div = ET.Element('p')
+        provenance_div = self.set_provenance()
+        div.append(provenance_div)
 
-            span = ET.Element('span')
-            span.text = 'Complete results '
-            url_div.append(span)
+        pre = ET.Element('pre')
+        pre.text = '\n'.join(results)
+        div.append(pre)
 
-            anchor = ET.Element('a')
-            anchor.text = 'here'
-            anchor.set('href', self.downloaded_url)
-            url_div.append(anchor)
+        self.insert_race_results(div)
 
-            span = ET.Element('span')
-            span.text = ' at '
-            url_div.append(span)
+    def process_csv_form(self, source_file, relative_url):
+        """Process CSV form URL.
 
-            anchor = ET.Element('a')
-            anchor.text = 'Active.com.'
-            anchor.set('href', 'http://www.active.com')
-            url_div.append(anchor)
+        Process results to be retrieve as a CSV file along with some extra CGI
+        form actions.
+        """
+        # Download the CSV file.
+        url = ("http://results.active.com" + relative_url +
+               ".csv?per_page=100000")
+        self.download_file(url, "event.csv")
 
-            div.append(url_div)
+        trs = self.process_csv_file('event.csv')
+        if len(trs) == 0:
+            # No results were found.
+            self.logger.info("No member results found.")
+            return
 
         table = ET.Element('table')
-        for row in results:
-            table.append(row)
+        for tr in trs:
+            table.append(tr)
+
+        # Construct the HTML for the results.
+        # Append the title and the provenance.
+        root = ET.parse(source_file).getroot()
+        root = self.remove_namespace(root)
+
+        div = ET.Element('div')
+        div.set('class', 'race')
+
+        titles = root.findall('.//title')
+        h2 = ET.Element('h2')
+        h2.text = titles[0].text
+        div.append(h2)
+
+        provenance_div = self.set_provenance()
+        div.append(provenance_div)
 
         div.append(table)
 
-        root = ET.parse(self.output_file).getroot()
-        body = root.findall('.//body')[0]
-        body.append(div)
+        self.insert_race_results(div)
 
-        ET.ElementTree(root).write(self.output_file)
+    def set_provenance(self):
+        """Create a DIV containing a link to the original result."""
+        pdiv = ET.Element('div')
+        pdiv.set('class', 'provenance')
+        span = ET.Element('span')
+        span.text = 'Complete results at '
+        pdiv.append(span)
+        anchor = ET.Element('a')
+        anchor.set('href', self.downloaded_url)
+        anchor.text = 'Active.com'
+        pdiv.append(anchor)
+        span = ET.Element('span')
+        span.text = '.'
+        pdiv.append(span)
+        return pdiv
 
-    def match_against_membership(self, line):
+    def process_csv_file(self, csv_file):
         """
-        Match the membership list against the current line of text.
+        Process CSV file into HTML if any results are found.
+
+        Returns:
+            List of ElementTree TR elements representing a row of valid race
+            results.  If the list is [], then no results were found.
         """
-        #z = zip(self.first_name_regex,self.last_name_regex)
-        for idx in range(0, len(self.first_name_regex)):
-            fregex = self.first_name_regex[idx]
-            lregex = self.last_name_regex[idx]
-            if fregex.search(line) and lregex.search(line):
-                return(True)
-        return(False)
+        trs = []
+        for row in csv.reader(open('event.csv')):
+            # the 3rd row item has the name for us to search.
+            for frst, lst in zip(self.first_name_regex, self.last_name_regex):
+                firstname_m = frst.search(row[2])
+                lastname_m = lst.search(row[2])
+                if firstname_m is not None and lastname_m is not None:
+                    # Construct an HTML row out of the CSV row.
+                    tr = ET.Element('tr')
+                    for item in row:
+                        td = ET.Element('td')
+                        td.text = item
+                        tr.append(td)
+                    trs.append(tr)
+
+        if len(trs) == 0:
+            return trs
+
+        # Prepend the first row as a header with TH elements.
+        with open('event.csv') as cvsfile:
+            reader = csv.reader(cvsfile)
+            row = next(reader)
+            tr = ET.Element('tr')
+            for item in row:
+                th = ET.Element('th')
+                th.text = item
+                tr.append(th)
+            trs.insert(0,tr)
+
+        return trs
 
     def download_master_file(self):
         """
@@ -400,22 +361,17 @@ class Active:
         source = urllib.urlencode({'[source]': 'event'})
         location = urllib.urlencode({'[location]': self.location})
         radius = urllib.urlencode({'[radius]': str(self.radius)})
-        start = urllib.urlencode({'[start_date]':
-            self.start_date.strftime('%Y-%m-%d')})
-        stop = urllib.urlencode({'[end_date]':
-            self.stop_date.strftime('%Y-%m-%d')})
 
-        url += '&search' + '&search'.join([query, source, location, radius,
-            start, stop])
+        start_dict = {'[start_date]': self.start_date.strftime('%Y-%m-%d')}
+        start = urllib.urlencode(start_dict)
+
+        stop_dict = {'[end_date]': self.stop_date.strftime('%Y-%m-%d')}
+        stop = urllib.urlencode(stop_dict)
+
+        lst = [query, source, location, radius, start, stop]
+        url += '&search' + '&search'.join(lst)
 
         self.logger.debug('Downloading %s.' % url)
-        rr.common.download_file(url, self.master_file)
+        self.download_file(url, self.master_file)
 
         self.local_tidy(self.master_file)
-
-    def compile_local_results(self):
-        """
-        Compile results from list of local files.
-        """
-        for line in open(self.race_list):
-            self.compile_race_results(line.rstrip())

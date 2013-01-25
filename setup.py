@@ -2,7 +2,7 @@ from distutils.core import setup
 
 setup(
     name='RaceResults',
-    version='0.0.5',
+    version='0.1.0',
     author='John Evans',
     author_email='john.g.evans.ne@gmail.com',
     url='http://pypi.python.org/pypi/RaceResults',
