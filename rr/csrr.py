@@ -103,7 +103,8 @@ class CompuScore(RaceResults):
         monthstr = monthstrs[self.start_date.month]
         pattern = 'http://www.compuscore.com/cs%s/%s' % (year, monthstr)
 
-        markup = open('index.htm').read()
+        with open('index.htm') as fp:
+            markup = fp.read()
         root = BeautifulSoup(markup, 'lxml')
         anchors = root.find_all('a')
         for anchor in anchors:
@@ -123,7 +124,8 @@ class CompuScore(RaceResults):
         """
         Determine if the race file took place in the specified date range.
         """
-        markup = open(race_file).read()
+        with open(race_file) as fp:
+            markup = fp.read()
         root = BeautifulSoup(markup, 'lxml')
 
         # The date is in a single H3 element under to BODY element.
@@ -161,10 +163,10 @@ class CompuScore(RaceResults):
         Go through a race file and collect results.
         """
         results = []
-        for rline in open(race_file):
-            line = rline.rstrip()
-            if self.match_against_membership(line):
-                results.append(line)
+        with open(race_file) as fp:
+            for line in fp.readlines():
+                if self.match_against_membership(line):
+                    results.append(line)
 
         if len(results) > 0:
             results = self.webify_results(race_file, results)
@@ -262,8 +264,8 @@ class CompuScore(RaceResults):
         """
         Compile results from list of local files.
         """
-        for line in open(self.race_list):
-            line = line.rstrip()
-            self.logger.info('Processing %s...' % line)
-            self.local_tidy(line)
-            self.compile_race_results(line)
+        with open(self.race_list) as fp:
+            for racefile in fp.readlines():
+                self.logger.info('Processing %s...' % racefile)
+                self.local_tidy(racefile)
+            self.compile_race_results(racefile)

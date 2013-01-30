@@ -123,7 +123,8 @@ class BestRace(RaceResults):
         pattern += ".*HTM"
         self.logger.debug('pattern is "%s"' % pattern)
 
-        markup = open(local_file).read()
+        with open(local_file) as fp:
+            markup = fp.read()
         root = BeautifulSoup(markup, 'lxml')
 
         anchors = root.find_all('a')
@@ -141,10 +142,10 @@ class BestRace(RaceResults):
         Go through a single race file and collect results.
         """
         results = []
-        for rline in open(race_file):
-            line = rline.rstrip()
-            if self.match_against_membership(line):
-                results.append(line)
+        with open(race_file) as fp:
+            for line in fp.readlines():
+                if self.match_against_membership(line):
+                    results.append(line)
 
         if len(results) > 0:
             results = self.webify_results(race_file, results)
@@ -160,7 +161,8 @@ class BestRace(RaceResults):
         hr.set('class', 'race_header')
         div.append(hr)
 
-        markup = open(race_file).read()
+        with open(race_file) as fp:
+            markup = fp.read()
         root = BeautifulSoup(markup, 'lxml')
         source_title = root.find_all('title')[0]
 
@@ -252,5 +254,6 @@ class BestRace(RaceResults):
     def compile_local_results(self):
         """Compile results from list of local files.
         """
-        for line in open(self.race_list):
-            self.compile_race_results(line.rstrip())
+        with open(self.race_list) as fp:
+            for line in fp.readlines():
+                self.compile_race_results(line)

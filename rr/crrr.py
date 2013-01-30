@@ -198,7 +198,8 @@ class CoolRunning(RaceResults):
 
         results = []
         for node in nodes:
-            text = ET.tostring(node)
+            #text = ET.tostring(node)
+            text = node.text
             for line in text.split('\n'):
                 if self.match_against_membership(line):
                     results.append(line)
@@ -413,7 +414,8 @@ class CoolRunning(RaceResults):
         # Stop when we find the first "1"
         # First line is <pre>, so skip that.
         banner = ''
-        for line in ET.tostring(pre).split('\n')[1:]:
+        text = pre.text
+        for line in text.split('\n')[1:]:
             if re.match('\s+1', line):
                 # found it
                 break
@@ -490,7 +492,12 @@ class CoolRunning(RaceResults):
         # This is an IE conditional comment that Excel likes to produce.
         # Have only seen this on CoolRunning.
         # Get rid of it before running through the common tidy process.
-        html = open(html_file, 'r').read()
+        try:
+            with open(html_file, 'r', encoding='utf-8') as fp:
+                html = fp.read()
+        except UnicodeDecodeError:
+            with open(html_file, 'r', encoding='iso-8859-1') as fp:
+                html = fp.read()
         html = html.replace('<![if supportMisalignedColumns]>', '')
         html = html.replace('<![endif]>', '')
         with open(html_file, 'w') as f:
@@ -503,12 +510,12 @@ class CoolRunning(RaceResults):
         """
         Compile results from list of local files.
         """
-        for line in open(self.race_list):
-            try:
-                self.logger.info('Processing file %s' % line)
-                race_file = line.rstrip()
-                self.local_tidy(race_file)
-                self.compile_race_results(race_file)
-            except IOError:
-                fmt = 'Encountered an error processing %s, skipping it.'
-                self.logger.debug(fmt % line)
+        with open(self.race_list) as fp:
+            for racefile in fp.readlines():
+                try:
+                    self.logger.info('Processing file %s' % racefile)
+                    self.local_tidy(racefile)
+                    self.compile_race_results(racefile)
+                except IOError:
+                    fmt = 'Encountered an error processing %s, skipping it.'
+                    self.logger.debug(fmt % line)
