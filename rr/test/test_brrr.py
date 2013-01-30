@@ -17,9 +17,7 @@ class TestBestRace(unittest.TestCase):
 
         # Make copies of the test files as fixtures.
         self.viking_race_file = tempfile.NamedTemporaryFile(suffix=".htm")
-        #self.viking_race_file = tempfile.NamedTemporaryFile(delete=False,
-        #        suffix=".htm").name
-        relfile "test/testdata/121202SB5.HTM"
+        relfile = "test/testdata/121202SB5.HTM"
         filename = pkg_resources.resource_filename(rr.__name__, relfile)
         shutil.copyfile(filename, self.viking_race_file.name)
 
@@ -34,11 +32,6 @@ class TestBestRace(unittest.TestCase):
         self.racelist_file.close()
         self.viking_race_file.close()
         self.results_file.close()
-        #os.unlink(self.membership_file)
-        #os.unlink(self.racelist_file)
-        #os.unlink(self.viking_race_file)
-        #if os.path.exists(self.results_file):
-        #    os.unlink(self.results_file)
 
     def populate_racelist_file(self, races):
         """
