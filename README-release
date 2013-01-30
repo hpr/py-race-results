@@ -1,0 +1,4 @@
+* Update doc/source/conf.py release number.
+* Update setup.py release number.
+* Merge onto master branch.
+* Tag the release.

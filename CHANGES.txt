@@ -1,0 +1,20 @@
+January 30, 2013 John Evans <john.g.evans.ne@gmail.com> - 0.2.3
+- Fleshed out this file, fixed a broken git tag.
+
+January 29, 2013 John Evans <john.g.evans.ne@gmail.com> - 0.2.2
+- Fixed typo in test suite.
+
+January 29, 2013 John Evans <john.g.evans.ne@gmail.com> - 0.2.1
+- Updated documentation properly.
+
+January 29, 2013 John Evans <john.g.evans.ne@gmail.com> - 0.2.0
+- Ported to Python 3.2.  Python 2.7 no longer works.
+
+January 22, 2013 John Evans <john.g.evans.ne@gmail.com> - 0.1.1
+- Swapped in BeautifulSoup for uTidyLib.
+
+January 22, 2013 John Evans <john.g.evans.ne@gmail.com> - 0.1.0
+- Active.com support works again.
+
+December 19, 2012 John Evans <john.g.evans.ne@gmail.com>
+- Initial import of source from SVN.
