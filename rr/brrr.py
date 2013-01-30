@@ -8,6 +8,8 @@ import re
 import warnings
 import xml.etree.cElementTree as ET
 
+from bs4 import BeautifulSoup
+
 from .common import RaceResults
 
 
@@ -108,8 +110,8 @@ class BestRace(RaceResults):
         local_file = 'index.html'
         fmt = 'http://www.bestrace.com/results/%s/%s%s'
         pattern = fmt % (self.start_date.strftime('%y'),
-                self.start_date.strftime('%y'),
-                self.start_date.strftime('%m'))
+                         self.start_date.strftime('%y'),
+                         self.start_date.strftime('%m'))
 
         day_range = '('
         for day in range(self.start_date.day, self.stop_date.day):
@@ -121,11 +123,10 @@ class BestRace(RaceResults):
         pattern += ".*HTM"
         self.logger.debug('pattern is "%s"' % pattern)
 
-        tree = ET.parse(local_file)
-        root = tree.getroot()
-        root = self.remove_namespace(root)
+        markup = open(local_file).read()
+        root = BeautifulSoup(markup, 'lxml')
 
-        anchors = root.findall('.//a')
+        anchors = root.find_all('a')
         for anchor in anchors:
             href = anchor.get('href')
             if href is None:
@@ -159,10 +160,9 @@ class BestRace(RaceResults):
         hr.set('class', 'race_header')
         div.append(hr)
 
-        tree = ET.parse(race_file)
-        root = tree.getroot()
-        root = self.remove_namespace(root)
-        source_title = root.findall('.//title')[0]
+        markup = open(race_file).read()
+        root = BeautifulSoup(markup, 'lxml')
+        source_title = root.find_all('title')[0]
 
         h1 = ET.Element('h1')
         h1.text = source_title.text
@@ -197,7 +197,7 @@ class BestRace(RaceResults):
 
         """
         try:
-            pre = root.findall('.//pre')[0]
+            pre = root.find_all('pre')[0]
         except IndexError:
             return('')
 

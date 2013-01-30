@@ -178,8 +178,8 @@ class CoolRunning(RaceResults):
                 urls.add(parts[-1])
 
                 inner_race_file = self.download_race(inner_anchor,
-                        inner_url=True,
-                        state=state)
+                                                     inner_url=True,
+                                                     state=state)
                 if inner_race_file is None:
                     continue
 
@@ -483,6 +483,21 @@ class CoolRunning(RaceResults):
             local_file = None
 
         return(local_file)
+
+    def local_tidy(self, html_file):
+        """Clean up the HTML, as it is often invalid."""
+
+        # This is an IE conditional comment that Excel likes to produce.
+        # Have only seen this on CoolRunning.
+        # Get rid of it before running through the common tidy process.
+        html = open(html_file, 'r').read()
+        html = html.replace('<![if supportMisalignedColumns]>', '')
+        html = html.replace('<![endif]>', '')
+        with open(html_file, 'w') as f:
+            f.write(html)
+
+        # And now call the common tidy process.
+        RaceResults.local_tidy(self, html_file)
 
     def compile_local_results(self):
         """

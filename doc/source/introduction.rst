@@ -21,8 +21,8 @@ Python.  The system version of Python on Snow Leopard (10.6) will
 not work out-of-the-box.  The required minimum ports are
 
 * python27
-* tidy
-* py27-utidylib
+* py27-beautifulsoup4
+* py27-lxml
 
 RaceResults does not yet work with Python versions 3.0 or above.
 
