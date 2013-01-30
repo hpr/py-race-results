@@ -10,14 +10,10 @@ import rr
 class TestNYRR(unittest.TestCase):
 
     def setUp(self):
-        self.membership_file = tempfile.NamedTemporaryFile(delete=False,
-                suffix=".txt").name
-        self.results_file = tempfile.NamedTemporaryFile(delete=False,
-                suffix=".txt").name
+        self.results_file = tempfile.NamedTemporaryFile(suffix=".txt")
 
     def tearDown(self):
-        os.remove(self.membership_file)
-        os.remove(self.results_file)
+        pass
 
     def test_web_download(self):
         """
@@ -26,12 +22,12 @@ class TestNYRR(unittest.TestCase):
         start_date = datetime.date(2012, 12, 14)
         stop_date = datetime.date(2012, 12, 15)
         o = rr.NewYorkRR(verbose='critical',
-                output_file=self.results_file,
-                team='RARI',
-                start_date=start_date,
-                stop_date=stop_date)
+                         output_file=self.results_file.name,
+                         team='RARI',
+                         start_date=start_date,
+                         stop_date=stop_date)
         o.run()
-        tree = ET.parse(self.results_file)
+        tree = ET.parse(self.results_file.name)
         root = tree.getroot()
         root = o.remove_namespace(root)
 

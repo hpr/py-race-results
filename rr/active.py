@@ -3,7 +3,7 @@ import datetime
 import logging
 import os
 import re
-import urllib
+import urllib.request
 import xml.etree.cElementTree as ET
 
 from bs4 import BeautifulSoup
@@ -111,10 +111,11 @@ class Active(RaceResults):
         """
         We assume that we have the master file stored locally.
         """
-        markup = open(self.master_file).read()
+        with open(self.master_file, 'r', encoding='utf-8') as fp:
+            markup = fp.read()
         root = BeautifulSoup(markup, 'lxml')
-        divs = [div for div in root.find_all('div') if div.has_key('class') and
-                div.get('class') == ['result-title']]
+        divs = [div for div in root.find_all('div')
+                if div.get('class') == ['result-title']]
 
         for result in divs:
 
@@ -136,7 +137,7 @@ class Active(RaceResults):
         it.
         """
         url = self.base_url + relative_event_url
-        self.logger.info('Downloading %s...' % url)
+        self.logger.info('Downloading event, %s...' % url)
         self.download_file(url, 'event.html')
         self.local_tidy('event.html')
 
@@ -163,7 +164,7 @@ class Active(RaceResults):
         events offered that day, like the Half Marathon and 8K.
         """
         self.downloaded_url = self.base_url + relative_url
-        self.logger.info('Downloading %s...' % self.downloaded_url)
+        self.logger.info('Downloading sub event, %s...' % self.downloaded_url)
 
         local_file = 'sub_event.html'
         self.download_file(self.downloaded_url, local_file)
@@ -183,7 +184,8 @@ class Active(RaceResults):
                                \s+id=\s*"table_search"
                                \s+method=\s*"get"
                                >""", re.VERBOSE)
-        html = open(local_file).read()
+        with open(local_file, 'r', encoding='utf-8') as fp:
+            html = fp.read()
         m = regex.search(html)
         if m is not None:
             self.process_csv_form(local_file, m.group('action'))
@@ -243,6 +245,7 @@ class Active(RaceResults):
         # Download the CSV file.
         url = ("http://results.active.com" + relative_url +
                ".csv?per_page=100000")
+        self.logger.info("Downloading CSV file %s" % url)
         self.download_file(url, "event.csv")
 
         trs = self.process_csv_file('event.csv')
@@ -300,19 +303,22 @@ class Active(RaceResults):
             results.  If the list is [], then no results were found.
         """
         trs = []
-        for row in csv.reader(open('event.csv')):
-            # the 3rd row item has the name for us to search.
-            for frst, lst in zip(self.first_name_regex, self.last_name_regex):
-                firstname_m = frst.search(row[2])
-                lastname_m = lst.search(row[2])
-                if firstname_m is not None and lastname_m is not None:
-                    # Construct an HTML row out of the CSV row.
-                    tr = ET.Element('tr')
-                    for item in row:
-                        td = ET.Element('td')
-                        td.text = item
-                        tr.append(td)
-                    trs.append(tr)
+        with open('event.csv', 'r', encoding='utf-8') as fp:
+            mlreader = csv.reader(fp)
+            for row in mlreader:
+                # the 3rd row item has the name for us to search.
+                for frst, lst in zip(self.first_name_regex,
+                                     self.last_name_regex):
+                    firstname_m = frst.search(row[2])
+                    lastname_m = lst.search(row[2])
+                    if firstname_m is not None and lastname_m is not None:
+                        # Construct an HTML row out of the CSV row.
+                        tr = ET.Element('tr')
+                        for item in row:
+                            td = ET.Element('td')
+                            td.text = item
+                            tr.append(td)
+                        trs.append(tr)
 
         if len(trs) == 0:
             return trs
@@ -350,21 +356,21 @@ class Active(RaceResults):
         url += 'utf8=%E2%9C%93'
 
         # Percent-encoding at work here.
-        query = urllib.urlencode({'[query]': ''})
-        source = urllib.urlencode({'[source]': 'event'})
-        location = urllib.urlencode({'[location]': self.location})
-        radius = urllib.urlencode({'[radius]': str(self.radius)})
+        query = urllib.parse.urlencode({'[query]': ''})
+        source = urllib.parse.urlencode({'[source]': 'event'})
+        location = urllib.parse.urlencode({'[location]': self.location})
+        radius = urllib.parse.urlencode({'[radius]': str(self.radius)})
 
         start_dict = {'[start_date]': self.start_date.strftime('%Y-%m-%d')}
-        start = urllib.urlencode(start_dict)
+        start = urllib.parse.urlencode(start_dict)
 
         stop_dict = {'[end_date]': self.stop_date.strftime('%Y-%m-%d')}
-        stop = urllib.urlencode(stop_dict)
+        stop = urllib.parse.urlencode(stop_dict)
 
         lst = [query, source, location, radius, start, stop]
         url += '&search' + '&search'.join(lst)
 
-        self.logger.debug('Downloading %s.' % url)
+        self.logger.debug('Downloading geographic search results, %s.' % url)
         self.download_file(url, self.master_file)
 
         self.local_tidy(self.master_file)
