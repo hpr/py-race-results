@@ -24,7 +24,9 @@ not work out-of-the-box.  The required minimum ports are
 * py32-beautifulsoup4
 * py32-lxml
 
-RaceResults does not yet work with Python versions 3.0 or above.
+Versions 0.2.0 and later of RaceResults no longer run on Python
+versions below 3.0 and currently require Python 3.2.  Version 0.1.1
+does run on Python version 2.7, however.
 
 Quick installation
 ------------------
