@@ -2,8 +2,7 @@ import datetime
 import logging
 import os
 import re
-import urllib
-import urllib2
+import urllib.request
 import xml.etree.cElementTree as ET
 
 from bs4 import BeautifulSoup
@@ -42,7 +41,8 @@ class NewYorkRR(RaceResults):
         # There are two forms used for searches.  The one that we want (list
         # all the results for an entire year) is the 2nd on that this regex
         # retrieves.
-        html = open(local_file).read()
+        with open(local_file) as fp:
+            html = fp.read()
         regex = re.compile(r"""<form
                                \s+name="(?P<name>\w+)"
                                \s+method=post
@@ -58,15 +58,17 @@ class NewYorkRR(RaceResults):
         post_params = {}
         post_params['NYRRYEAR'] = str(self.start_date.year)
         post_params['AESTIVACVNLIST'] = 'NYRRYEAR'
-        params = urllib.urlencode(post_params)
+        data = urllib.parse.urlencode(post_params)
+        data = data.encode()
 
         # Download the race list page for the specified year
         local_file = 'nyrrraces.html'
-        self.download_file(url, local_file, params)
+        self.download_file(url, local_file, data)
 
         # This is not valid HTML.  Need to get rid of some bad FORMs,
         # none of which are needed.
-        html = open(local_file).read()
+        with open(local_file, 'r', encoding='utf-8') as fp:
+            html = fp.read()
         html = html.replace('form', 'div')
         with open(local_file, 'w') as f:
             f.write(html)
@@ -114,7 +116,8 @@ class NewYorkRR(RaceResults):
         self.local_tidy(local_file)
 
         # There should be a single form.
-        markup = open(local_file).read()
+        with open(local_file, 'r', encoding='utf-8') as fp:
+            markup = fp.read()
         root = BeautifulSoup(markup, 'lxml')
         form = root.find_all('form')[0]
 
@@ -133,20 +136,22 @@ class NewYorkRR(RaceResults):
         post_params['AESTIVACVNLIST'] = 'overalltype,input.agegroup.m,'
         post_params['AESTIVACVNLIST'] += 'input.agegroup.f,teamgender'
         post_params['AESTIVACVNLIST'] += 'team_code'
-        params = urllib.urlencode(post_params)
+        data = urllib.parse.urlencode(post_params)
+        data = data.encode()
 
         # Provide all the search parameters for this race.  This includes, most
         # importantly, the team code, i.e. RARI for Raritan Valley Road
         # Runners.
         url = form.get('action')
         local_file = 'nyrrresult.html'
-        self.download_file(url, local_file, params)
+        self.download_file(url, local_file, data)
         self.local_tidy(local_file)
 
         # If there were no results for the specified team, then the html will
         # contain some red text to the effect of "Your search returns no
         # match."
-        html = open(local_file).read()
+        with open(local_file, 'r', encoding='utf-8') as fp:
+            html = fp.read()
         if re.search("Your search returns no match.", html) is not None:
             return
 

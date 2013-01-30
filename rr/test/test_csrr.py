@@ -17,58 +17,52 @@ class TestCompuscore(unittest.TestCase):
 
         # Make test data files into fixtures.  We need to do it before
         # changing directories.
-        self.redcross_file = tempfile.NamedTemporaryFile(delete=False,
-                suffix=".htm").name
-        filename = pkg_resources.resource_filename(
-                rr.__name__, "test/testdata/redcross.htm")
-        shutil.copyfile(filename, self.redcross_file)
+        self.redcross_file = tempfile.NamedTemporaryFile(suffix=".htm")
+        relfile = "test/testdata/redcross.htm"
+        filename = pkg_resources.resource_filename(rr.__name__, relfile)
+        shutil.copyfile(filename, self.redcross_file.name)
 
-        self.xc_file = tempfile.NamedTemporaryFile(delete=False,
-                suffix=".htm").name
-        filename = pkg_resources.resource_filename(
-                rr.__name__, "test/testdata/joxc.htm")
-        shutil.copyfile(filename, self.xc_file)
+        self.xc_file = tempfile.NamedTemporaryFile(suffix=".htm")
+        relfile = "test/testdata/joxc.htm"
+        filename = pkg_resources.resource_filename(rr.__name__, relfile)
+        shutil.copyfile(filename, self.xc_file.name)
 
         # Write test version of the membership file.
-        self.membership_file = tempfile.NamedTemporaryFile(delete=False,
-                suffix=".txt").name
+        self.membership_file = tempfile.NamedTemporaryFile(suffix=".txt")
 
         # We need a file to use for a list of race files.
-        self.racelist_file = tempfile.NamedTemporaryFile(delete=False,
-                suffix=".txt").name
+        self.racelist_file = tempfile.NamedTemporaryFile(suffix=".txt")
 
         # We need a file to use for writing race results.
-        self.results_file = tempfile.NamedTemporaryFile(delete=False,
-                suffix=".txt").name
+        self.results_file = tempfile.NamedTemporaryFile(suffix=".txt")
 
         # Generic membership list
         self.membership_list = ['FITZGERALD,ROBERT\n', 'STEVENS,JOANNA\n']
         self.joxc_membership_list = ['FOSTER,BILLY\n', 'FOSTER,JAIME\n']
 
     def tearDown(self):
-
-        # Remove all the other temporary files.
-        os.unlink(self.membership_file)
-        os.unlink(self.racelist_file)
-        os.unlink(self.redcross_file)
-        os.unlink(self.xc_file)
-        if os.path.exists(self.results_file):
-            os.unlink(self.results_file)
+        self.membership_file.close()
+        self.racelist_file.close()
+        self.redcross_file.close()
+        self.xc_file.close()
+        self.results_file.close()
 
     def populate_racelist_file(self, race_files):
         """
         Put test races into a racelist file.
         """
-        with open(self.racelist_file, 'w') as fp:
+        with open(self.racelist_file.name, 'w') as fp:
             for race_file in race_files:
                 fp.write(race_file)
+            fp.flush()
 
     def populate_membership_file(self, membership_list):
         """
         Put some names into a faux membership file.
         """
-        with open(self.membership_file, 'w') as fp:
+        with open(self.membership_file.name, 'w') as fp:
             fp.writelines(membership_list)
+            fp.flush()
 
     def test_racelist(self):
         """
@@ -76,13 +70,13 @@ class TestCompuscore(unittest.TestCase):
         race files.
         """
         self.populate_membership_file(self.membership_list)
-        self.populate_racelist_file([self.redcross_file])
+        self.populate_racelist_file([self.redcross_file.name])
         obj = rr.CompuScore(verbose='critical',
-                start_date=datetime.datetime.now(),
-                stop_date=datetime.datetime.now(),
-                memb_list=self.membership_file,
-                race_list=self.racelist_file,
-                output_file=self.results_file)
+                            start_date=datetime.datetime.now(),
+                            stop_date=datetime.datetime.now(),
+                            memb_list=self.membership_file.name,
+                            race_list=self.racelist_file.name,
+                            output_file=self.results_file.name)
         obj.run()
         tree = ET.parse(self.results_file)
         root = tree.getroot()
@@ -99,9 +93,9 @@ class TestCompuscore(unittest.TestCase):
         self.populate_membership_file(self.joxc_membership_list)
         self.populate_racelist_file([self.xc_file])
         obj = rr.CompuScore(verbose='critical',
-                memb_list=self.membership_file,
-                race_list=self.racelist_file,
-                output_file=self.results_file)
+                            memb_list=self.membership_file,
+                            race_list=self.racelist_file,
+                            output_file=self.results_file)
         obj.run()
         tree = ET.parse(self.results_file)
         root = tree.getroot()
@@ -129,10 +123,10 @@ class TestCompuscore(unittest.TestCase):
         """
         self.populate_membership_file(self.membership_list)
         obj = rr.CompuScore(verbose='critical',
-                start_date=datetime.date(2012, 1, 1),
-                stop_date=datetime.date(2012, 2, 28),
-                memb_list=self.membership_file,
-                output_file=self.results_file)
+                            start_date=datetime.date(2012, 1, 1),
+                            stop_date=datetime.date(2012, 2, 28),
+                            memb_list=self.membership_file.name,
+                            output_file=self.results_file.name)
         obj.run()
         tree = ET.parse(self.results_file)
         root = tree.getroot()
@@ -151,10 +145,10 @@ class TestCompuscore(unittest.TestCase):
         """
         self.populate_membership_file(['FOSTER,BILLY\n'])
         obj = rr.CompuScore(verbose='critical',
-                start_date=datetime.date(2013, 1, 2),
-                stop_date=datetime.date(2013, 1, 2),
-                memb_list=self.membership_file,
-                output_file=self.results_file)
+                            start_date=datetime.date(2013, 1, 2),
+                            stop_date=datetime.date(2013, 1, 2),
+                            memb_list=self.membership_file.name,
+                            output_file=self.results_file.name)
         obj.run()
 
         # "no results" means that the body of the output file is empty.

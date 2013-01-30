@@ -16,53 +16,57 @@ class TestBestRace(unittest.TestCase):
     def setUp(self):
 
         # Make copies of the test files as fixtures.
-        self.viking_race_file = tempfile.NamedTemporaryFile(delete=False,
-                suffix=".htm").name
-        filename = pkg_resources.resource_filename(rr.__name__,
-                "test/testdata/121202SB5.HTM")
-        shutil.copyfile(filename, self.viking_race_file)
+        self.viking_race_file = tempfile.NamedTemporaryFile(suffix=".htm")
+        #self.viking_race_file = tempfile.NamedTemporaryFile(delete=False,
+        #        suffix=".htm").name
+        relfile "test/testdata/121202SB5.HTM"
+        filename = pkg_resources.resource_filename(rr.__name__, relfile)
+        shutil.copyfile(filename, self.viking_race_file.name)
 
         # Create other fixtures that are easy to clean up later.
-        self.membership_file = tempfile.NamedTemporaryFile(delete=False,
-                suffix=".txt").name
-        self.racelist_file = tempfile.NamedTemporaryFile(delete=False,
-                suffix=".txt").name
-        self.results_file = tempfile.NamedTemporaryFile(delete=False,
-                suffix=".txt").name
+        self.membership_file = tempfile.NamedTemporaryFile(suffix=".txt")
+        self.racelist_file = tempfile.NamedTemporaryFile(suffix=".txt")
+        self.results_file = tempfile.NamedTemporaryFile(suffix=".txt")
 
     def tearDown(self):
         # Remove other test fixtures.
-        os.unlink(self.membership_file)
-        os.unlink(self.racelist_file)
-        os.unlink(self.viking_race_file)
-        if os.path.exists(self.results_file):
-            os.unlink(self.results_file)
+        self.membership_file.close()
+        self.racelist_file.close()
+        self.viking_race_file.close()
+        self.results_file.close()
+        #os.unlink(self.membership_file)
+        #os.unlink(self.racelist_file)
+        #os.unlink(self.viking_race_file)
+        #if os.path.exists(self.results_file):
+        #    os.unlink(self.results_file)
 
     def populate_racelist_file(self, races):
         """
         Put a test race into a racelist file.
         """
-        with open(self.racelist_file, 'w') as fp:
+        with open(self.racelist_file.name, 'w') as fp:
             for race_file in races:
                 fp.write(race_file)
+            fp.flush()
 
     def populate_membership_file(self):
         """
         Put some names into a faux membership file.
         """
-        with open(self.membership_file, 'w') as fp:
+        with open(self.membership_file.name, 'w') as fp:
             fp.write('STRAWN,MARK\n')
             fp.write('CARR,MICHAEL\n')
+            fp.flush()
 
     def test_racelist(self):
         self.populate_membership_file()
-        self.populate_racelist_file([self.viking_race_file])
+        self.populate_racelist_file([self.viking_race_file.name])
         o = rr.BestRace(verbose='critical',
-                memb_list=self.membership_file,
-                race_list=self.racelist_file,
-                output_file=self.results_file)
+                        memb_list=self.membership_file.name,
+                        race_list=self.racelist_file.name,
+                        output_file=self.results_file.name)
         o.run()
-        tree = ET.parse(self.results_file)
+        tree = ET.parse(self.results_file.name)
         root = tree.getroot()
         p = root.findall('.//div/pre')
         self.assertTrue("MICHAEL CARR" in p[0].text)
@@ -76,10 +80,10 @@ class TestBestRace(unittest.TestCase):
         start_date = datetime.datetime(2012, 12, 9)
         stop_date = datetime.datetime(2012, 12, 10)
         o = rr.BestRace(verbose='critical',
-                memb_list=self.membership_file,
-                output_file=self.results_file,
-                start_date=start_date,
-                stop_date=stop_date)
+                        memb_list=self.membership_file.name,
+                        output_file=self.results_file.name,
+                        start_date=start_date,
+                        stop_date=stop_date)
         o.run()
         root = ET.parse(self.results_file).getroot()
         p = root.findall('.//div/pre')

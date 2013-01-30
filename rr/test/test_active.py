@@ -2,6 +2,7 @@ import datetime
 import os
 import pkg_resources
 import tempfile
+import time
 import unittest
 import xml.etree.cElementTree as ET
 
@@ -13,25 +14,22 @@ class TestActive(unittest.TestCase):
     Test parsing results from Active.
     """
     def setUp(self):
-        self.membership_file = tempfile.NamedTemporaryFile(delete=False,
-                suffix=".txt").name
-        self.racelist_file = tempfile.NamedTemporaryFile(delete=False,
-                suffix=".txt").name
-        self.results_file = tempfile.NamedTemporaryFile(delete=False,
-                suffix=".html").name
+        self.membership_file = tempfile.NamedTemporaryFile(suffix=".txt")
+        self.racelist_file = tempfile.NamedTemporaryFile(suffix=".txt")
+        self.results_file = tempfile.NamedTemporaryFile(suffix=".html")
 
     def tearDown(self):
-        os.unlink(self.membership_file)
-        os.unlink(self.racelist_file)
-        if os.path.exists(self.results_file):
-            os.unlink(self.results_file)
+        self.membership_file.close()
+        self.racelist_file.close()
+        self.results_file.close()
 
     def populate_membership_file(self, membership_list):
         """
         Put some names into a faux membership file.
         """
-        with open(self.membership_file, 'w') as fp:
+        with open(self.membership_file.name, 'w') as fp:
             fp.writelines(membership_list)
+            fp.flush()
 
     def test_web_csv_download(self):
         """
@@ -41,14 +39,14 @@ class TestActive(unittest.TestCase):
         start_date = datetime.date(2013, 1, 1)
         stop_date = datetime.date(2013, 1, 31)
         o = Active(verbose='critical',
-                output_file=self.results_file,
-                location="New Brunswick, NJ",
-                radius="100",
-                memb_list=self.membership_file,
-                start_date=start_date,
-                stop_date=stop_date)
+                   output_file=self.results_file.name,
+                   location="New Brunswick, NJ",
+                   radius="100",
+                   memb_list=self.membership_file.name,
+                   start_date=start_date,
+                   stop_date=stop_date)
         o.run()
-        tree = ET.parse(self.results_file)
+        tree = ET.parse(self.results_file.name)
         root = tree.getroot()
         root = o.remove_namespace(root)
 
@@ -69,14 +67,14 @@ class TestActive(unittest.TestCase):
         start_date = datetime.date(2012, 12, 2)
         stop_date = datetime.date(2012, 12, 2)
         o = Active(verbose='critical',
-                output_file=self.results_file,
-                memb_list=self.membership_file,
-                location="Boston, MA",
-                radius="100",
-                start_date=start_date,
-                stop_date=stop_date)
+                   output_file=self.results_file.name,
+                   memb_list=self.membership_file.name,
+                   location="Boston, MA",
+                   radius="100",
+                   start_date=start_date,
+                   stop_date=stop_date)
         o.run()
-        tree = ET.parse(self.results_file)
+        tree = ET.parse(self.results_file.name)
         root = tree.getroot()
         root = o.remove_namespace(root)
 

@@ -2,7 +2,7 @@ from distutils.core import setup
 
 setup(
     name='RaceResults',
-    version='0.1.1',
+    version='0.2.0',
     author='John Evans',
     author_email='john.g.evans.ne@gmail.com',
     url='http://pypi.python.org/pypi/RaceResults',
@@ -15,7 +15,7 @@ setup(
     description='Race results parsing',
     classifiers=[
         "Programming Language :: Python",
-        "Programming Language :: Python :: 2.7",
+        "Programming Language :: Python :: 3.2",
         "Programming Language :: Python :: Implementation :: CPython",
         "License :: OSI Approved :: MIT License",
         "Development Status :: 4 - Beta",

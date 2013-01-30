@@ -1,12 +1,14 @@
 import collections
-import cookielib
+import http.cookiejar
 import csv
+from http.client import IncompleteRead
 import logging
-#import tidy
-from bs4 import BeautifulSoup
-import urllib2
+import time
+import urllib.request
 import xml.dom.minidom
 import xml.etree.cElementTree as ET
+
+from bs4 import BeautifulSoup
 
 
 class RaceResults:
@@ -54,16 +56,17 @@ class RaceResults:
         Smith,Joe, ...
         """
 
-        mlreader = csv.reader(open(self.memb_list, 'r'))
-        first_name = []
-        first_name_regex = []
-        last_name = []
-        last_name_regex = []
-        for row in mlreader:
-            lname = row[0]
-            fname = row[1]
-            first_name.append(fname)
-            last_name.append(lname)
+        with open(self.memb_list) as csvfile:
+            mlreader = csv.reader(csvfile)
+            first_name = []
+            first_name_regex = []
+            last_name = []
+            last_name_regex = []
+            for row in mlreader:
+                lname = row[0]
+                fname = row[1]
+                first_name.append(fname)
+                last_name.append(lname)
 
         FirstLast = collections.namedtuple('FirstLastName', ['first', 'last'])
         names = FirstLast(first=first_name, last=last_name)
@@ -73,20 +76,12 @@ class RaceResults:
         """
         Tidy up the HTML.
         """
-        #html = open(html_file, 'r').read()
-        #options = dict(output_xhtml=1,
-        #        add_xml_decl=1,
-        #        indent=1,
-        #        numeric_entities=True,
-        #        drop_proprietary_attributes=True,
-        #        bare=True,
-        #        word_2000=True,
-        #        tidy_mark=1,
-        #        hide_comments=True,
-        #        new_inline_tags='fb:like')
-        #thtml = tidy.parseString(html, **options)
-
-        markup = open(html_file).read()
+        try:
+            with open(html_file, encoding='utf-8') as fp:
+                markup = fp.read()
+        except UnicodeDecodeError:
+            with open(html_file, encoding='iso-8859-1') as fp:
+                markup = fp.read()
         soup = BeautifulSoup(markup, "lxml")
 
         import codecs
@@ -129,15 +124,16 @@ class RaceResults:
         """
         # cookie support needed for NYRR results.
         if self.cj is None:
-            self.cj = cookielib.LWPCookieJar()
-        cookie_processor = urllib2.HTTPCookieProcessor(self.cj)
-        opener = urllib2.build_opener(cookie_processor)
-        urllib2.install_opener(opener)
+            self.cj = http.cookiejar.LWPCookieJar()
+        cookie_processor = urllib.request.HTTPCookieProcessor(self.cj)
+        opener = urllib.request.build_opener(cookie_processor)
+        urllib.request.install_opener(opener)
 
         headers = {'User-Agent': self.user_agent}
-        req = urllib2.Request(url, None, headers)
-        response = urllib2.urlopen(req, params)
-        html = response.read()
+        req = urllib.request.Request(url, None, headers)
+        response = urllib.request.urlopen(req, params)
+        html = response.readall()
+
         with open(local_file, 'wb') as f:
             f.write(html)
 
