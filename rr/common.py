@@ -16,10 +16,16 @@ class RaceResults:
     Attributes:
         start_date, stop_date:  date range to restrict race searches
         memb_list:  membership list
-        race_list:  file containing list of races
+        race_list:  file containing list of race files
         output_file:  final race results file
         verbose:  how much output to produce
-        logger: handles verbosity of program execution
+        logger: handles verbosity of program execution.  All is logged to
+            standard output.
+        cookie_jar:  repository for handling http cookies
+        user_agent:  masquerade as browser because some sites do not like
+            "Python-urllib"
+        downloaded_url:  URL to a race that has been downloaded.  We link back
+            to it in the resulting output.
     """
 
     def __init__(self):
@@ -45,7 +51,7 @@ class RaceResults:
         user_agent += "Safari/535.19"
         self.user_agent = user_agent
 
-        self.cj = None
+        self.cookie_jar = None
 
     def parse_membership_list(self):
         """
@@ -123,9 +129,9 @@ class RaceResults:
             params:  POST parameters to supply
         """
         # cookie support needed for NYRR results.
-        if self.cj is None:
-            self.cj = http.cookiejar.LWPCookieJar()
-        cookie_processor = urllib.request.HTTPCookieProcessor(self.cj)
+        if self.cookie_jar is None:
+            self.cookie_jar = http.cookiejar.LWPCookieJar()
+        cookie_processor = urllib.request.HTTPCookieProcessor(self.cookie_jar)
         opener = urllib.request.build_opener(cookie_processor)
         urllib.request.install_opener(opener)
 
