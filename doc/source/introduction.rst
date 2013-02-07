@@ -119,7 +119,15 @@ results within 100 miles of Boston, MA, one would type the following::
 
 Membership File
 ---------------
-The club membership file should be a CSV file.  The first two fields
-in the CSV file must be FIRST NAME, LAST NAME.  Other than that,
-the format of the CSV file can be whatever else you put into it.
+The club membership file should be a CSV file with the first line being
+a header line.  The first two fields in the CSV file must be LAST
+NAME, FIRST NAME.  The remaining fields do not matter.  For example::
+
+   LAST,FIRST,DOB
+   Doe,Jane,1967-12-1 
+   Smith,Joe,1980-5-1 
+   Warner,Johanna,1990-5-1 
+   .
+   .
+   .
 
