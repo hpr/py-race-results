@@ -1,3 +1,6 @@
+February 07, 2013 John Evans <john.g.evans.ne@gmail.com> - 0.2.5
+- Replaced ElementTree with BeautifulSoup in test suite.
+
 February 06, 2013 John Evans <john.g.evans.ne@gmail.com> - 0.2.4
 - Improved html documentation re membership list.
 - Improved code documentation re cookie processing.
