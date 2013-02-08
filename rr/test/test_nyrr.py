@@ -2,7 +2,8 @@ import datetime
 import os
 import tempfile
 import unittest
-import xml.etree.cElementTree as ET
+
+from bs4 import BeautifulSoup
 
 import rr
 
@@ -27,16 +28,14 @@ class TestNYRR(unittest.TestCase):
                          start_date=start_date,
                          stop_date=stop_date)
         o.run()
-        tree = ET.parse(self.results_file.name)
-        root = tree.getroot()
-        root = o.remove_namespace(root)
 
-        # This should find two divs.  One is the top-level "race" div, the 2nd
-        # is an interior "provenance" div.
-        divs = root.findall('.//div[@class]')
-        self.assertEqual(len(divs), 2)
-        self.assertEqual(divs[0].get('class'), 'race')
-        self.assertEqual(divs[1].get('class'), 'provenance')
+        with open(self.results_file.name, 'r') as f:
+            html = f.read()
+            soup = BeautifulSoup(html, 'lxml')
+            self.assertTrue("Petit" in
+                            soup.div.table.contents[3].contents[1].contents[0])
+            self.assertTrue("Ron" in
+                            soup.div.table.contents[3].contents[3].contents[0])
 
 
 if __name__ == "__main__":

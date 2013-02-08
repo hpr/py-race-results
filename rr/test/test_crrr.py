@@ -4,7 +4,8 @@ import pkg_resources
 import shutil
 import tempfile
 import unittest
-import xml.etree.cElementTree as ET
+
+from bs4 import BeautifulSoup
 
 import rr
 
@@ -79,10 +80,12 @@ class TestCoolRunning(unittest.TestCase):
                            race_list=self.racelist_file.name,
                            output_file=self.results_file.name)
         o.run()
-        root = ET.parse(self.results_file).getroot()
-        p = root.findall('.//div/pre')
-        self.assertTrue("Caleb Gartner" in p[0].text)
-        self.assertTrue("Sean Spalding" in p[0].text)
+
+        with open(self.results_file.name, 'r') as f:
+            html = f.read()
+            soup = BeautifulSoup(html, 'lxml')
+            self.assertTrue("Caleb Gartner" in soup.div.pre.contents[0])
+            self.assertTrue("Sean Spalding" in soup.div.pre.contents[0])
 
     def test_cape_cod_road_runners(self):
         """
@@ -95,14 +98,12 @@ class TestCoolRunning(unittest.TestCase):
                            race_list=self.racelist_file.name,
                            output_file=self.results_file.name)
         o.run()
-        tree = ET.parse(self.results_file)
-        root = tree.getroot()
-        root = o.remove_namespace(root)
 
-        # Mike Northon shows up in the 2nd TR row (the first
-        # real result).
-        p = root.findall('.//div/table/tr/td')
-        self.assertTrue("MIKE NORTON" in p[9].text)
+        with open(self.results_file.name, 'r') as f:
+            html = f.read()
+            soup = BeautifulSoup(html, 'lxml')
+            self.assertTrue("MIKE NORTON" in
+                            soup.div.table.contents[3].contents[3].contents[0])
 
     def test_misaligned_columns(self):
         """
@@ -118,7 +119,9 @@ class TestCoolRunning(unittest.TestCase):
         o.local_tidy(self.colonialrr_file.name)
 
         # The test succeeds if the file can be parsed.
-        ET.parse(self.colonialrr_file)
+        with open(self.colonialrr_file.name, 'r') as f:
+            html = f.read()
+            soup = BeautifulSoup(html, 'lxml')
 
     def test_web_download(self):
         """
@@ -132,11 +135,11 @@ class TestCoolRunning(unittest.TestCase):
                            start_date=start_date,
                            stop_date=stop_date)
         o.run()
-        tree = ET.parse(self.results_file)
-        root = tree.getroot()
-        root = o.remove_namespace(root)
-        p = root.findall('.//div/pre')
-        self.assertTrue("John Banner" in p[0].text)
+
+        with open(self.results_file.name, 'r') as f:
+            html = f.read()
+            soup = BeautifulSoup(html, 'lxml')
+            self.assertTrue("John Banner" in soup.div.pre.contents[0])
 
 
 if __name__ == "__main__":

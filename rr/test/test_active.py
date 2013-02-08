@@ -55,9 +55,9 @@ class TestActive(unittest.TestCase):
 
             # There are two results to verify.
             self.assertTrue("Jason Kennedy" in
-                    divs[0].table.contents[3].contents[5].contents[0])
+                            divs[0].table.contents[3].contents[5].contents[0])
             self.assertTrue("Jason Kennedy" in
-                    divs[2].table.contents[3].contents[5].contents[0])
+                            divs[2].table.contents[3].contents[5].contents[0])
 
     def test_raw_file_download(self):
         """
