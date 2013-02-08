@@ -1,4 +1,5 @@
 * Update doc/source/conf.py release number.
 * Update setup.py release number.
+* Update CHANGES.txt
 * Merge onto master branch.
 * Tag the release.

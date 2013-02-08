@@ -4,7 +4,8 @@ import pkg_resources
 import tempfile
 import time
 import unittest
-import xml.etree.cElementTree as ET
+
+from bs4 import BeautifulSoup
 
 from rr import Active
 
@@ -46,18 +47,17 @@ class TestActive(unittest.TestCase):
                    start_date=start_date,
                    stop_date=stop_date)
         o.run()
-        tree = ET.parse(self.results_file.name)
-        root = tree.getroot()
-        root = o.remove_namespace(root)
 
-        # This should find four divs.  Two are the top-level "race" divs,
-        # the other two are interior "provenance" div.
-        divs = root.findall('.//div[@class]')
-        self.assertEqual(len(divs), 4)
-        self.assertEqual(divs[0].get('class'), 'race')
-        self.assertEqual(divs[1].get('class'), 'provenance')
-        self.assertEqual(divs[2].get('class'), 'race')
-        self.assertEqual(divs[3].get('class'), 'provenance')
+        with open(self.results_file.name, 'r') as f:
+            html = f.read()
+            soup = BeautifulSoup(html, 'lxml')
+            divs = soup.findAll('div')
+
+            # There are two results to verify.
+            self.assertTrue("Jason Kennedy" in
+                            divs[0].table.contents[3].contents[5].contents[0])
+            self.assertTrue("Jason Kennedy" in
+                            divs[2].table.contents[3].contents[5].contents[0])
 
     def test_raw_file_download(self):
         """
@@ -74,20 +74,13 @@ class TestActive(unittest.TestCase):
                    start_date=start_date,
                    stop_date=stop_date)
         o.run()
-        tree = ET.parse(self.results_file.name)
-        root = tree.getroot()
-        root = o.remove_namespace(root)
 
-        # This should find two divs.  One is the top-level "race" div,
-        # the other is an interior "provenance" div.
-        divs = root.findall('.//div[@class]')
-        self.assertEqual(len(divs), 2)
-        self.assertEqual(divs[0].get('class'), 'race')
-        self.assertEqual(divs[1].get('class'), 'provenance')
+        with open(self.results_file.name, 'r') as f:
+            html = f.read()
+            soup = BeautifulSoup(html, 'lxml')
+            divs = soup.findAll('div')
 
-        # Verify that we got the member result correct.
-        pre = root.findall('.//pre')
-        self.assertTrue("HIMBERGER" in pre[0].text)
+            self.assertTrue("PAUL HIMBERGER" in divs[0].pre.contents[0])
 
 
 if __name__ == "__main__":

@@ -4,7 +4,8 @@ import pkg_resources
 import shutil
 import tempfile
 import unittest
-import xml.etree.cElementTree as ET
+
+from bs4 import BeautifulSoup
 
 import rr
 
@@ -78,11 +79,11 @@ class TestCompuscore(unittest.TestCase):
                             race_list=self.racelist_file.name,
                             output_file=self.results_file.name)
         obj.run()
-        tree = ET.parse(self.results_file)
-        root = tree.getroot()
-        root = obj.remove_namespace(root)
-        p = root.findall('.//div/pre')
-        self.assertTrue("Robert Fitzgerald" in p[0].text)
+
+        with open(self.results_file.name, 'r') as f:
+            html = f.read()
+            soup = BeautifulSoup(html, 'lxml')
+            self.assertTrue("Robert Fitzgerald" in soup.div.pre.contents[0])
 
     @unittest.skip("Must await CompuScore refactoring.")
     def test_xcountry_banner(self):
@@ -128,11 +129,11 @@ class TestCompuscore(unittest.TestCase):
                             memb_list=self.membership_file.name,
                             output_file=self.results_file.name)
         obj.run()
-        tree = ET.parse(self.results_file)
-        root = tree.getroot()
-        root = obj.remove_namespace(root)
-        p = root.findall('.//div/pre')
-        self.assertTrue("Joanna Stevens" in p[0].text)
+
+        with open(self.results_file.name, 'r') as f:
+            html = f.read()
+            soup = BeautifulSoup(html, 'lxml')
+            self.assertTrue("Joanna Stevens" in soup.div.pre.contents[0])
 
     def test_empty_results_because_of_date(self):
         """
@@ -152,11 +153,10 @@ class TestCompuscore(unittest.TestCase):
         obj.run()
 
         # "no results" means that the body of the output file is empty.
-        tree = ET.parse(self.results_file)
-        root = tree.getroot()
-        root = obj.remove_namespace(root)
-        body = root.findall('.//body')
-        self.assertEqual(len(body[0].getchildren()), 0)
+        with open(self.results_file.name, 'r') as f:
+            html = f.read()
+            soup = BeautifulSoup(html, 'lxml')
+            self.assertEqual(soup.body.contents[0], '\n')
 
 
 if __name__ == "__main__":

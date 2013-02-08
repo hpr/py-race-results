@@ -4,7 +4,8 @@ import pkg_resources
 import shutil
 import tempfile
 import unittest
-import xml.etree.cElementTree as ET
+
+from bs4 import BeautifulSoup
 
 import rr
 
@@ -59,11 +60,12 @@ class TestBestRace(unittest.TestCase):
                         race_list=self.racelist_file.name,
                         output_file=self.results_file.name)
         o.run()
-        tree = ET.parse(self.results_file.name)
-        root = tree.getroot()
-        p = root.findall('.//div/pre')
-        self.assertTrue("MICHAEL CARR" in p[0].text)
-        self.assertTrue("MARK STRAWN" in p[0].text)
+
+        with open(self.results_file.name, 'r') as f:
+            html = f.read()
+            soup = BeautifulSoup(html, 'lxml')
+            self.assertTrue("MICHAEL CARR" in soup.div.pre.contents[0])
+            self.assertTrue("MARK STRAWN" in soup.div.pre.contents[0])
 
     def test_web_download(self):
         """
@@ -78,9 +80,11 @@ class TestBestRace(unittest.TestCase):
                         start_date=start_date,
                         stop_date=stop_date)
         o.run()
-        root = ET.parse(self.results_file).getroot()
-        p = root.findall('.//div/pre')
-        self.assertTrue("MARK STRAWN" in p[0].text)
+
+        with open(self.results_file.name, 'r') as f:
+            html = f.read()
+            soup = BeautifulSoup(html, 'lxml')
+            self.assertTrue("MARK STRAWN" in soup.div.pre.contents[0])
 
 
 if __name__ == "__main__":
