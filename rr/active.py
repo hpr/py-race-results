@@ -219,12 +219,12 @@ class Active(RaceResults):
         div = ET.Element('div')
         div.set('class', 'race')
 
-        root = ET.parse(source_file).getroot()
-        root = self.remove_namespace(root)
+        with open(source_file, 'r') as f:
+            html = f.read()
+        soup = BeautifulSoup(html, 'lxml')
 
-        titles = root.findall('.//title')
         h2 = ET.Element('h2')
-        h2.text = titles[0].text
+        h2.text = soup.title.contents[0]
         div.append(h2)
 
         provenance_div = self.set_provenance()
@@ -260,15 +260,15 @@ class Active(RaceResults):
 
         # Construct the HTML for the results.
         # Append the title and the provenance.
-        root = ET.parse(source_file).getroot()
-        root = self.remove_namespace(root)
+        with open(source_file, 'r') as f:
+            html = f.read()
+        soup = BeautifulSoup(html, 'lxml')
 
         div = ET.Element('div')
         div.set('class', 'race')
 
-        titles = root.findall('.//title')
         h2 = ET.Element('h2')
-        h2.text = titles[0].text
+        h2.text = soup.title.contents[0]
         div.append(h2)
 
         provenance_div = self.set_provenance()
