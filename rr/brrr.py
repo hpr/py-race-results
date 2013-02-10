@@ -164,10 +164,9 @@ class BestRace(RaceResults):
         with open(race_file) as fp:
             markup = fp.read()
         root = BeautifulSoup(markup, 'lxml')
-        source_title = root.find_all('title')[0]
 
         h1 = ET.Element('h1')
-        h1.text = source_title.text
+        h1.text = root.title.text
         div.append(h1)
 
         # Append the URL if possible.

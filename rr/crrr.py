@@ -9,6 +9,8 @@ import re
 import sys
 import xml.etree.cElementTree as ET
 
+from bs4 import BeautifulSoup
+
 from .common import RaceResults
 
 
@@ -118,20 +120,20 @@ class CoolRunning(RaceResults):
         local_state_file = state + '.shtml'
         pattern = self.construct_state_match_pattern(state)
 
-        tree = ET.parse(local_state_file)
-        root = tree.getroot()
-        root = self.remove_namespace(root)
-
-        anchor_pattern = './/a'
-        anchors = root.findall(anchor_pattern)
+        with open(local_state_file, 'r') as f:
+            markup = f.read()
+        soup = BeautifulSoup(markup, 'lxml')
+        anchors = soup.find_all('a')
 
         urls = set()
 
         for anchor in anchors:
 
-            href = anchor.get('href')
-            if href is None:
+            try:
+                href = anchor['href']
+            except KeyError:
                 continue
+
             match = pattern.search(href)
             if match is None:
                 continue
@@ -145,17 +147,10 @@ class CoolRunning(RaceResults):
             self.compile_race_results(race_file)
 
             # Now collect any secondary result files.
-            try:
-                tree = ET.parse(race_file)
-            except ET.ParseError:
-                self.logger.debug('ElementTree ParseError:  %s' % race_file)
-                continue
-            except:
-                raise
-            root = tree.getroot()
-            root = self.remove_namespace(root)
-
-            inner_anchors = root.findall(anchor_pattern)
+            with open(race_file) as f:
+                markup = f.read()
+            race_soup = BeautifulSoup(markup, 'lxml')
+            inner_anchors = race_soup.find_all('a')
 
             # construct the 2ndary pattern
             parts = race_file.split('.')
@@ -163,7 +158,7 @@ class CoolRunning(RaceResults):
             secondary_pattern = re.compile(s, re.DOTALL)
             for inner_anchor in inner_anchors:
 
-                href = inner_anchor.get('href')
+                href = inner_anchor['href']
                 if href is None:
                     continue
                 match = secondary_pattern.search(href)
@@ -189,20 +184,15 @@ class CoolRunning(RaceResults):
         """
         Compile race results for vanilla CoolRunning races.
         """
-        pattern = './/body/table/tr/td/table/tr/td/table/tr/td/div/pre'
+        with open(race_file, 'r') as f:
+            markup = f.read()
+        soup = BeautifulSoup(markup, 'lxml')
 
-        tree = ET.parse(race_file)
-        root = tree.getroot()
-        self.remove_namespace(root)
-        nodes = root.findall(pattern)
-
+        text = soup.pre.text
         results = []
-        for node in nodes:
-            #text = ET.tostring(node)
-            text = node.text
-            for line in text.split('\n'):
-                if self.match_against_membership(line):
-                    results.append(line)
+        for line in text.split('\n'):
+            if self.match_against_membership(line):
+                results.append(line)
 
         return results
 
@@ -211,23 +201,15 @@ class CoolRunning(RaceResults):
         Check to see if the current race file matches the usual
         pattern found on CoolRunning.
         """
-        pattern = './/body/table/tr/td/table/tr/td/table/tr/td/div/pre'
-
-        try:
-            tree = ET.parse(race_file)
-        except ET.ParseError:
-            self.logger.debug('XML_02 ParseError on %s' % race_file)
+        #pattern = './/body/table/tr/td/table/tr/td/table/tr/td/div/pre'
+        with open(race_file, 'r') as f:
+            markup = f.read()
+        soup = BeautifulSoup(markup, 'lxml')
+        
+        if soup.pre is None:
             return False
-        except:
-            raise
-
-        root = tree.getroot()
-        self.remove_namespace(root)
-        nodes = root.findall(pattern)
-        if len(nodes) > 0:
-            return True
         else:
-            return False
+            return True
 
     def is_ccrr_pattern(self, race_file):
         """
@@ -326,23 +308,18 @@ class CoolRunning(RaceResults):
 
         # The H1 tag has the race name.
         # The H1 tag comes from the only H1 tag in the race file.
-        tree = ET.parse(race_file)
-        root = tree.getroot()
-        root = self.remove_namespace(root)
-        pattern = './/h1'
-        source_h1 = root.findall(pattern)[0]
+        with open(race_file, 'r') as f:
+            markup = f.read()
+        root = BeautifulSoup(markup, 'lxml')
 
         h1 = ET.Element('h1')
-        h1.text = source_h1.text
+        h1.text = root.h1.text
         div.append(h1)
 
         # The first H2 tag has the location and date.
         # The H2 tag comes from the only H2 tag in the race file.
-        pattern = './/h2'
-        source_h2 = root.findall(pattern)[0]
-
         h2 = ET.Element('h2')
-        h2.text = source_h2.text
+        h2.text = root.h2.text
         div.append(h2)
 
         # Append the URL if possible.
