@@ -197,10 +197,21 @@ class CompuScore(RaceResults):
 
         # Append the URL if possible.
         if self.downloaded_url is not None:
-            text = '<p class="provenance">Complete results '
-            text += '<a href="%s">here</a> on Compuscore.</p>'
-            text %= self.downloaded_url
-            p = ET.XML(text)
+            p = ET.Element('p')
+            p.set('class', 'provenance')
+
+            span1 = ET.Element('span')
+            span1.text = 'Complete results '
+            anchor = ET.Element('a')
+            anchor.set('href', self.downloaded_url)
+            anchor.text = 'here'
+            span2 = ET.Element('span')
+            span2.text = ' on Compuscore.'
+
+            p.append(span1)
+            p.append(anchor)
+            p.append(span2)
+
             div.append(p)
 
         # Append the actual race results.  Consists of the column headings
