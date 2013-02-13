@@ -77,27 +77,25 @@ class NewYorkRR(RaceResults):
 
         # Parse out the list of races.  They are all in a
         # particular table.
-        tree = ET.parse(local_file)
-        root = self.remove_namespace(tree.getroot())
-        tables = root.findall('.//table')
-
+        with open(local_file, 'r') as f:
+            markup = f.read()
+        soup = BeautifulSoup(markup, 'lxml')
+        tables = soup.find_all('table')
         table = tables[7]
 
         # This is awful, all the entries are in a single table element.
         # The TD element has a P element, which has the list that we want.
-        tds = table.findall('.//td')
-        td = tds[0]
-        ps = td.findall('.//p')
-        p = ps[0]
-        links = [link for link in p.getchildren() if link.tag == 'a']
+        p = table.td.p
 
-        if len(links) == 0:
-            raise RuntimeError("No links found.  Please manually verify.")
-
+        links = p.find_all('a')
         for link in links:
-            url = link.get('href')
-            race_name = re.sub('\n *', '', link.text)
-            race_date = re.sub('\s', '', link.tail)
+
+            race_name = re.sub('\n *', '', link.text[0])
+            url = link['href']
+
+            # The next sibling is the race date.  In ElementTree parliance, this
+            # would be the "tail" of the anchor link.
+            race_date = re.sub('\s', '', link.nextSibling)
             race_date = datetime.datetime.strptime(race_date, "%m/%d/%y")
             race_date = datetime.date(race_date.year, race_date.month,
                                       race_date.day)
