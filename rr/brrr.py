@@ -171,10 +171,18 @@ class BestRace(RaceResults):
 
         # Append the URL if possible.
         if self.downloaded_url is not None:
-            text = '<p class="provenance">Complete results '
-            text += '<a href="%s">here</a> on BestRace.</p>'
-            text %= self.downloaded_url
-            p = ET.XML(text)
+            p = ET.Element('p')
+            p.set('class', 'provenance')
+            span = ET.Element('span')
+            span.text = 'Complete results '
+            p.append(span)
+            a = ET.Element('a')
+            a.set('href', self.downloaded_url)
+            a.text = 'here'
+            p.append(a)
+            span = ET.Element('span')
+            span.text = ' on BestRace.'
+            p.append(span)
             div.append(p)
 
         pre = ET.Element('pre')
