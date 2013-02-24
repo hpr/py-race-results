@@ -205,7 +205,7 @@ class CoolRunning(RaceResults):
         with open(race_file, 'r') as f:
             markup = f.read()
         soup = BeautifulSoup(markup, 'lxml')
-        
+
         if soup.pre is None:
             return False
         else:

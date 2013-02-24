@@ -93,8 +93,8 @@ class NewYorkRR(RaceResults):
             race_name = re.sub('\n *', '', link.text[0])
             url = link['href']
 
-            # The next sibling is the race date.  In ElementTree parliance, this
-            # would be the "tail" of the anchor link.
+            # The next sibling is the race date.  In ElementTree parliance,
+            # this would be the "tail" of the anchor link.
             race_date = re.sub('\s', '', link.nextSibling)
             race_date = datetime.datetime.strptime(race_date, "%m/%d/%y")
             race_date = datetime.date(race_date.year, race_date.month,
