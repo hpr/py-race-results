@@ -37,6 +37,12 @@ class TestCoolRunning(unittest.TestCase):
         filename = pkg_resources.resource_filename(rr.__name__, relfile)
         shutil.copyfile(filename, self.colonialrr_file.name)
 
+        # This file isn't parseable by ElementTree.
+        self.black_cat_file = tempfile.NamedTemporaryFile(suffix=".shtml")
+        relfile = "test/testdata/Mar2_BlackC_set1.shtml"
+        filename = pkg_resources.resource_filename(rr.__name__, relfile)
+        shutil.copyfile(filename, self.black_cat_file.name)
+
         # Create other fixtures that are easy to clean up later.
         self.membership_file = tempfile.NamedTemporaryFile(suffix=".txt")
         self.racelist_file = tempfile.NamedTemporaryFile(suffix=".txt")
@@ -50,6 +56,22 @@ class TestCoolRunning(unittest.TestCase):
         self.ccrr_file.close()
         self.results_file.close()
 
+    def populate_membership_file(self, lst=None):
+        """
+        Put some names into a faux membership file.
+        """
+        if lst is None:
+            with open(self.membership_file.name, 'w') as fp:
+                fp.write('GARTNER,CALEB\n')
+                fp.write('SPALDING,SEAN\n')
+                fp.write('BANNER,JOHN\n')
+                fp.write('NORTON,MIKE\n')
+                fp.flush()
+        else:
+            with open(self.membership_file.name, 'w') as fp:
+                for name_line in lst:
+                    fp.write(name_line)
+
     def populate_racelist_file(self, race_files):
         """
         Put a test race into a racelist file.
@@ -57,17 +79,6 @@ class TestCoolRunning(unittest.TestCase):
         with open(self.racelist_file.name, 'w') as fp:
             for race_file in race_files:
                 fp.write(race_file)
-            fp.flush()
-
-    def populate_membership_file(self):
-        """
-        Put some names into a faux membership file.
-        """
-        with open(self.membership_file.name, 'w') as fp:
-            fp.write('GARTNER,CALEB\n')
-            fp.write('SPALDING,SEAN\n')
-            fp.write('BANNER,JOHN\n')
-            fp.write('NORTON,MIKE\n')
             fp.flush()
 
     def test_racelist(self):
@@ -140,6 +151,25 @@ class TestCoolRunning(unittest.TestCase):
             html = f.read()
             soup = BeautifulSoup(html, 'lxml')
             self.assertTrue("John Banner" in soup.div.pre.contents[0])
+
+    def test_black_cat(self):
+        """
+        Black Cat race results for 2013 could not be processed because
+        ElementTree could not parse for the race banner header.
+        """
+        self.populate_membership_file('Popham,Michael')
+        self.populate_racelist_file([self.black_cat_file.name])
+        o = rr.CoolRunning(verbose='critical',
+                           memb_list=self.membership_file.name,
+                           race_list=self.racelist_file.name,
+                           output_file=self.results_file.name)
+        o.run()
+
+        with open(self.results_file.name, 'r') as f:
+            html = f.read()
+            soup = BeautifulSoup(html, 'lxml')
+            self.assertTrue("MICHAEL POPHAM" in
+                            soup.pre.contents[0])
 
 
 if __name__ == "__main__":

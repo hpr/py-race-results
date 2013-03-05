@@ -366,47 +366,40 @@ class CoolRunning(RaceResults):
         pre = ET.Element('pre')
         pre.set('class', 'actual_results')
 
-        root = ET.parse(race_file).getroot()
-        root = self.remove_namespace(root)
-        banner_text = self.parse_banner(root)
+        with open(race_file, 'r') as f:
+            markup = f.read()
+        soup = BeautifulSoup(markup, 'lxml')
+
+        banner_text = self.parse_banner(soup.pre)
 
         pre.text = banner_text + '\n'.join(result_lst)
         div.append(pre)
 
         return div
 
-    def parse_banner(self, root):
+    def parse_banner(self, tag):
         """
                    The Andrea Holden 5k Thanksgiving Race
          PLC    Time  Pace  PLC/Group  PLC/Sex Bib#   Name
            1   16:40  5:23    1 30-39    1 M   142 Brian Allen
 
         """
-        pattern = './/pre'
-        try:
-            pre = root.findall(pattern)[0]
-        except IndexError:
-            return('')
+        banner = ''
+        if (len(tag.findChildren()) > 1):
+            # Don't bother if the PRE tag has mixed content.
+            return banner
 
         # Stop when we find the first "1"
         # First line is <pre>, so skip that.
-        banner = ''
-        text = pre.text
-        for line in text.split('\n')[1:]:
+        text = tag.contents
+        for line in text:
             if re.match('\s+1', line):
                 # found it
                 break
             else:
-                banner += line + '\n'
+                banner += line
 
-        # If there are ANY html elements in here, then forget it, because the
-        # html elements will end up converted into entities, which we do not
-        # want.
-        if re.search('<.*?>', banner) is not None:
-            return('')
-        else:
-            banner += '\n'
-            return(banner)
+        return banner
 
     def match_against_membership(self, line):
         """
