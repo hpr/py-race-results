@@ -77,15 +77,33 @@ class TestCoolRunning(unittest.TestCase):
         Put a test race into a racelist file.
         """
         with open(self.racelist_file.name, 'w') as fp:
-            for race_file in race_files:
-                fp.write(race_file)
+            for racefile in race_files:
+                fp.write(racefile + '\n')
             fp.flush()
 
     def test_racelist(self):
         """
-        Test compiling race results from a list of local files.
+        Test compiling race results from a list of local files (just one).
         """
         self.populate_racelist_file([self.vanilla_crrr_file.name])
+        o = rr.CoolRunning(verbose='critical',
+                           memb_list=self.membership_file.name,
+                           race_list=self.racelist_file.name,
+                           output_file=self.results_file.name)
+        o.run()
+
+        with open(self.results_file.name, 'r') as f:
+            html = f.read()
+            soup = BeautifulSoup(html, 'lxml')
+            self.assertTrue("Caleb Gartner" in soup.div.pre.contents[0])
+            self.assertTrue("Sean Spalding" in soup.div.pre.contents[0])
+
+    def test_multiple_racelist(self):
+        """
+        Test compiling race results from a list of local files.
+        """
+        racelist = [self.vanilla_crrr_file.name, self.ccrr_file.name]
+        self.populate_racelist_file(racelist)
         o = rr.CoolRunning(verbose='critical',
                            memb_list=self.membership_file.name,
                            race_list=self.racelist_file.name,

@@ -482,10 +482,11 @@ class CoolRunning(RaceResults):
         """
         with open(self.race_list) as fp:
             for racefile in fp.readlines():
+                racefile = racefile.rstrip()
                 try:
                     self.logger.info('Processing file %s' % racefile)
                     self.local_tidy(racefile)
                     self.compile_race_results(racefile)
                 except IOError:
                     fmt = 'Encountered an error processing %s, skipping it.'
-                    self.logger.debug(fmt % line)
+                    self.logger.debug(fmt % racefile)
