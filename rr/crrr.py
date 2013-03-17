@@ -192,7 +192,7 @@ class CoolRunning(RaceResults):
         results = []
         for line in text.split('\n'):
             if self.match_against_membership(line):
-                results.append(line)
+                results.append(line + '\n')
 
         return results
 
@@ -372,7 +372,7 @@ class CoolRunning(RaceResults):
 
         banner_text = self.parse_banner(soup.pre)
 
-        pre.text = banner_text + '\n'.join(result_lst)
+        pre.text = banner_text + '\n'.join(result_lst) + '\n'
         div.append(pre)
 
         return div
@@ -389,15 +389,13 @@ class CoolRunning(RaceResults):
             # Don't bother if the PRE tag has mixed content.
             return banner
 
-        # Stop when we find the first "1"
-        # First line is <pre>, so skip that.
-        text = tag.contents
+        # Stop when we find the first leading "1"
+        text = tag.contents[0].split('\n')
         for line in text:
             if re.match('\s+1', line):
                 # found it
                 break
-            else:
-                banner += line
+            banner += line + '\n'
 
         return banner
 

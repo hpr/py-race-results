@@ -249,6 +249,7 @@ class CompuScore(RaceResults):
         We have a line of text from the race file.  Match it against the
         membership list.
         """
+        print(line)
         for idx in range(0, len(self.first_name_regex)):
             fregex = self.first_name_regex[idx]
             lregex = self.last_name_regex[idx]
@@ -277,6 +278,7 @@ class CompuScore(RaceResults):
         """
         with open(self.race_list) as fp:
             for racefile in fp.readlines():
+                racefile = racefile.rstrip()
                 self.logger.info('Processing %s...' % racefile)
                 self.local_tidy(racefile)
-            self.compile_race_results(racefile)
+                self.compile_race_results(racefile)

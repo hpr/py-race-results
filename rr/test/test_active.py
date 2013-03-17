@@ -37,8 +37,8 @@ class TestActive(unittest.TestCase):
         Verify that we can get CSV results from the web.
         """
         self.populate_membership_file(['KENNEDY,JASON'])
-        start_date = datetime.date(2013, 1, 1)
-        stop_date = datetime.date(2013, 1, 31)
+        start_date = datetime.date(2013, 1, 6)
+        stop_date = datetime.date(2013, 1, 6)
         o = Active(verbose='critical',
                    output_file=self.results_file.name,
                    location="New Brunswick, NJ",

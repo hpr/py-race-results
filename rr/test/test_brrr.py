@@ -40,7 +40,7 @@ class TestBestRace(unittest.TestCase):
         """
         with open(self.racelist_file.name, 'w') as fp:
             for race_file in races:
-                fp.write(race_file)
+                fp.write(race_file + '\n')
             fp.flush()
 
     def populate_membership_file(self):
@@ -54,7 +54,8 @@ class TestBestRace(unittest.TestCase):
 
     def test_racelist(self):
         self.populate_membership_file()
-        self.populate_racelist_file([self.viking_race_file.name])
+        lst = [self.viking_race_file.name, self.viking_race_file.name]
+        self.populate_racelist_file(lst)
         o = rr.BestRace(verbose='critical',
                         memb_list=self.membership_file.name,
                         race_list=self.racelist_file.name,

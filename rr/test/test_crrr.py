@@ -43,6 +43,12 @@ class TestCoolRunning(unittest.TestCase):
         filename = pkg_resources.resource_filename(rr.__name__, relfile)
         shutil.copyfile(filename, self.black_cat_file.name)
 
+        # This file isn't parseable by ElementTree.
+        self.ras_na_eireann_file = tempfile.NamedTemporaryFile(suffix=".shtml")
+        relfile = "test/testdata/Mar10_Rasnah_set1.shtml"
+        filename = pkg_resources.resource_filename(rr.__name__, relfile)
+        shutil.copyfile(filename, self.ras_na_eireann_file.name)
+
         # Create other fixtures that are easy to clean up later.
         self.membership_file = tempfile.NamedTemporaryFile(suffix=".txt")
         self.racelist_file = tempfile.NamedTemporaryFile(suffix=".txt")
@@ -187,6 +193,26 @@ class TestCoolRunning(unittest.TestCase):
             html = f.read()
             soup = BeautifulSoup(html, 'lxml')
             self.assertTrue("MICHAEL POPHAM" in
+                            soup.pre.contents[0])
+
+    def test_ras_na_eireann(self):
+        """
+        All individual results for Ras na Eireann were getting included.
+        """
+        self.populate_membership_file('Smith-Rohrberg,Karen')
+        self.populate_racelist_file([self.ras_na_eireann_file.name])
+        o = rr.CoolRunning(verbose='critical',
+                           memb_list=self.membership_file.name,
+                           race_list=self.racelist_file.name,
+                           output_file=self.results_file.name)
+        o.run()
+
+        with open(self.results_file.name, 'r') as f:
+            html = f.read()
+            soup = BeautifulSoup(html, 'lxml')
+            self.assertTrue("Karen Smith-Rohrberg" in
+                            soup.pre.contents[0])
+            self.assertTrue("Dan Harrington" not in
                             soup.pre.contents[0])
 
 
