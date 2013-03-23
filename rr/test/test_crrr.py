@@ -1,6 +1,7 @@
 import datetime
 import os
 import pkg_resources
+import re
 import shutil
 import tempfile
 import unittest
@@ -103,6 +104,27 @@ class TestCoolRunning(unittest.TestCase):
             soup = BeautifulSoup(html, 'lxml')
             self.assertTrue("Caleb Gartner" in soup.div.pre.contents[0])
             self.assertTrue("Sean Spalding" in soup.div.pre.contents[0])
+
+    def test_consecutive_newlines(self):
+        """
+        Verify that we don't get two consecutive newlines in the 
+        race results, which makes them look bad.
+
+        See Issue 33
+        """
+        self.populate_racelist_file([self.vanilla_crrr_file.name])
+        o = rr.CoolRunning(verbose='critical',
+                           memb_list=self.membership_file.name,
+                           race_list=self.racelist_file.name,
+                           output_file=self.results_file.name)
+        o.run()
+
+        with open(self.results_file.name, 'r') as f:
+            html = f.read()
+            soup = BeautifulSoup(html, 'lxml')
+            text = soup.pre.contents[0]
+            m = re.search(text, '\n\n')
+            self.assertIsNone(m)
 
     def test_multiple_racelist(self):
         """

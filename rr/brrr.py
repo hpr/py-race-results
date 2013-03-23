@@ -190,7 +190,7 @@ class BestRace(RaceResults):
 
         banner_text = self.parse_banner(root)
 
-        pre.text = banner_text + '\n'.join(results_lst)
+        pre.text = banner_text + ''.join(results_lst)
         div.append(pre)
 
         return div
