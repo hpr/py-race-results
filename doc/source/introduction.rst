@@ -29,7 +29,7 @@ versions below 3.1 and currently require Python 3.2 or higher.
 Version 0.1.1 does run on Python version 2.7, however.
 
 Python 3.3 will also work, but currently requires **beautifulsoup4**
-and **lxml** to be installed via pip.
+and **lxml** to be installed via pip (as of |today|).
 
 Quick installation
 ------------------
