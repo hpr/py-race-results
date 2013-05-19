@@ -126,7 +126,8 @@ class CompuScore(RaceResults):
         """
         with open(race_file) as fp:
             markup = fp.read()
-        root = BeautifulSoup(markup, 'lxml')
+        #root = BeautifulSoup(markup, 'lxml')
+        root = BeautifulSoup(markup, 'html.parser')
 
         # The date is in a single H3 element under to BODY element.
         h3 = root.find_all('h3')
@@ -183,17 +184,25 @@ class CompuScore(RaceResults):
         div.append(hr)
 
         # The single H2 element in the file has the race name.
-        tree = ET.parse(race_file)
-        root = tree.getroot()
-        root = self.remove_namespace(root)
-        pattern = './/h2'
-        race_name_element = root.findall(pattern)[0]
-        div.append(race_name_element)
+        with open(race_file) as fp:
+            markup = fp.read()
+        root = BeautifulSoup(markup, 'html.parser')
+        #tree = ET.parse(race_file)
+        #root = tree.getroot()
+        #root = self.remove_namespace(root)
+        #pattern = './/h2'
+        #race_name_element = root.findall(pattern)[0]
+        h2 = ET.Element('h2')
+        h2.text = root.h2.text
+        div.append(h2)
 
         # The single H3 element in the file has the race date.
-        pattern = './/h3'
-        race_date_element = root.findall(pattern)[0]
-        div.append(race_date_element)
+        h3 = ET.Element('h3')
+        h3.text = root.h3.text
+        div.append(h3)
+        #pattern = './/h3'
+        #race_date_element = root.findall(pattern)[0]
+        #div.append(race_date_element)
 
         # Append the URL if possible.
         if self.downloaded_url is not None:
@@ -229,19 +238,8 @@ class CompuScore(RaceResults):
         Find the HTML preceeding the results that sets up the column
         titles.
         """
-        pattern = './/strong'
-        strongs = root.findall(pattern)
-        pattern = './/u'
-        us = root.findall(pattern)
-        try:
-            text = strongs[2].text
-            text += '\n' + us[1].text
-        except (IndexError, TypeError):
-            # TypeError if the ET parsing is wrong
-            self.logger.warning('Could not locate all of the banner.')
-            text = ''
-
-        text += '\n'
+        strongs = root.find_all('strong')
+        text = strongs[6].text
         return(text)
 
     def match_against_membership(self, line):

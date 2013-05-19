@@ -145,6 +145,13 @@ class NewYorkRR(RaceResults):
         self.download_file(url, local_file, data)
         self.local_tidy(local_file)
 
+        # Use Beautifulsoup/lxml to make it compliant.
+        with open(local_file, 'r', encoding='utf-8') as fp:
+            markup = fp.read()
+            soup = BeautifulSoup(markup, 'lxml')
+        with open(local_file, 'w') as fp:
+            fp.write(soup.prettify())
+
         # If there were no results for the specified team, then the html will
         # contain some red text to the effect of "Your search returns no
         # match."
