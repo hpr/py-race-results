@@ -108,10 +108,10 @@ class BestRace(RaceResults):
         We assume that we have the state file stored locally.
         """
         local_file = 'index.html'
-        fmt = 'http://www.bestrace.com/results/%s/%s%s'
-        pattern = fmt % (self.start_date.strftime('%y'),
-                         self.start_date.strftime('%y'),
-                         self.start_date.strftime('%m'))
+        pattern = 'http://www.bestrace.com/results/{0}/{1}{2}'
+        pattern = pattern.format(self.start_date.strftime('%y'),
+                                 self.start_date.strftime('%y'),
+                                 self.start_date.strftime('%m'))
 
         day_range = '('
         for day in range(self.start_date.day, self.stop_date.day):
@@ -120,22 +120,21 @@ class BestRace(RaceResults):
 
         pattern += day_range
 
-        pattern += ".*HTM"
+        pattern += "\w+\.HTM"
         self.logger.debug('pattern is "%s"' % pattern)
 
         with open(local_file) as fp:
             markup = fp.read()
-        root = BeautifulSoup(markup, 'lxml')
 
-        anchors = root.find_all('a')
-        for anchor in anchors:
-            href = anchor.get('href')
-            if href is None:
-                continue
-            if re.match(pattern, href):
-                self.logger.info('Downloading %s...' % href)
-                race_file = self.download_race(href)
-                self.compile_race_results(race_file)
+        matchiter = re.finditer(pattern, markup)
+        for match in matchiter:
+            span = match.span()
+            start = span[0]
+            stop = span[1]
+            url = markup[start:stop]
+            self.logger.info('Downloading %s...' % url)
+            race_file = self.download_race(url)
+            self.compile_race_results(race_file)
 
     def compile_race_results(self, race_file):
         """
