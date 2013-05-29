@@ -99,26 +99,28 @@ class CompuScore(RaceResults):
         Pick out the URLs of the race results and process each.  We cannot
         easily restrict based on the time frame here.
         """
-        year = self.start_date.year
-        monthstr = monthstrs[self.start_date.month]
-        pattern = 'http://www.compuscore.com/cs%s/%s' % (year, monthstr)
-
         with open('index.htm') as fp:
             markup = fp.read()
-        root = BeautifulSoup(markup, 'lxml')
-        anchors = root.find_all('a')
-        for anchor in anchors:
-            href = anchor.get('href')
-            if re.match(pattern, href):
-                local_file = href.split('/')[-1]
-                self.logger.info('Downloading %s...' % local_file)
-                self.download_file(href, local_file)
-                self.downloaded_url = href
-                self.local_tidy(local_file)
-                if self.race_date_in_range(local_file):
-                    self.compile_race_results(local_file)
-                else:
-                    self.logger.info('Date not in range...')
+
+        year = self.start_date.year
+        monthstr = monthstrs[self.start_date.month]
+        pattern = 'http://www.compuscore.com/cs{0}/{1}/(?P<race>\w+)\.htm'
+        pattern = pattern.format(year, monthstr)
+        matchiter = re.finditer(pattern, markup)
+
+        for match in matchiter:
+            start = match.span()[0]
+            stop = match.span()[1]
+            url = markup[start:stop]
+            local_file = url.split('/')[-1]
+            self.logger.info('Downloading %s...' % local_file)
+            self.download_file(url, local_file)
+            self.downloaded_url = url
+            self.local_tidy(local_file)
+            if self.race_date_in_range(local_file):
+                self.compile_race_results(local_file)
+            else:
+                self.logger.info('Date not in range...')
 
     def race_date_in_range(self, race_file):
         """
