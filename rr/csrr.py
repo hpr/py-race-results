@@ -99,26 +99,28 @@ class CompuScore(RaceResults):
         Pick out the URLs of the race results and process each.  We cannot
         easily restrict based on the time frame here.
         """
-        year = self.start_date.year
-        monthstr = monthstrs[self.start_date.month]
-        pattern = 'http://www.compuscore.com/cs%s/%s' % (year, monthstr)
-
         with open('index.htm') as fp:
             markup = fp.read()
-        root = BeautifulSoup(markup, 'lxml')
-        anchors = root.find_all('a')
-        for anchor in anchors:
-            href = anchor.get('href')
-            if re.match(pattern, href):
-                local_file = href.split('/')[-1]
-                self.logger.info('Downloading %s...' % local_file)
-                self.download_file(href, local_file)
-                self.downloaded_url = href
-                self.local_tidy(local_file)
-                if self.race_date_in_range(local_file):
-                    self.compile_race_results(local_file)
-                else:
-                    self.logger.info('Date not in range...')
+
+        year = self.start_date.year
+        monthstr = monthstrs[self.start_date.month]
+        pattern = 'http://www.compuscore.com/cs{0}/{1}/(?P<race>\w+)\.htm'
+        pattern = pattern.format(year, monthstr)
+        matchiter = re.finditer(pattern, markup)
+
+        for match in matchiter:
+            start = match.span()[0]
+            stop = match.span()[1]
+            url = markup[start:stop]
+            local_file = url.split('/')[-1]
+            self.logger.info('Downloading %s...' % local_file)
+            self.download_file(url, local_file)
+            self.downloaded_url = url
+            self.local_tidy(local_file)
+            if self.race_date_in_range(local_file):
+                self.compile_race_results(local_file)
+            else:
+                self.logger.info('Date not in range...')
 
     def race_date_in_range(self, race_file):
         """
@@ -126,7 +128,8 @@ class CompuScore(RaceResults):
         """
         with open(race_file) as fp:
             markup = fp.read()
-        root = BeautifulSoup(markup, 'lxml')
+        #root = BeautifulSoup(markup, 'lxml')
+        root = BeautifulSoup(markup, 'html.parser')
 
         # The date is in a single H3 element under to BODY element.
         h3 = root.find_all('h3')
@@ -183,24 +186,43 @@ class CompuScore(RaceResults):
         div.append(hr)
 
         # The single H2 element in the file has the race name.
-        tree = ET.parse(race_file)
-        root = tree.getroot()
-        root = self.remove_namespace(root)
-        pattern = './/h2'
-        race_name_element = root.findall(pattern)[0]
-        div.append(race_name_element)
+        with open(race_file) as fp:
+            markup = fp.read()
+        root = BeautifulSoup(markup, 'html.parser')
+        #tree = ET.parse(race_file)
+        #root = tree.getroot()
+        #root = self.remove_namespace(root)
+        #pattern = './/h2'
+        #race_name_element = root.findall(pattern)[0]
+        h2 = ET.Element('h2')
+        h2.text = root.h2.text
+        div.append(h2)
 
         # The single H3 element in the file has the race date.
-        pattern = './/h3'
-        race_date_element = root.findall(pattern)[0]
-        div.append(race_date_element)
+        h3 = ET.Element('h3')
+        h3.text = root.h3.text
+        div.append(h3)
+        #pattern = './/h3'
+        #race_date_element = root.findall(pattern)[0]
+        #div.append(race_date_element)
 
         # Append the URL if possible.
         if self.downloaded_url is not None:
-            text = '<p class="provenance">Complete results '
-            text += '<a href="%s">here</a> on Compuscore.</p>'
-            text %= self.downloaded_url
-            p = ET.XML(text)
+            p = ET.Element('p')
+            p.set('class', 'provenance')
+
+            span1 = ET.Element('span')
+            span1.text = 'Complete results '
+            anchor = ET.Element('a')
+            anchor.set('href', self.downloaded_url)
+            anchor.text = 'here'
+            span2 = ET.Element('span')
+            span2.text = ' on Compuscore.'
+
+            p.append(span1)
+            p.append(anchor)
+            p.append(span2)
+
             div.append(p)
 
         # Append the actual race results.  Consists of the column headings
@@ -218,19 +240,8 @@ class CompuScore(RaceResults):
         Find the HTML preceeding the results that sets up the column
         titles.
         """
-        pattern = './/strong'
-        strongs = root.findall(pattern)
-        pattern = './/u'
-        us = root.findall(pattern)
-        try:
-            text = strongs[2].text
-            text += '\n' + us[1].text
-        except (IndexError, TypeError):
-            # TypeError if the ET parsing is wrong
-            self.logger.warning('Could not locate all of the banner.')
-            text = ''
-
-        text += '\n'
+        strongs = root.find_all('strong')
+        text = strongs[6].text
         return(text)
 
     def match_against_membership(self, line):
@@ -266,6 +277,7 @@ class CompuScore(RaceResults):
         """
         with open(self.race_list) as fp:
             for racefile in fp.readlines():
+                racefile = racefile.rstrip()
                 self.logger.info('Processing %s...' % racefile)
                 self.local_tidy(racefile)
-            self.compile_race_results(racefile)
+                self.compile_race_results(racefile)

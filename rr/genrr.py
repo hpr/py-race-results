@@ -1,5 +1,5 @@
 """
-Module for BestRace.
+Module for generic races not from one of the main race web sites.
 """
 import datetime
 import logging
@@ -13,9 +13,9 @@ from bs4 import BeautifulSoup
 from .common import RaceResults
 
 
-class BestRace(RaceResults):
+class GenericRR(RaceResults):
     """
-    Process races found on BestRace.com.
+    Generic processing of races.
 
     Attributes:
         start_date, stop_date:  date range to restrict race searches
@@ -67,18 +67,7 @@ class BestRace(RaceResults):
     def local_tidy(self, html_file):
         """
         Cleans up the HTML file.
-
-        LIBTIDY doesn't seem to like p:colorspace, so get rid of it before
-        calling LIBTIDY.
         """
-        fp = open(html_file, 'r')
-        html = fp.read()
-        fp.close()
-        html = html.replace(':colorscheme', '')
-        fp = open(html_file, 'w')
-        fp.write(html)
-        fp.close()
-
         RaceResults.local_tidy(self, html_file)
 
     def compile_results(self):
@@ -94,13 +83,6 @@ class BestRace(RaceResults):
             # Get race results
             self.compile_local_results()
 
-    def compile_web_results(self):
-        """
-        Download the requested results and compile them.
-        """
-        self.download_master_file()
-        self.process_master_file()
-
     def process_master_file(self):
         """
         Compile results for the specified state.
@@ -108,10 +90,10 @@ class BestRace(RaceResults):
         We assume that we have the state file stored locally.
         """
         local_file = 'index.html'
-        pattern = 'http://www.bestrace.com/results/{0}/{1}{2}'
-        pattern = pattern.format(self.start_date.strftime('%y'),
-                                 self.start_date.strftime('%y'),
-                                 self.start_date.strftime('%m'))
+        fmt = 'http://www.bestrace.com/results/%s/%s%s'
+        pattern = fmt % (self.start_date.strftime('%y'),
+                         self.start_date.strftime('%y'),
+                         self.start_date.strftime('%m'))
 
         day_range = '('
         for day in range(self.start_date.day, self.stop_date.day):
@@ -120,21 +102,22 @@ class BestRace(RaceResults):
 
         pattern += day_range
 
-        pattern += "\w+\.HTM"
+        pattern += ".*HTM"
         self.logger.debug('pattern is "%s"' % pattern)
 
         with open(local_file) as fp:
             markup = fp.read()
+        root = BeautifulSoup(markup, 'lxml')
 
-        matchiter = re.finditer(pattern, markup)
-        for match in matchiter:
-            span = match.span()
-            start = span[0]
-            stop = span[1]
-            url = markup[start:stop]
-            self.logger.info('Downloading %s...' % url)
-            race_file = self.download_race(url)
-            self.compile_race_results(race_file)
+        anchors = root.find_all('a')
+        for anchor in anchors:
+            href = anchor.get('href')
+            if href is None:
+                continue
+            if re.match(pattern, href):
+                self.logger.info('Downloading %s...' % href)
+                race_file = self.download_race(href)
+                self.compile_race_results(race_file)
 
     def compile_race_results(self, race_file):
         """
@@ -160,66 +143,16 @@ class BestRace(RaceResults):
         hr.set('class', 'race_header')
         div.append(hr)
 
-        with open(race_file) as fp:
-            markup = fp.read()
-        root = BeautifulSoup(markup, 'lxml')
-
         h1 = ET.Element('h1')
-        h1.text = root.title.text
+        h1.text = 'Unknown'
         div.append(h1)
-
-        # Append the URL if possible.
-        if self.downloaded_url is not None:
-            p = ET.Element('p')
-            p.set('class', 'provenance')
-            span = ET.Element('span')
-            span.text = 'Complete results '
-            p.append(span)
-            a = ET.Element('a')
-            a.set('href', self.downloaded_url)
-            a.text = 'here'
-            p.append(a)
-            span = ET.Element('span')
-            span.text = ' on BestRace.'
-            p.append(span)
-            div.append(p)
 
         pre = ET.Element('pre')
         pre.set('class', 'actual_results')
-
-        banner_text = self.parse_banner(root)
-
-        pre.text = banner_text + ''.join(results_lst)
+        pre.text = '\n'.join(results_lst)
         div.append(pre)
 
         return div
-
-    def parse_banner(self, root):
-        """Retrieve the banner from the race file.
-
-        Example of a banner
-
-                   The Andrea Holden 5k Thanksgiving Race
-         PLC    Time  Pace  PLC/Group  PLC/Sex Bib#   Name
-           1   16:40  5:23    1 30-39    1 M   142 Brian Allen
-
-        """
-        try:
-            pre = root.find_all('pre')[0]
-        except IndexError:
-            return('')
-
-        # Stop when we find the first "1"
-        banner = ''
-        for line in pre.text.split('\n'):
-            if re.match('\s+1', line):
-                # found it
-                break
-            else:
-                banner += line + '\n'
-
-        banner += '\n'
-        return(banner)
 
     def match_against_membership(self, line):
         """
@@ -231,31 +164,6 @@ class BestRace(RaceResults):
             if fregex.search(line) and lregex.search(line):
                 return(True)
         return(False)
-
-    def download_master_file(self):
-        """Download results for the specified state.
-
-        The URL will have the pattern
-
-        http://www.bestrace.com/YYYYschedule.shtml
-
-        """
-        fmt = 'http://www.bestrace.com/%sschedule.html'
-        url = fmt % self.start_date.strftime('%Y')
-        self.logger.info('Downloading %s.' % url)
-        self.download_file(url, 'index.html')
-        self.local_tidy('index.html')
-
-    def download_race(self, url):
-        """
-        Download a race URL to a local file.
-        """
-        local_file = url.split('/')[-1]
-        self.logger.info('Downloading %s...' % local_file)
-        self.download_file(url, local_file)
-        self.downloaded_url = url
-        self.local_tidy(local_file)
-        return(local_file)
 
     def compile_local_results(self):
         """Compile results from list of local files.

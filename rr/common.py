@@ -88,7 +88,8 @@ class RaceResults:
         except UnicodeDecodeError:
             with open(html_file, encoding='iso-8859-1') as fp:
                 markup = fp.read()
-        soup = BeautifulSoup(markup, "lxml")
+        #soup = BeautifulSoup(markup, "lxml")
+        soup = BeautifulSoup(markup, "html.parser")
 
         import codecs
         fp = codecs.open(html_file, encoding='utf-8', mode='w')

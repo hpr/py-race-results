@@ -1,6 +1,7 @@
 import datetime
 import os
 import pkg_resources
+import re
 import shutil
 import tempfile
 import unittest
@@ -40,7 +41,7 @@ class TestBestRace(unittest.TestCase):
         """
         with open(self.racelist_file.name, 'w') as fp:
             for race_file in races:
-                fp.write(race_file)
+                fp.write(race_file + '\n')
             fp.flush()
 
     def populate_membership_file(self):
@@ -54,7 +55,8 @@ class TestBestRace(unittest.TestCase):
 
     def test_racelist(self):
         self.populate_membership_file()
-        self.populate_racelist_file([self.viking_race_file.name])
+        lst = [self.viking_race_file.name, self.viking_race_file.name]
+        self.populate_racelist_file(lst)
         o = rr.BestRace(verbose='critical',
                         memb_list=self.membership_file.name,
                         race_list=self.racelist_file.name,
@@ -66,6 +68,33 @@ class TestBestRace(unittest.TestCase):
             soup = BeautifulSoup(html, 'lxml')
             self.assertTrue("MICHAEL CARR" in soup.div.pre.contents[0])
             self.assertTrue("MARK STRAWN" in soup.div.pre.contents[0])
+
+    def test_consecutive_newlines(self):
+        """
+        Verify that we don't get two consecutive newlines in the 
+        race results, which makes them look bad.
+
+        See Issue 33
+        """
+        self.populate_membership_file()
+        lst = [self.viking_race_file.name, self.viking_race_file.name]
+        self.populate_racelist_file(lst)
+        o = rr.BestRace(verbose='critical',
+                        memb_list=self.membership_file.name,
+                        race_list=self.racelist_file.name,
+                        output_file=self.results_file.name)
+        o.run()
+
+        with open(self.results_file.name, 'r') as f:
+            html = f.read()
+            soup = BeautifulSoup(html, 'lxml')
+            text = soup.pre.contents[0]
+
+            # Ok, first we need to jump over the banner, because that 
+            # does have consecutive newlines.  
+            start = re.search('MICHAEL', text).start()
+            m = re.search('\n\n', text[start:])
+            self.assertIsNone(m)
 
     def test_web_download(self):
         """

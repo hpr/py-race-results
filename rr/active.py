@@ -141,21 +141,16 @@ class Active(RaceResults):
         self.download_file(url, 'event.html')
         self.local_tidy('event.html')
 
-        root = ET.parse('event.html').getroot()
-        root = self.remove_namespace(root)
+        with open('event.html') as f:
+            soup = BeautifulSoup(f, 'lxml')
 
-        # Look for the event overview.
-        pattern = './/body/div/div/div/div/div/nav'
-        nav = root.findall(pattern)
-        divs = nav[0].getchildren()
-
-        # Look at all of the children except the first.  That first URL is the
-        # event overview, which is where we are at now.
-        for div in divs[1:]:
-            anchor = div.getchildren()[0]
+        # Look at all of the links except the first.  That first URL is the
+        # event overview, which we don't need.
+        anchors = soup.nav.findAll('a')
+        for anchor in anchors[1:]:
             self.logger.info("Looking at sub-event '%s' ..." %
                              clean_race_name(anchor.text))
-            self.process_sub_event(anchor.get('href'))
+            self.process_sub_event(anchor['href'])
 
     def process_sub_event(self, relative_url):
         """
@@ -219,12 +214,12 @@ class Active(RaceResults):
         div = ET.Element('div')
         div.set('class', 'race')
 
-        root = ET.parse(source_file).getroot()
-        root = self.remove_namespace(root)
+        with open(source_file, 'r') as f:
+            html = f.read()
+        soup = BeautifulSoup(html, 'lxml')
 
-        titles = root.findall('.//title')
         h2 = ET.Element('h2')
-        h2.text = titles[0].text
+        h2.text = soup.title.contents[0]
         div.append(h2)
 
         provenance_div = self.set_provenance()
@@ -260,15 +255,15 @@ class Active(RaceResults):
 
         # Construct the HTML for the results.
         # Append the title and the provenance.
-        root = ET.parse(source_file).getroot()
-        root = self.remove_namespace(root)
+        with open(source_file, 'r') as f:
+            html = f.read()
+        soup = BeautifulSoup(html, 'lxml')
 
         div = ET.Element('div')
         div.set('class', 'race')
 
-        titles = root.findall('.//title')
         h2 = ET.Element('h2')
-        h2.text = titles[0].text
+        h2.text = soup.title.contents[0]
         div.append(h2)
 
         provenance_div = self.set_provenance()

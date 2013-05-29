@@ -1,6 +1,7 @@
 import datetime
 import os
 import pkg_resources
+import re
 import shutil
 import tempfile
 import unittest
@@ -69,6 +70,35 @@ class TestCompuscore(unittest.TestCase):
         """
         Verify that we can correctly parse race results when given a list of
         race files.
+        """
+        self.populate_membership_file(self.membership_list)
+        self.populate_racelist_file([self.redcross_file.name])
+        obj = rr.CompuScore(verbose='critical',
+                            start_date=datetime.datetime.now(),
+                            stop_date=datetime.datetime.now(),
+                            memb_list=self.membership_file.name,
+                            race_list=self.racelist_file.name,
+                            output_file=self.results_file.name)
+        obj.run()
+
+        with open(self.results_file.name, 'r') as f:
+            html = f.read()
+            soup = BeautifulSoup(html, 'lxml')
+            text = soup.pre.contents[0]
+
+            # Ok, first we need to jump over the banner, because that 
+            # does have consecutive newlines.  
+            start = re.search('Robert Fitzgerald', text).start()
+            m = re.search('\n\n', text[start:])
+            self.assertIsNone(m)
+
+
+    def test_consecutive_newlines(self):
+        """
+        Verify that we don't get two consecutive newlines in the 
+        race results, which makes them look bad.
+
+        See Issue 33
         """
         self.populate_membership_file(self.membership_list)
         self.populate_racelist_file([self.redcross_file.name])

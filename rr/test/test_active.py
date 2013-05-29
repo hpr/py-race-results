@@ -37,8 +37,8 @@ class TestActive(unittest.TestCase):
         Verify that we can get CSV results from the web.
         """
         self.populate_membership_file(['KENNEDY,JASON'])
-        start_date = datetime.date(2013, 1, 1)
-        stop_date = datetime.date(2013, 1, 31)
+        start_date = datetime.date(2013, 1, 6)
+        stop_date = datetime.date(2013, 1, 6)
         o = Active(verbose='critical',
                    output_file=self.results_file.name,
                    location="New Brunswick, NJ",
@@ -53,11 +53,8 @@ class TestActive(unittest.TestCase):
             soup = BeautifulSoup(html, 'lxml')
             divs = soup.findAll('div')
 
-            # There are two results to verify.
             self.assertTrue("Jason Kennedy" in
                             divs[0].table.contents[3].contents[5].contents[0])
-            self.assertTrue("Jason Kennedy" in
-                            divs[2].table.contents[3].contents[5].contents[0])
 
     def test_raw_file_download(self):
         """

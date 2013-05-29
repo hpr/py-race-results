@@ -10,7 +10,8 @@ setup(
     package_data={'rr': ['test/testdata/*.HTM',
         'test/testdata/*.shtml',
         'test/testdata/*.htm']},
-    scripts=['bin/active','bin/brrr','bin/crrr','bin/csrr','bin/nyrr'],
+    scripts=['bin/active','bin/brrr','bin/crrr','bin/csrr','bin/nyrr',
+             'bin/genrr'],
     license='LICENSE.txt',
     description='Race results parsing',
     classifiers=[
