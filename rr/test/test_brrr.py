@@ -71,7 +71,7 @@ class TestBestRace(unittest.TestCase):
 
     def test_consecutive_newlines(self):
         """
-        Verify that we don't get two consecutive newlines in the 
+        Verify that we don't get two consecutive newlines in the
         race results, which makes them look bad.
 
         See Issue 33
@@ -90,8 +90,8 @@ class TestBestRace(unittest.TestCase):
             soup = BeautifulSoup(html, 'lxml')
             text = soup.pre.contents[0]
 
-            # Ok, first we need to jump over the banner, because that 
-            # does have consecutive newlines.  
+            # Ok, first we need to jump over the banner, because that
+            # does have consecutive newlines.
             start = re.search('MICHAEL', text).start()
             m = re.search('\n\n', text[start:])
             self.assertIsNone(m)

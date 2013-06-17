@@ -158,7 +158,10 @@ class CoolRunning(RaceResults):
             secondary_pattern = re.compile(s, re.DOTALL)
             for inner_anchor in inner_anchors:
 
-                href = inner_anchor['href']
+                try:
+                    href = inner_anchor['href']
+                except KeyError:
+                    continue
                 if href is None:
                     continue
                 match = secondary_pattern.search(href)
