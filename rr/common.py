@@ -66,7 +66,7 @@ class RaceResults:
         """
 
         with open(self.memb_list) as csvfile:
-            mlreader = csv.reader(csvfile, delimiter='\t')
+            mlreader = csv.reader(csvfile, delimiter=',')
             first_name = []
             last_name = []
             for row in mlreader:
@@ -97,7 +97,7 @@ class RaceResults:
             fptr.write(soup.prettify())
             fptr.close()
 
-    def download_file(self, url, params=None):
+    def download_file(self, url, params=None, local_file=None):
         """
         Download a URL.
 
@@ -108,7 +108,10 @@ class RaceResults:
         """
 
         headers = {'User-Agent': self.user_agent}
-        request = requests.get(url, headers=headers)
+        if params is None:
+            request = requests.get(url, headers=headers)
+        else:
+            request = requests.post(url, headers=headers, params=params)
         #if self.cookies is None:
         #else:
         #r = requests.post(url, headers=headers, cookies=self.cookies)
@@ -116,7 +119,11 @@ class RaceResults:
         # Save any cookies for the next download.
         self.cookies = request.cookies
 
-        self.html = request.text
+        if local_file is not None:
+            with open(local_file, 'w') as fptr:
+                fptr.write(request.text)
+        else:
+            self.html = request.text
 
     def initialize_output_file(self):
         """
