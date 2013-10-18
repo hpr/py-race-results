@@ -424,12 +424,12 @@ class CoolRunning(RaceResults):
 
         """
         self.logger.info('Processing %s...' % state)
-        local_state_file = state + '.shtml'
-        fmt = 'http://www.coolrunning.com/results/%s/%s'
-        url = fmt % (self.start_date.strftime('%y'), local_state_file)
-        self.logger.info('Downloading %s.' % url)
-        self.download_file(url, local_state_file)
-        self.local_tidy(local_state_file)
+        state_file = '{0}.shtml'.format(state)
+        url = 'http://www.coolrunning.com/results/{0}/{1}'
+        url = url.format(self.start_date.strftime('%y'), state_file)
+        self.logger.info('Downloading {0}.'.format(url))
+        self.download_file(url, local_file=state_file)
+        self.local_tidy(state_file)
 
     def download_race(self, anchor, inner_url=False, state=''):
         """
@@ -446,7 +446,7 @@ class CoolRunning(RaceResults):
         url = 'http://www.coolrunning.com/%s' % href
         local_file = href.split('/')[-1]
         self.logger.info('Downloading %s...' % url)
-        self.download_file(url, local_file)
+        self.download_file(url, local_file=local_file)
         self.downloaded_url = url
         try:
             self.local_tidy(local_file)
@@ -457,25 +457,25 @@ class CoolRunning(RaceResults):
 
         return(local_file)
 
-    def local_tidy(self, html_file):
+    def local_tidy(self, local_file=None):
         """Clean up the HTML, as it is often invalid."""
 
         # This is an IE conditional comment that Excel likes to produce.
         # Have only seen this on CoolRunning.
         # Get rid of it before running through the common tidy process.
         try:
-            with open(html_file, 'r', encoding='utf-8') as fp:
+            with open(local_file, 'r', encoding='utf-8') as fp:
                 html = fp.read()
         except UnicodeDecodeError:
-            with open(html_file, 'r', encoding='iso-8859-1') as fp:
+            with open(local_file, 'r', encoding='iso-8859-1') as fp:
                 html = fp.read()
         html = html.replace('<![if supportMisalignedColumns]>', '')
         html = html.replace('<![endif]>', '')
-        with open(html_file, 'w') as f:
+        with open(local_file, 'w') as f:
             f.write(html)
 
         # And now call the common tidy process.
-        RaceResults.local_tidy(self, html_file)
+        RaceResults.local_tidy(self, local_file)
 
     def compile_local_results(self):
         """

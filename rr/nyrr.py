@@ -35,20 +35,17 @@ class NewYorkRR(RaceResults):
         url = 'http://web2.nyrrc.org'
         url += '/cgi-bin/start.cgi/aes-programs/results/resultsarchive.htm'
 
-        local_file = 'resultsarchive.html'
-        self.download_file(url, local_file)
+        self.download_file(url)
 
         # There are two forms used for searches.  The one that we want (list
         # all the results for an entire year) is the 2nd on that this regex
         # retrieves.
-        with open(local_file) as fp:
-            html = fp.read()
         regex = re.compile(r"""<form
                                \s+name="(?P<name>\w+)"
                                \s+method=post
                                \s+action=(?P<action>\S+)
                                .*\s""", re.VERBOSE)
-        m = regex.findall(html)
+        m = regex.findall(self.html)
         if len(m) != 2:
             msg = "resultsarchive did not yield right number of results."
             raise RuntimeError(msg)
@@ -58,28 +55,19 @@ class NewYorkRR(RaceResults):
         post_params = {}
         post_params['NYRRYEAR'] = str(self.start_date.year)
         post_params['AESTIVACVNLIST'] = 'NYRRYEAR'
-        data = urllib.parse.urlencode(post_params)
-        data = data.encode()
 
         # Download the race list page for the specified year
-        local_file = 'nyrrraces.html'
-        self.download_file(url, local_file, data)
+        self.download_file(url, params=post_params)
 
         # This is not valid HTML.  Need to get rid of some bad FORMs,
         # none of which are needed.
-        with open(local_file, 'r', encoding='utf-8') as fp:
-            html = fp.read()
-        html = html.replace('form', 'div')
-        with open(local_file, 'w') as f:
-            f.write(html)
-
-        self.local_tidy(local_file)
+        self.html = self.html.replace('form', 'div')
+        self.local_tidy()
 
         # Parse out the list of races.  They are all in a
         # particular table.
-        with open(local_file, 'r') as f:
-            markup = f.read()
-        soup = BeautifulSoup(markup, 'lxml')
+        import pdb; pdb.set_trace()
+        soup = BeautifulSoup(self.html, 'lxml')
         tables = soup.find_all('table')
         table = tables[7]
 
