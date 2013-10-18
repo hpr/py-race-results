@@ -22,7 +22,7 @@ monthstrs = {1: 'janfeb',
              7: 'july',
              8: 'aug',
              9: 'sept',
-             10: 'oct',
+             10: 'october',
              11: 'novdec',
              12: 'novdec', }
 
@@ -216,7 +216,7 @@ class CompuScore(RaceResults):
         pre = ET.Element('pre')
         pre.set('class', 'actual_results')
         banner_text = self.parse_banner(root)
-        pre.text = banner_text + '\n'.join(results)
+        pre.text = banner_text + '\n' + '\n'.join(results)
         div.append(pre)
 
         return div
