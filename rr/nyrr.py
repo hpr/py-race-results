@@ -37,48 +37,21 @@ class NewYorkRR(RaceResults):
 
         self.download_file(url)
 
-        # There are two forms used for searches.  The one that we want (list
-        # all the results for an entire year) is the 2nd on that this regex
-        # retrieves.
-        regex = re.compile(r"""<form
-                               \s+name="(?P<name>\w+)"
-                               \s+method=post
-                               \s+action=(?P<action>\S+)
-                               .*\s""", re.VERBOSE)
-        m = regex.findall(self.html)
-        if len(m) != 2:
-            msg = "resultsarchive did not yield right number of results."
-            raise RuntimeError(msg)
-        url = m[0][1]
-
-        # The page for POSTing the search needs POST params.
-        post_params = {}
-        post_params['NYRRYEAR'] = str(self.start_date.year)
-        post_params['AESTIVACVNLIST'] = 'NYRRYEAR'
-
-        # Download the race list page for the specified year
-        self.download_file(url, params=post_params)
-
-        # This is not valid HTML.  Need to get rid of some bad FORMs,
-        # none of which are needed.
-        self.html = self.html.replace('form', 'div')
-        self.local_tidy()
-
         # Parse out the list of races.  They are all in a
         # particular table.
-        import pdb; pdb.set_trace()
-        soup = BeautifulSoup(self.html, 'lxml')
+        #soup = BeautifulSoup(self.html, 'lxml')
+        soup = BeautifulSoup(self.html, 'html.parser')
         tables = soup.find_all('table')
-        table = tables[7]
+        table = tables[4]
 
         # This is awful, all the entries are in a single table element.
         # The TD element has a P element, which has the list that we want.
-        p = table.td.p
+        td = table.table.td
 
-        links = p.find_all('a')
+        links = td.find_all('a')
         for link in links:
 
-            race_name = re.sub('\n *', '', link.text[0])
+            race_name = link.text
             url = link['href']
 
             # The next sibling is the race date.  In ElementTree parliance,
@@ -97,8 +70,9 @@ class NewYorkRR(RaceResults):
         """We have the URL of a single event.  The URL does not lead to the
         results, however, it leads to a search page.
         """
+        import pdb; pdb.set_trace()
         local_file = 'event_search.html'
-        self.download_file(url, local_file)
+        self.download_file(url, local_file=local_file)
         self.local_tidy(local_file)
 
         # There should be a single form.
@@ -130,7 +104,7 @@ class NewYorkRR(RaceResults):
         # Runners.
         url = form.get('action')
         local_file = 'nyrrresult.html'
-        self.download_file(url, local_file, data)
+        self.download_file(url, local_file=local_file, params=data)
         self.local_tidy(local_file)
 
         # Use Beautifulsoup/lxml to make it compliant.

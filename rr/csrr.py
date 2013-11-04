@@ -189,7 +189,11 @@ class CompuScore(RaceResults):
 
         # The single H3 element in the file has the race date.
         h3 = ET.Element('h3')
-        h3.text = root.h3.text
+        try:
+            h3.text = root.h3.text
+        except AttributeError:
+            # except if it's not there.
+            h3.text = ''
         div.append(h3)
 
         # Append the URL if possible.
@@ -227,7 +231,11 @@ class CompuScore(RaceResults):
         titles.
         """
         strongs = root.find_all('strong')
-        text = strongs[6].text
+        try:
+            text = strongs[6].text
+        except IndexError:
+            text = ''
+
         return(text)
 
     def match_against_membership(self, line):
