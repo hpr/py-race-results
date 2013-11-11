@@ -122,7 +122,7 @@ class CoolRunning(RaceResults):
 
         with open(local_state_file, 'r') as f:
             markup = f.read()
-        soup = BeautifulSoup(markup, 'lxml')
+        soup = BeautifulSoup(markup, 'html.parser')
         anchors = soup.find_all('a')
 
         urls = set()
@@ -149,7 +149,7 @@ class CoolRunning(RaceResults):
             # Now collect any secondary result files.
             with open(race_file) as f:
                 markup = f.read()
-            race_soup = BeautifulSoup(markup, 'lxml')
+            race_soup = BeautifulSoup(markup, 'html.parser')
             inner_anchors = race_soup.find_all('a')
 
             # construct the 2ndary pattern
@@ -189,7 +189,7 @@ class CoolRunning(RaceResults):
         """
         with open(race_file, 'r') as f:
             markup = f.read()
-        soup = BeautifulSoup(markup, 'lxml')
+        soup = BeautifulSoup(markup, 'html.parser')
 
         text = soup.pre.text
         results = []
@@ -207,7 +207,7 @@ class CoolRunning(RaceResults):
         #pattern = './/body/table/tr/td/table/tr/td/table/tr/td/div/pre'
         with open(race_file, 'r') as f:
             markup = f.read()
-        soup = BeautifulSoup(markup, 'lxml')
+        soup = BeautifulSoup(markup, 'html.parser')
 
         if soup.pre is None:
             return False
@@ -313,7 +313,7 @@ class CoolRunning(RaceResults):
         # The H1 tag comes from the only H1 tag in the race file.
         with open(race_file, 'r') as f:
             markup = f.read()
-        root = BeautifulSoup(markup, 'lxml')
+        root = BeautifulSoup(markup, 'html.parser')
 
         h1 = ET.Element('h1')
         h1.text = root.h1.text
@@ -371,7 +371,7 @@ class CoolRunning(RaceResults):
 
         with open(race_file, 'r') as f:
             markup = f.read()
-        soup = BeautifulSoup(markup, 'lxml')
+        soup = BeautifulSoup(markup, 'html.parser')
 
         banner_text = self.parse_banner(soup.pre)
 
