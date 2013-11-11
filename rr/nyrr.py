@@ -2,7 +2,7 @@ import datetime
 import logging
 import os
 import re
-import urllib.request
+import urllib
 import xml.etree.cElementTree as ET
 
 from bs4 import BeautifulSoup
@@ -70,7 +70,6 @@ class NewYorkRR(RaceResults):
         """We have the URL of a single event.  The URL does not lead to the
         results, however, it leads to a search page.
         """
-        import pdb; pdb.set_trace()
         local_file = 'event_search.html'
         self.download_file(url, local_file=local_file)
         self.local_tidy(local_file)
@@ -78,8 +77,11 @@ class NewYorkRR(RaceResults):
         # There should be a single form.
         with open(local_file, 'r', encoding='utf-8') as fp:
             markup = fp.read()
-        root = BeautifulSoup(markup, 'lxml')
-        form = root.find_all('form')[0]
+        pattern = r"""<form\saction="(?P<action>.*)"\s*method="post">"""
+        regex = re.compile(pattern, re.VERBOSE)
+        m = regex.search(markup)
+        url = m.group('action')
+
 
         # The page for POSTing the search needs POST params.
         post_params = {}
@@ -96,15 +98,15 @@ class NewYorkRR(RaceResults):
         post_params['AESTIVACVNLIST'] = 'overalltype,input.agegroup.m,'
         post_params['AESTIVACVNLIST'] += 'input.agegroup.f,teamgender'
         post_params['AESTIVACVNLIST'] += 'team_code'
-        data = urllib.parse.urlencode(post_params)
-        data = data.encode()
+        #data = urllib.parse.urlencode(post_params)
+        #data = data.encode()
 
         # Provide all the search parameters for this race.  This includes, most
         # importantly, the team code, i.e. RARI for Raritan Valley Road
         # Runners.
-        url = form.get('action')
         local_file = 'nyrrresult.html'
-        self.download_file(url, local_file=local_file, params=data)
+        import pdb; pdb.set_trace()
+        self.download_file(url, local_file=local_file, params=post_params)
         self.local_tidy(local_file)
 
         # Use Beautifulsoup/lxml to make it compliant.

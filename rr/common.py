@@ -111,10 +111,11 @@ class RaceResults:
         if params is None:
             request = requests.get(url, headers=headers)
         else:
-            request = requests.post(url, headers=headers, params=params)
-        #if self.cookies is None:
-        #else:
-        #r = requests.post(url, headers=headers, cookies=self.cookies)
+            kwargs = {'headers': headers}
+            kwargs['params'] = params
+            if self.cookies is not None:
+                kwargs['cookies'] = self.cookies
+            request = requests.post(url, **kwargs)
 
         # Save any cookies for the next download.
         self.cookies = request.cookies
