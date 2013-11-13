@@ -195,7 +195,7 @@ class CoolRunning(RaceResults):
         results = []
         for line in text.split('\n'):
             if self.match_against_membership(line):
-                results.append(line + '\n')
+                results.append(line)
 
         return results
 
