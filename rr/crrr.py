@@ -11,7 +11,7 @@ import xml.etree.cElementTree as ET
 
 from bs4 import BeautifulSoup
 
-from .common import RaceResults
+from .common import RaceResults, remove_namespace
 
 
 class CoolRunning(RaceResults):
@@ -234,7 +234,7 @@ class CoolRunning(RaceResults):
             raise
 
         root = tree.getroot()
-        self.remove_namespace(root)
+        root = remove_namespace(root)
         nodes = root.findall(pattern)
         if len(nodes) > 0:
             return True
@@ -253,7 +253,7 @@ class CoolRunning(RaceResults):
 
         tree = ET.parse(race_file)
         root = tree.getroot()
-        self.remove_namespace(root)
+        root = remove_namespace(root)
 
         trs = root.findall(pattern)
 

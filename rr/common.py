@@ -1,6 +1,7 @@
 """Parse race results.
 """
 import collections
+import copy
 import codecs
 import csv
 import logging
@@ -118,13 +119,14 @@ class RaceResults:
             request = requests.post(url, **kwargs)
 
         # Save any cookies for the next download.
-        self.cookies = request.cookies
+        self.cookies = copy.deepcopy(request.cookies)
 
         if local_file is not None:
             with open(local_file, 'w') as fptr:
                 fptr.write(request.text)
         else:
             self.html = request.text
+        request.close()
 
     def initialize_output_file(self):
         """

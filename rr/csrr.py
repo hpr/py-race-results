@@ -274,4 +274,8 @@ class CompuScore(RaceResults):
                 racefile = racefile.rstrip()
                 self.logger.info('Processing %s...' % racefile)
                 self.local_tidy(racefile)
-                self.compile_race_results(racefile)
+
+                with open(racefile, 'rt') as fptr:
+                    self.html = fptr.read()
+
+                self.compile_race_results()

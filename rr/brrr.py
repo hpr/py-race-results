@@ -249,5 +249,7 @@ class BestRace(RaceResults):
         """
         with open(self.race_list) as fp:
             for line in fp.readlines():
-                line = line.rstrip()
-                self.compile_race_results(line)
+                filename = line.rstrip()
+                with open(filename, 'rt') as fptr:
+                    self.html = fptr.read()
+                self.compile_race_results()
