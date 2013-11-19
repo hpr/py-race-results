@@ -1,14 +1,15 @@
+"""Parse race results.
+"""
 import collections
-import http.cookiejar
+import copy
+import codecs
 import csv
-from http.client import IncompleteRead
 import logging
-import time
-import urllib.request
 import xml.dom.minidom
 import xml.etree.cElementTree as ET
 
 from bs4 import BeautifulSoup
+import requests
 
 
 class RaceResults:
@@ -21,7 +22,9 @@ class RaceResults:
         verbose:  how much output to produce
         logger: handles verbosity of program execution.  All is logged to
             standard output.
-        cookie_jar:  repository for handling http cookies
+        cookies : NYRR requires cookies
+        html : str
+            HTML from downloaded web page
         user_agent:  masquerade as browser because some sites do not like
             "Python-urllib"
         downloaded_url:  URL to a race that has been downloaded.  We link back
@@ -51,7 +54,8 @@ class RaceResults:
         user_agent += "Safari/535.19"
         self.user_agent = user_agent
 
-        self.cookie_jar = None
+        self.html = None
+        self.cookies = None
 
     def parse_membership_list(self):
         """
@@ -63,11 +67,9 @@ class RaceResults:
         """
 
         with open(self.memb_list) as csvfile:
-            mlreader = csv.reader(csvfile)
+            mlreader = csv.reader(csvfile, delimiter=',')
             first_name = []
-            first_name_regex = []
             last_name = []
-            last_name_regex = []
             for row in mlreader:
                 lname = row[0]
                 fname = row[1]
@@ -78,71 +80,53 @@ class RaceResults:
         names = FirstLast(first=first_name, last=last_name)
         return names
 
-    def local_tidy(self, html_file):
+    def local_tidy(self, local_file=None):
         """
         Tidy up the HTML.
         """
-        try:
-            with open(html_file, encoding='utf-8') as fp:
-                markup = fp.read()
-        except UnicodeDecodeError:
-            with open(html_file, encoding='iso-8859-1') as fp:
-                markup = fp.read()
-        #soup = BeautifulSoup(markup, "lxml")
-        soup = BeautifulSoup(markup, "html.parser")
+        if local_file is None:
+            html = self.html
+        else:
+            with open(local_file, encoding='utf-8') as fptr:
+                html = fptr.read()
+        soup = BeautifulSoup(html, "html.parser")
 
-        import codecs
-        fp = codecs.open(html_file, encoding='utf-8', mode='w')
-        fp.write(soup.prettify())
-        fp.close()
+        if local_file is None:
+            self.html = soup.prettify()
+        else:
+            fptr = codecs.open(local_file, encoding='utf-8', mode='w')
+            fptr.write(soup.prettify())
+            fptr.close()
 
-    def pretty_print_xml(self, xml_file):
+    def download_file(self, url, params=None, local_file=None):
         """
-        Taken from StackOverflow
+        Download a URL.
+
+        Parameters
+        ----------
+        url : The URL to retrieve
+        params : POST parameters to supply
         """
-        xml_string = xml.dom.minidom.parse(xml_file)
-        pp_string = xml_string.toprettyxml()
-        fp = open(xml_file, 'w')
-        fp.write(pp_string)
-        fp.close()
-
-    def remove_namespace(self, doc):
-        """Remove namespace in the passed document in place."""
-        # We seem to need this for all element searches now.
-        xmlns = 'http://www.w3.org/1999/xhtml'
-
-        namespace = '{%s}' % xmlns
-        nsl = len(namespace)
-        for elem in doc.getiterator():
-            if elem.tag.startswith(namespace):
-                elem.tag = elem.tag[nsl:]
-
-        return(doc)
-
-    def download_file(self, url, local_file, params=None):
-        """
-        Download a URL to a local file.
-
-        Args
-        ----
-            url:  The URL to retrieve
-            local_file:  Name of the file where we will store the web page.
-            params:  POST parameters to supply
-        """
-        # cookie support needed for NYRR results.
-        if self.cookie_jar is None:
-            self.cookie_jar = http.cookiejar.LWPCookieJar()
-        cookie_processor = urllib.request.HTTPCookieProcessor(self.cookie_jar)
-        opener = urllib.request.build_opener(cookie_processor)
-        urllib.request.install_opener(opener)
 
         headers = {'User-Agent': self.user_agent}
-        req = urllib.request.Request(url, None, headers)
-        response = urllib.request.urlopen(req, params)
-        html = response.readall()
+        if params is None:
+            request = requests.get(url, headers=headers)
+        else:
+            kwargs = {'headers': headers}
+            kwargs['params'] = params
+            if self.cookies is not None:
+                kwargs['cookies'] = self.cookies
+            request = requests.post(url, **kwargs)
 
-        with open(local_file, 'wb') as f:
-            f.write(html)
+        # Save any cookies for the next download.
+        self.cookies = copy.deepcopy(request.cookies)
+
+        if local_file is not None:
+            with open(local_file, 'w') as fptr:
+                fptr.write(request.text)
+        else:
+            self.html = request.text
+        request.close()
 
     def initialize_output_file(self):
         """
@@ -164,9 +148,9 @@ class RaceResults:
         link.set('rel', 'stylesheet')
         link.set('href', 'rr.css')
         link.set('type', 'text/css')
-        body = ET.SubElement(ofile, 'body')
+        ET.SubElement(ofile, 'body')
         ET.ElementTree(ofile).write(self.output_file)
-        self.pretty_print_xml(self.output_file)
+        pretty_print_xml(self.output_file)
 
     def insert_race_results(self, results):
         """
@@ -174,8 +158,33 @@ class RaceResults:
         """
         tree = ET.parse(self.output_file)
         root = tree.getroot()
-        root = self.remove_namespace(root)
+        root = remove_namespace(root)
         body = root.findall('.//body')[0]
         body.append(results)
         ET.ElementTree(root).write(self.output_file)
-        self.local_tidy(self.output_file)
+        self.local_tidy(local_file=self.output_file)
+
+
+def pretty_print_xml(xml_file):
+    """
+    Taken from StackOverflow
+    """
+    xml_string = xml.dom.minidom.parse(xml_file)
+    pp_string = xml_string.toprettyxml()
+    fptr = open(xml_file, 'w')
+    fptr.write(pp_string)
+    fptr.close()
+
+
+def remove_namespace(doc):
+    """Remove namespace in the passed document in place."""
+    # We seem to need this for all element searches now.
+    xmlns = 'http://www.w3.org/1999/xhtml'
+
+    namespace = '{%s}' % xmlns
+    nsl = len(namespace)
+    for elem in doc.getiterator():
+        if elem.tag.startswith(namespace):
+            elem.tag = elem.tag[nsl:]
+
+    return(doc)

@@ -1,4 +1,5 @@
 import datetime
+import http.cookiejar
 import logging
 import os
 import re
@@ -7,7 +8,7 @@ import xml.etree.cElementTree as ET
 
 from bs4 import BeautifulSoup
 
-from .common import RaceResults
+from .common import RaceResults, remove_namespace
 
 
 class NewYorkRR(RaceResults):
@@ -25,6 +26,8 @@ class NewYorkRR(RaceResults):
 
         # Set the appropriate logging level.
         self.logger.setLevel(getattr(logging, self.verbose.upper()))
+
+        self.cookie_jar = None
 
     def run(self):
         """
@@ -116,7 +119,7 @@ class NewYorkRR(RaceResults):
         # There should be a single form.
         with open(local_file, 'r', encoding='utf-8') as fp:
             markup = fp.read()
-        root = BeautifulSoup(markup, 'lxml')
+        root = BeautifulSoup(markup, 'html.parser')
         form = root.find_all('form')[0]
 
         # The page for POSTing the search needs POST params.
@@ -162,7 +165,7 @@ class NewYorkRR(RaceResults):
 
         # So now we have a result.  Parse it for the result table.
         root = ET.parse(local_file).getroot()
-        root = self.remove_namespace(root)
+        root = remove_namespace(root)
 
         # 3rd table is the one we want.
         pattern = './/table'
@@ -254,3 +257,47 @@ class NewYorkRR(RaceResults):
             new_table.append(tr)
 
         return(new_table)
+
+    def local_tidy(self, local_file=None):
+        """
+        Tidy up the HTML.
+        """
+        try:
+            with open(local_file, encoding='utf-8') as fp:
+                markup = fp.read()
+        except UnicodeDecodeError:
+            with open(local_file, encoding='iso-8859-1') as fp:
+                markup = fp.read()
+        #soup = BeautifulSoup(markup, "lxml")
+        soup = BeautifulSoup(markup, "html.parser")
+
+        import codecs
+        fp = codecs.open(local_file, encoding='utf-8', mode='w')
+        fp.write(soup.prettify())
+        fp.close()
+
+    def download_file(self, url, local_file, params=None):
+        """
+        Download a URL to a local file.
+
+        Args
+        ----
+            url:  The URL to retrieve
+            local_file:  Name of the file where we will store the web page.
+            params:  POST parameters to supply
+        """
+        # cookie support needed for NYRR results.
+        if self.cookie_jar is None:
+            self.cookie_jar = http.cookiejar.LWPCookieJar()
+        cookie_processor = urllib.request.HTTPCookieProcessor(self.cookie_jar)
+        opener = urllib.request.build_opener(cookie_processor)
+        urllib.request.install_opener(opener)
+
+        headers = {'User-Agent': self.user_agent}
+        req = urllib.request.Request(url, None, headers)
+        response = urllib.request.urlopen(req, params)
+        html = response.readall()
+
+        with open(local_file, 'wb') as f:
+            f.write(html)
+

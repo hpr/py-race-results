@@ -9,6 +9,7 @@ import xml.etree.cElementTree as ET
 from bs4 import BeautifulSoup
 
 from .common import RaceResults
+from .common import remove_namespace
 
 
 def clean_race_name(text):
@@ -55,10 +56,6 @@ class Active(RaceResults):
         self.__dict__.update(**kwargs)
 
         self.base_url = 'http://results.active.com'
-
-        # This is the name of the file that keeps all of the high level results
-        # for the location.
-        self.master_file = 'geographic.html'
 
         # Need to remember the current URL so that we can reference it in the
         # output.
@@ -111,9 +108,7 @@ class Active(RaceResults):
         """
         We assume that we have the master file stored locally.
         """
-        with open(self.master_file, 'r', encoding='utf-8') as fp:
-            markup = fp.read()
-        root = BeautifulSoup(markup, 'lxml')
+        root = BeautifulSoup(self.html, 'html.parser')
         divs = [div for div in root.find_all('div')
                 if div.get('class') == ['result-title']]
 
@@ -137,19 +132,20 @@ class Active(RaceResults):
         it.
         """
         url = self.base_url + relative_event_url
-        self.logger.info('Downloading event, %s...' % url)
-        self.download_file(url, 'event.html')
-        self.local_tidy('event.html')
+        self.logger.info('Downloading event, {0}...'.format(url))
+        self.download_file(url)
+        self.local_tidy()
 
-        with open('event.html') as f:
-            soup = BeautifulSoup(f, 'lxml')
+        soup = BeautifulSoup(self.html, 'html.parser')
 
         # Look at all of the links except the first.  That first URL is the
         # event overview, which we don't need.
         anchors = soup.nav.findAll('a')
         for anchor in anchors[1:]:
-            self.logger.info("Looking at sub-event '%s' ..." %
-                             clean_race_name(anchor.text))
+            msg = "Looking at sub-event '{0}' ..."
+            msg = msg.format(clean_race_name(anchor.text))
+            self.logger.info(msg)
+
             self.process_sub_event(anchor['href'])
 
     def process_sub_event(self, relative_url):
@@ -161,9 +157,8 @@ class Active(RaceResults):
         self.downloaded_url = self.base_url + relative_url
         self.logger.info('Downloading sub event, %s...' % self.downloaded_url)
 
-        local_file = 'sub_event.html'
-        self.download_file(self.downloaded_url, local_file)
-        self.local_tidy(local_file)
+        self.download_file(self.downloaded_url)
+        self.local_tidy()
 
         # <form accept-charset="UTF-8"
         #       action="/events/blah-blah-blah"
@@ -179,17 +174,16 @@ class Active(RaceResults):
                                \s+id=\s*"table_search"
                                \s+method=\s*"get"
                                >""", re.VERBOSE)
-        with open(local_file, 'r', encoding='utf-8') as fp:
-            html = fp.read()
-        m = regex.search(html)
+        m = regex.search(self.html)
         if m is not None:
-            self.process_csv_form(local_file, m.group('action'))
+            self.process_csv_form(m.group('action'))
             return
 
         # Next, see if the results are already hard-coded into the file.
         # <pre id="raw-file">
-        root = ET.parse(local_file).getroot()
-        root = self.remove_namespace(root)
+        #root = ET.parse(local_file).getroot()
+        root = ET.fromstring(self.html)
+        root = remove_namespace(root)
         pres = root.findall('.//pre[@id]')
         if len(pres) == 1:
             self.process_raw_file(local_file, pres[0].text)
@@ -231,7 +225,7 @@ class Active(RaceResults):
 
         self.insert_race_results(div)
 
-    def process_csv_form(self, source_file, relative_url):
+    def process_csv_form(self, relative_url):
         """Process CSV form URL.
 
         Process results to be retrieve as a CSV file along with some extra CGI
@@ -241,37 +235,36 @@ class Active(RaceResults):
         url = ("http://results.active.com" + relative_url +
                ".csv?per_page=100000")
         self.logger.info("Downloading CSV file %s" % url)
-        self.download_file(url, "event.csv")
+        with tempfile.NamedTemporaryFile(suffix='.csv') as tfile:
+            self.download_file(url, file=tfile.name)
 
-        trs = self.process_csv_file('event.csv')
-        if len(trs) == 0:
-            # No results were found.
-            self.logger.info("No member results found.")
-            return
-
-        table = ET.Element('table')
-        for tr in trs:
-            table.append(tr)
-
-        # Construct the HTML for the results.
-        # Append the title and the provenance.
-        with open(source_file, 'r') as f:
-            html = f.read()
-        soup = BeautifulSoup(html, 'lxml')
-
-        div = ET.Element('div')
-        div.set('class', 'race')
-
-        h2 = ET.Element('h2')
-        h2.text = soup.title.contents[0]
-        div.append(h2)
-
-        provenance_div = self.set_provenance()
-        div.append(provenance_div)
-
-        div.append(table)
-
-        self.insert_race_results(div)
+            trs = self.process_csv_file(tfile.name)
+            if len(trs) == 0:
+                # No results were found.
+                self.logger.info("No member results found.")
+                return
+    
+            table = ET.Element('table')
+            for tr in trs:
+                table.append(tr)
+    
+            # Construct the HTML for the results.
+            # Append the title and the provenance.
+            soup = BeautifulSoup(self.html, 'html.parser')
+    
+            div = ET.Element('div')
+            div.set('class', 'race')
+    
+            h2 = ET.Element('h2')
+            h2.text = soup.title.contents[0]
+            div.append(h2)
+    
+            provenance_div = self.set_provenance()
+            div.append(provenance_div)
+    
+            div.append(table)
+    
+            self.insert_race_results(div)
 
     def set_provenance(self):
         """Create a DIV containing a link to the original result."""
@@ -366,6 +359,6 @@ class Active(RaceResults):
         url += '&search' + '&search'.join(lst)
 
         self.logger.debug('Downloading geographic search results, %s.' % url)
-        self.download_file(url, self.master_file)
+        self.download_file(url)
 
-        self.local_tidy(self.master_file)
+        self.local_tidy()

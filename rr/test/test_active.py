@@ -7,9 +7,10 @@ import unittest
 
 from bs4 import BeautifulSoup
 
-from rr import Active
+#from rr import Active
 
 
+@unittest.skip("active not supported at the moment")
 class TestActive(unittest.TestCase):
     """
     Test parsing results from Active.

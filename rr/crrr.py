@@ -11,7 +11,7 @@ import xml.etree.cElementTree as ET
 
 from bs4 import BeautifulSoup
 
-from .common import RaceResults
+from .common import RaceResults, remove_namespace
 
 
 class CoolRunning(RaceResults):
@@ -109,7 +109,7 @@ class CoolRunning(RaceResults):
 
         pattern += '.*shtml'
         self.logger.debug('Match pattern is %s' % pattern)
-        r = re.compile(pattern, re.DOTALL)
+        r = re.compile(pattern)
         return(r)
 
     def process_state_master_file(self, state):
@@ -122,7 +122,7 @@ class CoolRunning(RaceResults):
 
         with open(local_state_file, 'r') as f:
             markup = f.read()
-        soup = BeautifulSoup(markup, 'lxml')
+        soup = BeautifulSoup(markup, 'html.parser')
         anchors = soup.find_all('a')
 
         urls = set()
@@ -149,16 +149,19 @@ class CoolRunning(RaceResults):
             # Now collect any secondary result files.
             with open(race_file) as f:
                 markup = f.read()
-            race_soup = BeautifulSoup(markup, 'lxml')
+            race_soup = BeautifulSoup(markup, 'html.parser')
             inner_anchors = race_soup.find_all('a')
 
             # construct the 2ndary pattern
             parts = race_file.split('.')
             s = parts[0][:-1]
-            secondary_pattern = re.compile(s, re.DOTALL)
+            secondary_pattern = re.compile(s)
             for inner_anchor in inner_anchors:
 
-                href = inner_anchor['href']
+                try:
+                    href = inner_anchor['href']
+                except KeyError:
+                    continue
                 if href is None:
                     continue
                 match = secondary_pattern.search(href)
@@ -186,13 +189,13 @@ class CoolRunning(RaceResults):
         """
         with open(race_file, 'r') as f:
             markup = f.read()
-        soup = BeautifulSoup(markup, 'lxml')
+        soup = BeautifulSoup(markup, 'html.parser')
 
         text = soup.pre.text
         results = []
         for line in text.split('\n'):
             if self.match_against_membership(line):
-                results.append(line + '\n')
+                results.append(line)
 
         return results
 
@@ -204,7 +207,7 @@ class CoolRunning(RaceResults):
         #pattern = './/body/table/tr/td/table/tr/td/table/tr/td/div/pre'
         with open(race_file, 'r') as f:
             markup = f.read()
-        soup = BeautifulSoup(markup, 'lxml')
+        soup = BeautifulSoup(markup, 'html.parser')
 
         if soup.pre is None:
             return False
@@ -231,7 +234,7 @@ class CoolRunning(RaceResults):
             raise
 
         root = tree.getroot()
-        self.remove_namespace(root)
+        root = remove_namespace(root)
         nodes = root.findall(pattern)
         if len(nodes) > 0:
             return True
@@ -250,7 +253,7 @@ class CoolRunning(RaceResults):
 
         tree = ET.parse(race_file)
         root = tree.getroot()
-        self.remove_namespace(root)
+        root = remove_namespace(root)
 
         trs = root.findall(pattern)
 
@@ -310,7 +313,7 @@ class CoolRunning(RaceResults):
         # The H1 tag comes from the only H1 tag in the race file.
         with open(race_file, 'r') as f:
             markup = f.read()
-        root = BeautifulSoup(markup, 'lxml')
+        root = BeautifulSoup(markup, 'html.parser')
 
         h1 = ET.Element('h1')
         h1.text = root.h1.text
@@ -368,7 +371,7 @@ class CoolRunning(RaceResults):
 
         with open(race_file, 'r') as f:
             markup = f.read()
-        soup = BeautifulSoup(markup, 'lxml')
+        soup = BeautifulSoup(markup, 'html.parser')
 
         banner_text = self.parse_banner(soup.pre)
 
@@ -421,12 +424,12 @@ class CoolRunning(RaceResults):
 
         """
         self.logger.info('Processing %s...' % state)
-        local_state_file = state + '.shtml'
-        fmt = 'http://www.coolrunning.com/results/%s/%s'
-        url = fmt % (self.start_date.strftime('%y'), local_state_file)
-        self.logger.info('Downloading %s.' % url)
-        self.download_file(url, local_state_file)
-        self.local_tidy(local_state_file)
+        state_file = '{0}.shtml'.format(state)
+        url = 'http://www.coolrunning.com/results/{0}/{1}'
+        url = url.format(self.start_date.strftime('%y'), state_file)
+        self.logger.info('Downloading {0}.'.format(url))
+        self.download_file(url, local_file=state_file)
+        self.local_tidy(state_file)
 
     def download_race(self, anchor, inner_url=False, state=''):
         """
@@ -443,7 +446,7 @@ class CoolRunning(RaceResults):
         url = 'http://www.coolrunning.com/%s' % href
         local_file = href.split('/')[-1]
         self.logger.info('Downloading %s...' % url)
-        self.download_file(url, local_file)
+        self.download_file(url, local_file=local_file)
         self.downloaded_url = url
         try:
             self.local_tidy(local_file)
@@ -454,25 +457,25 @@ class CoolRunning(RaceResults):
 
         return(local_file)
 
-    def local_tidy(self, html_file):
+    def local_tidy(self, local_file=None):
         """Clean up the HTML, as it is often invalid."""
 
         # This is an IE conditional comment that Excel likes to produce.
         # Have only seen this on CoolRunning.
         # Get rid of it before running through the common tidy process.
         try:
-            with open(html_file, 'r', encoding='utf-8') as fp:
+            with open(local_file, 'r', encoding='utf-8') as fp:
                 html = fp.read()
         except UnicodeDecodeError:
-            with open(html_file, 'r', encoding='iso-8859-1') as fp:
+            with open(local_file, 'r', encoding='iso-8859-1') as fp:
                 html = fp.read()
         html = html.replace('<![if supportMisalignedColumns]>', '')
         html = html.replace('<![endif]>', '')
-        with open(html_file, 'w') as f:
+        with open(local_file, 'w') as f:
             f.write(html)
 
         # And now call the common tidy process.
-        RaceResults.local_tidy(self, html_file)
+        RaceResults.local_tidy(self, local_file)
 
     def compile_local_results(self):
         """

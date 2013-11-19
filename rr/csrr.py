@@ -22,7 +22,7 @@ monthstrs = {1: 'janfeb',
              7: 'july',
              8: 'aug',
              9: 'sept',
-             10: 'oct',
+             10: 'october',
              11: 'novdec',
              12: 'novdec', }
 
@@ -99,37 +99,34 @@ class CompuScore(RaceResults):
         Pick out the URLs of the race results and process each.  We cannot
         easily restrict based on the time frame here.
         """
-        with open('index.htm') as fp:
-            markup = fp.read()
-
         year = self.start_date.year
         monthstr = monthstrs[self.start_date.month]
         pattern = 'http://www.compuscore.com/cs{0}/{1}/(?P<race>\w+)\.htm'
         pattern = pattern.format(year, monthstr)
-        matchiter = re.finditer(pattern, markup)
+        matchiter = re.finditer(pattern, self.html)
 
+        lst = []
         for match in matchiter:
-            start = match.span()[0]
-            stop = match.span()[1]
-            url = markup[start:stop]
-            local_file = url.split('/')[-1]
-            self.logger.info('Downloading %s...' % local_file)
-            self.download_file(url, local_file)
+            span = match.span()
+            start = span[0]
+            stop = span[1]
+            url = self.html[start:stop]
+            lst.append(url)
+
+        for url in lst:
+            self.logger.info('Downloading {0}...'.format(url))
+            self.download_file(url)
             self.downloaded_url = url
-            self.local_tidy(local_file)
-            if self.race_date_in_range(local_file):
-                self.compile_race_results(local_file)
+            if self.race_date_in_range():
+                self.compile_race_results()
             else:
                 self.logger.info('Date not in range...')
 
-    def race_date_in_range(self, race_file):
+    def race_date_in_range(self):
         """
         Determine if the race file took place in the specified date range.
         """
-        with open(race_file) as fp:
-            markup = fp.read()
-        #root = BeautifulSoup(markup, 'lxml')
-        root = BeautifulSoup(markup, 'html.parser')
+        root = BeautifulSoup(self.html, 'html.parser')
 
         # The date is in a single H3 element under to BODY element.
         h3 = root.find_all('h3')
@@ -161,21 +158,20 @@ class CompuScore(RaceResults):
         else:
             return False
 
-    def compile_race_results(self, race_file):
+    def compile_race_results(self):
         """
         Go through a race file and collect results.
         """
         results = []
-        with open(race_file) as fp:
-            for line in fp.readlines():
-                if self.match_against_membership(line):
-                    results.append(line)
+        for line in self.html.split('\n'):
+            if self.match_against_membership(line):
+                results.append(line)
 
         if len(results) > 0:
-            results = self.webify_results(race_file, results)
+            results = self.webify_results(results)
             self.insert_race_results(results)
 
-    def webify_results(self, race_file, results):
+    def webify_results(self, results):
         """
         Take the list of results and turn it into output HTML.
         """
@@ -186,25 +182,19 @@ class CompuScore(RaceResults):
         div.append(hr)
 
         # The single H2 element in the file has the race name.
-        with open(race_file) as fp:
-            markup = fp.read()
-        root = BeautifulSoup(markup, 'html.parser')
-        #tree = ET.parse(race_file)
-        #root = tree.getroot()
-        #root = self.remove_namespace(root)
-        #pattern = './/h2'
-        #race_name_element = root.findall(pattern)[0]
+        root = BeautifulSoup(self.html, 'html.parser')
         h2 = ET.Element('h2')
         h2.text = root.h2.text
         div.append(h2)
 
         # The single H3 element in the file has the race date.
         h3 = ET.Element('h3')
-        h3.text = root.h3.text
+        try:
+            h3.text = root.h3.text
+        except AttributeError:
+            # except if it's not there.
+            h3.text = ''
         div.append(h3)
-        #pattern = './/h3'
-        #race_date_element = root.findall(pattern)[0]
-        #div.append(race_date_element)
 
         # Append the URL if possible.
         if self.downloaded_url is not None:
@@ -230,7 +220,7 @@ class CompuScore(RaceResults):
         pre = ET.Element('pre')
         pre.set('class', 'actual_results')
         banner_text = self.parse_banner(root)
-        pre.text = banner_text + '\n'.join(results)
+        pre.text = banner_text + '\n' + '\n'.join(results)
         div.append(pre)
 
         return div
@@ -241,7 +231,11 @@ class CompuScore(RaceResults):
         titles.
         """
         strongs = root.find_all('strong')
-        text = strongs[6].text
+        try:
+            text = strongs[6].text
+        except IndexError:
+            text = ''
+
         return(text)
 
     def match_against_membership(self, line):
@@ -265,11 +259,11 @@ class CompuScore(RaceResults):
         http://compuscore.com/csYYYY/MONTH/index.htm
 
         """
-        url = 'http://compuscore.com/cs%s/%s/index.htm'
-        url %= (self.start_date.year, self.monthstr)
-        self.logger.info('Downloading %s.' % url)
-        self.download_file(url, 'index.htm')
-        self.local_tidy('index.htm')
+        url = 'http://compuscore.com/cs{0}/{1}/index.htm'
+        url = url.format(self.start_date.year, self.monthstr)
+        self.logger.info('Downloading master file {0}.'.format(url))
+        self.download_file(url)
+        self.local_tidy()
 
     def compile_local_results(self):
         """
@@ -280,4 +274,8 @@ class CompuScore(RaceResults):
                 racefile = racefile.rstrip()
                 self.logger.info('Processing %s...' % racefile)
                 self.local_tidy(racefile)
-                self.compile_race_results(racefile)
+
+                with open(racefile, 'rt') as fptr:
+                    self.html = fptr.read()
+
+                self.compile_race_results()
