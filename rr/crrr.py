@@ -100,7 +100,8 @@ class CoolRunning(RaceResults):
         pattern += self.start_date.strftime('%b')
 
         # continue with a regexp to match any of the days in the range.
-        day_range = '('
+        # It's a non-capturing group.
+        day_range = '(?:'
         for day in range(self.start_date.day, self.stop_date.day):
             day_range += "%d_|" % day
         day_range += '%d_)' % self.stop_date.day
@@ -118,32 +119,18 @@ class CoolRunning(RaceResults):
         We assume that we have the state file stored locally.
         """
         local_state_file = state + '.shtml'
-        pattern = self.construct_state_match_pattern(state)
+        regex = self.construct_state_match_pattern(state)
 
         with open(local_state_file, 'r') as f:
             markup = f.read()
-        soup = BeautifulSoup(markup, 'html.parser')
-        anchors = soup.find_all('a')
 
-        urls = set()
+        relative_urls = regex.findall(markup)
+        
+        for relative_url in relative_urls:
 
-        for anchor in anchors:
-
-            try:
-                href = anchor['href']
-            except KeyError:
-                continue
-
-            match = pattern.search(href)
-            if match is None:
-                continue
-
-            # keep track of the last part of the URL.
-            # That should be unique.
-            parts = href.split('/')
-            urls.add(parts[-1])
-
-            race_file = self.download_race(anchor)
+            top_level_url = 'http://www.coolrunning.com' + relative_url
+            race_file = top_level_url.split('/')[-1]
+            self.download_file(top_level_url, local_file=race_file)
             self.compile_race_results(race_file)
 
             # Now collect any secondary result files.
@@ -169,19 +156,17 @@ class CoolRunning(RaceResults):
                     continue
 
                 parts = href.split('/')
-                if parts[-1] in urls:
-                    # yes we did
+                if parts[-1] in relative_url:
+                    # Already did this one.
                     continue
 
-                urls.add(parts[-1])
+                race_file = parts[1]
+                parts = top_level_url.split('/')
+                parts[-1] = race_file
+                inner_url = '/'.join(parts)
+                self.download_file(inner_url, local_file=race_file)
 
-                inner_race_file = self.download_race(inner_anchor,
-                                                     inner_url=True,
-                                                     state=state)
-                if inner_race_file is None:
-                    continue
-
-                self.compile_race_results(inner_race_file)
+                self.compile_race_results(race_file)
 
     def compile_vanilla_results(self, race_file):
         """
