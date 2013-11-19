@@ -1,3 +1,6 @@
+November 18, 2013 John Evans <john.g.evans.ne@gmail.com> - 0.2.7
+- Finally have NYRR working again.
+
 February 07, 2013 John Evans <john.g.evans.ne@gmail.com> - 0.2.5
 - Replaced ElementTree with BeautifulSoup in test suite.
 
