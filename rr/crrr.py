@@ -109,7 +109,7 @@ class CoolRunning(RaceResults):
 
         pattern += '.*shtml'
         self.logger.debug('Match pattern is %s' % pattern)
-        r = re.compile(pattern, re.DOTALL)
+        r = re.compile(pattern)
         return(r)
 
     def process_state_master_file(self, state):
@@ -155,7 +155,7 @@ class CoolRunning(RaceResults):
             # construct the 2ndary pattern
             parts = race_file.split('.')
             s = parts[0][:-1]
-            secondary_pattern = re.compile(s, re.DOTALL)
+            secondary_pattern = re.compile(s)
             for inner_anchor in inner_anchors:
 
                 try:
