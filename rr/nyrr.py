@@ -7,7 +7,7 @@ import xml.etree.cElementTree as ET
 
 from bs4 import BeautifulSoup
 
-from .common import RaceResults
+from .common import RaceResults, remove_namespace
 
 
 class NewYorkRR(RaceResults):
@@ -90,13 +90,13 @@ class NewYorkRR(RaceResults):
         post_params['input.fname'] = ''
         post_params['input.bib'] = ''
         post_params['overalltype'] = 'All'
-        post_params['input.agegroup.m'] = '12 to 19'
-        post_params['input.agegroup.f'] = '12 to 19'
+        post_params['input.agegroup.m'] = '12 to 14'
+        post_params['input.agegroup.f'] = '12 to 14'
         post_params['teamgender'] = ''
         post_params['team_code'] = self.team
         post_params['items.display'] = '500'
         post_params['AESTIVACVNLIST'] = 'overalltype,input.agegroup.m,'
-        post_params['AESTIVACVNLIST'] += 'input.agegroup.f,teamgender'
+        post_params['AESTIVACVNLIST'] += 'input.agegroup.f,teamgender,'
         post_params['AESTIVACVNLIST'] += 'team_code'
         #data = urllib.parse.urlencode(post_params)
         #data = data.encode()
@@ -105,7 +105,6 @@ class NewYorkRR(RaceResults):
         # importantly, the team code, i.e. RARI for Raritan Valley Road
         # Runners.
         local_file = 'nyrrresult.html'
-        import pdb; pdb.set_trace()
         self.download_file(url, local_file=local_file, params=post_params)
         self.local_tidy(local_file)
 
@@ -126,7 +125,7 @@ class NewYorkRR(RaceResults):
 
         # So now we have a result.  Parse it for the result table.
         root = ET.parse(local_file).getroot()
-        root = self.remove_namespace(root)
+        root = remove_namespace(root)
 
         # 3rd table is the one we want.
         pattern = './/table'

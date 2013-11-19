@@ -109,7 +109,7 @@ class CoolRunning(RaceResults):
 
         pattern += '.*shtml'
         self.logger.debug('Match pattern is %s' % pattern)
-        r = re.compile(pattern, re.DOTALL)
+        r = re.compile(pattern)
         return(r)
 
     def process_state_master_file(self, state):
