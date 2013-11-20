@@ -291,20 +291,25 @@ class CoolRunning(RaceResults):
         hr.set('class', 'race_header')
         div.append(hr)
 
-        # The H1 tag has the race name.
-        # The H1 tag comes from the only H1 tag in the race file.
         with open(race_file, 'r') as f:
             markup = f.read()
-        root = BeautifulSoup(markup, 'html.parser')
+
+        # The H1 tag has the race name.  The H2 tag has the location and date.
+        # Both are the only such tabs in the file.
+        #
+        # Use re.DOTALL since . must match across lines.
+        regex = re.compile('<h1>(?P<h1>.*)</h1>.*<h2>(?P<h2>.*)</h2>',
+                           re.DOTALL)
+        matchobj = regex.search(markup)
+        if matchobj is None:
+            raise RuntimeError("Could not find H1/H2 tags in {0}".format(race_file))
 
         h1 = ET.Element('h1')
-        h1.text = root.h1.text
+        h1.text = matchobj.group('h1')
         div.append(h1)
 
-        # The first H2 tag has the location and date.
-        # The H2 tag comes from the only H2 tag in the race file.
         h2 = ET.Element('h2')
-        h2.text = root.h2.text
+        h2.text = matchobj.group('h2')
         div.append(h2)
 
         # Append the URL if possible.
