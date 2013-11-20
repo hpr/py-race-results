@@ -58,9 +58,10 @@ class CompuScore(RaceResults):
             #
             #   '60.Gene Gugliotta       North Plainfiel,NJ 53 M U '
             #
-            pattern = '\.' + first_name + '\s'
+            # Use word boundaries for the regexps except at the very beginning.
+            pattern = '\\.' + first_name + '\\b'
             first_name_regex.append(re.compile(pattern, re.IGNORECASE))
-            pattern = '\s' + last_name + '\s'
+            pattern = '\\b' + last_name + '\\b'
             last_name_regex.append(re.compile(pattern, re.IGNORECASE))
 
         self.first_name_regex = first_name_regex
