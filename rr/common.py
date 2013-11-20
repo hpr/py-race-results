@@ -1,6 +1,5 @@
 """Parse race results.
 """
-import collections
 import copy
 import codecs
 import csv
@@ -66,19 +65,16 @@ class RaceResults:
         Smith,Joe, ...
         """
 
+        members = []
         with open(self.memb_list) as csvfile:
             mlreader = csv.reader(csvfile, delimiter=',')
             first_name = []
             last_name = []
             for row in mlreader:
-                lname = row[0]
-                fname = row[1]
-                first_name.append(fname)
-                last_name.append(lname)
+                # members.append((lname, fname))
+                members.append((row[0], row[1]))
 
-        FirstLast = collections.namedtuple('FirstLastName', ['first', 'last'])
-        names = FirstLast(first=first_name, last=last_name)
-        return names
+        return members
 
     def local_tidy(self, local_file=None):
         """
