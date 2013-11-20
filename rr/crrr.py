@@ -47,15 +47,13 @@ class CoolRunning(RaceResults):
         first_name_regex = []
         last_name_regex = []
         for last_name, first_name in self.parse_membership_list():
-            # For the regular expression, surround the name with
-            # at least one white space character.  That way we cut
-            # down on a lot of false positives, e.g. "Ed Ford" does
-            # not cause every fricking person from "New Bedford" to
+            # Use word boundaries to prevent false positives, e.g. "Ed Ford"
+            # does not cause every fricking person from "New Bedford" to
             # match.  Here's an example line to match.
             #   '60 Gene Gugliotta       North Plainfiel,NJ 53 M U '
-            pattern = '\s+' + first_name + '\s+'
+            pattern = '\\b' + first_name + '\\b'
             first_name_regex.append(re.compile(pattern, re.IGNORECASE))
-            pattern = '\s+' + last_name + '\s+'
+            pattern = '\\b' + last_name + '\\b'
             last_name_regex.append(re.compile(pattern, re.IGNORECASE))
 
         self.first_name_regex = first_name_regex
