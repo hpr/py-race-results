@@ -130,42 +130,39 @@ class CoolRunning(RaceResults):
 
             top_level_url = 'http://www.coolrunning.com' + relative_url
             race_file = top_level_url.split('/')[-1]
+            self.logger.info(top_level_url)
             self.download_file(top_level_url, local_file=race_file)
             self.compile_race_results(race_file)
 
             # Now collect any secondary result files.
             with open(race_file) as f:
                 markup = f.read()
-            race_soup = BeautifulSoup(markup, 'html.parser')
-            inner_anchors = race_soup.find_all('a')
 
-            # construct the 2ndary pattern
+            # construct the secondary pattern.  If the race name is something
+            # like "TheRaceSet1.shtml", then the secondary races will be
+            # "TheRaceSet[2345].shmtl" etc.
             parts = race_file.split('.')
-            s = parts[0][:-1]
-            secondary_pattern = re.compile(s)
-            for inner_anchor in inner_anchors:
+            base = parts[-2][0:-1]
+            pat = '<a href="(?P<inner_url>\.\/' + base + '\d+\.shtml)">'
+            inner_regex = re.compile(pat)
+            for matchobj in inner_regex.finditer(markup):
 
-                try:
-                    href = inner_anchor['href']
-                except KeyError:
-                    continue
-                if href is None:
-                    continue
-                match = secondary_pattern.search(href)
-                if match is None:
+                relative_inner_url = matchobj.group('inner_url')
+                if relative_inner_url in top_level_url:
+                    # Already seen this one.
                     continue
 
-                parts = href.split('/')
-                if parts[-1] in relative_url:
-                    # Already did this one.
-                    continue
+                # Strip off the leading "./" to get the name we use for the 
+                # local file.
+                race_file = relative_inner_url[2:]
 
-                race_file = parts[1]
-                parts = top_level_url.split('/')
-                parts[-1] = race_file
-                inner_url = '/'.join(parts)
+                # Form the full inner url by swapping out the top level
+                # url
+                lst = top_level_url.split('/')
+                lst[-1] = race_file
+                inner_url = '/'.join(lst)
+                self.logger.info(inner_url)
                 self.download_file(inner_url, local_file=race_file)
-
                 self.compile_race_results(race_file)
 
     def compile_vanilla_results(self, race_file):
