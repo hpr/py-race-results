@@ -40,46 +40,36 @@ class BestRace(RaceResults):
         self.load_membership_list()
         self.compile_results()
         # Make the output human-readable.
-        RaceResults.local_tidy(self, self.output_file)
+        RaceResults.local_tidy(self, local_file=self.output_file)
 
     def load_membership_list(self):
         """
         Construct regular expressions for each person in the membership list.
         """
-        names = self.parse_membership_list()
         first_name_regex = []
         last_name_regex = []
-        for j in range(len(names.first)):
-            # For the regular expression, surround the name with
-            # at least one white space character.  That way we cut
-            # down on a lot of false positives, e.g. "Ed Ford" does
-            # not cause every fricking person from "New Bedford" to
+        for last_name, first_name in self.parse_membership_list():
+            # Use word boundaries to prevent false positives, e.g. "Ed Ford"
+            # does not cause every fricking person from "New Bedford" to
             # match.  Here's an example line to match.
             #   '60 Gene Gugliotta       North Plainfiel,NJ 53 M U '
-            pattern = '\s+' + names.first[j] + '\s+'
+            pattern = '\\b' + first_name + '\\b'
             first_name_regex.append(re.compile(pattern, re.IGNORECASE))
-            pattern = '\s+' + names.last[j] + '\s+'
+            pattern = '\\b' + last_name + '\\b'
             last_name_regex.append(re.compile(pattern, re.IGNORECASE))
 
         self.first_name_regex = first_name_regex
         self.last_name_regex = last_name_regex
 
-    def local_tidy(self, html_file):
+    def local_tidy(self, local_file=None):
         """
-        Cleans up the HTML file.
+        Clean up the HTML file.
 
         LIBTIDY doesn't seem to like p:colorspace, so get rid of it before
         calling LIBTIDY.
         """
-        fp = open(html_file, 'r')
-        html = fp.read()
-        fp.close()
-        html = html.replace(':colorscheme', '')
-        fp = open(html_file, 'w')
-        fp.write(html)
-        fp.close()
-
-        RaceResults.local_tidy(self, html_file)
+        self.html = self.html.replace(':colorscheme', '')
+        RaceResults.local_tidy(self, local_file=local_file)
 
     def compile_results(self):
         """
@@ -104,10 +94,7 @@ class BestRace(RaceResults):
     def process_master_file(self):
         """
         Compile results for the specified state.
-
-        We assume that we have the state file stored locally.
         """
-        local_file = 'index.html'
         pattern = 'http://www.bestrace.com/results/{0}/{1}{2}'
         pattern = pattern.format(self.start_date.strftime('%y'),
                                  self.start_date.strftime('%y'),
@@ -123,34 +110,34 @@ class BestRace(RaceResults):
         pattern += "\w+\.HTM"
         self.logger.debug('pattern is "%s"' % pattern)
 
-        with open(local_file) as fp:
-            markup = fp.read()
-
-        matchiter = re.finditer(pattern, markup)
+        matchiter = re.finditer(pattern, self.html)
+        lst = []
         for match in matchiter:
             span = match.span()
             start = span[0]
             stop = span[1]
-            url = markup[start:stop]
-            self.logger.info('Downloading %s...' % url)
-            race_file = self.download_race(url)
-            self.compile_race_results(race_file)
+            url = self.html[start:stop]
+            lst.append(url)
 
-    def compile_race_results(self, race_file):
+        for url in lst:
+            self.logger.info('Downloading %s...' % url)
+            self.download_race(url)
+            self.compile_race_results()
+
+    def compile_race_results(self):
         """
         Go through a single race file and collect results.
         """
         results = []
-        with open(race_file) as fp:
-            for line in fp.readlines():
-                if self.match_against_membership(line):
-                    results.append(line)
+        for line in self.html.split('\n'):
+            if self.match_against_membership(line):
+                results.append(line)
 
         if len(results) > 0:
-            results = self.webify_results(race_file, results)
+            results = self.webify_results(results)
             self.insert_race_results(results)
 
-    def webify_results(self, race_file, results_lst):
+    def webify_results(self, results_lst):
         """
         Take the list of results and turn it into output HTML.
         """
@@ -160,9 +147,7 @@ class BestRace(RaceResults):
         hr.set('class', 'race_header')
         div.append(hr)
 
-        with open(race_file) as fp:
-            markup = fp.read()
-        root = BeautifulSoup(markup, 'lxml')
+        root = BeautifulSoup(self.html, 'html.parser')
 
         h1 = ET.Element('h1')
         h1.text = root.title.text
@@ -243,24 +228,25 @@ class BestRace(RaceResults):
         fmt = 'http://www.bestrace.com/%sschedule.html'
         url = fmt % self.start_date.strftime('%Y')
         self.logger.info('Downloading %s.' % url)
-        self.download_file(url, 'index.html')
-        self.local_tidy('index.html')
+        self.download_file(url)
+        self.local_tidy()
 
     def download_race(self, url):
         """
         Download a race URL to a local file.
         """
-        local_file = url.split('/')[-1]
-        self.logger.info('Downloading %s...' % local_file)
-        self.download_file(url, local_file)
+        name = url.split('/')[-1]
+        self.logger.info('Downloading %s...' % name)
+        self.download_file(url)
         self.downloaded_url = url
-        self.local_tidy(local_file)
-        return(local_file)
+        self.local_tidy()
 
     def compile_local_results(self):
         """Compile results from list of local files.
         """
         with open(self.race_list) as fp:
             for line in fp.readlines():
-                line = line.rstrip()
-                self.compile_race_results(line)
+                filename = line.rstrip()
+                with open(filename, 'rt') as fptr:
+                    self.html = fptr.read()
+                self.compile_race_results()

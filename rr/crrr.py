@@ -11,7 +11,7 @@ import xml.etree.cElementTree as ET
 
 from bs4 import BeautifulSoup
 
-from .common import RaceResults
+from .common import RaceResults, remove_namespace
 
 
 class CoolRunning(RaceResults):
@@ -44,19 +44,16 @@ class CoolRunning(RaceResults):
         """
         Construct regular expressions for each person in the membership list.
         """
-        names = self.parse_membership_list()
         first_name_regex = []
         last_name_regex = []
-        for j in range(len(names.first)):
-            # For the regular expression, surround the name with
-            # at least one white space character.  That way we cut
-            # down on a lot of false positives, e.g. "Ed Ford" does
-            # not cause every fricking person from "New Bedford" to
+        for last_name, first_name in self.parse_membership_list():
+            # Use word boundaries to prevent false positives, e.g. "Ed Ford"
+            # does not cause every fricking person from "New Bedford" to
             # match.  Here's an example line to match.
             #   '60 Gene Gugliotta       North Plainfiel,NJ 53 M U '
-            pattern = '\s+' + names.first[j] + '\s+'
+            pattern = '\\b' + first_name + '\\b'
             first_name_regex.append(re.compile(pattern, re.IGNORECASE))
-            pattern = '\s+' + names.last[j] + '\s+'
+            pattern = '\\b' + last_name + '\\b'
             last_name_regex.append(re.compile(pattern, re.IGNORECASE))
 
         self.first_name_regex = first_name_regex
@@ -100,7 +97,8 @@ class CoolRunning(RaceResults):
         pattern += self.start_date.strftime('%b')
 
         # continue with a regexp to match any of the days in the range.
-        day_range = '('
+        # It's a non-capturing group.
+        day_range = '(?:'
         for day in range(self.start_date.day, self.stop_date.day):
             day_range += "%d_|" % day
         day_range += '%d_)' % self.stop_date.day
@@ -109,7 +107,7 @@ class CoolRunning(RaceResults):
 
         pattern += '.*shtml'
         self.logger.debug('Match pattern is %s' % pattern)
-        r = re.compile(pattern, re.DOTALL)
+        r = re.compile(pattern)
         return(r)
 
     def process_state_master_file(self, state):
@@ -118,67 +116,51 @@ class CoolRunning(RaceResults):
         We assume that we have the state file stored locally.
         """
         local_state_file = state + '.shtml'
-        pattern = self.construct_state_match_pattern(state)
+        regex = self.construct_state_match_pattern(state)
 
         with open(local_state_file, 'r') as f:
             markup = f.read()
-        soup = BeautifulSoup(markup, 'lxml')
-        anchors = soup.find_all('a')
 
-        urls = set()
+        relative_urls = regex.findall(markup)
+        
+        for relative_url in relative_urls:
 
-        for anchor in anchors:
-
-            try:
-                href = anchor['href']
-            except KeyError:
-                continue
-
-            match = pattern.search(href)
-            if match is None:
-                continue
-
-            # keep track of the last part of the URL.
-            # That should be unique.
-            parts = href.split('/')
-            urls.add(parts[-1])
-
-            race_file = self.download_race(anchor)
+            top_level_url = 'http://www.coolrunning.com' + relative_url
+            race_file = top_level_url.split('/')[-1]
+            self.logger.info(top_level_url)
+            self.download_file(top_level_url, local_file=race_file)
             self.compile_race_results(race_file)
 
             # Now collect any secondary result files.
             with open(race_file) as f:
                 markup = f.read()
-            race_soup = BeautifulSoup(markup, 'lxml')
-            inner_anchors = race_soup.find_all('a')
 
-            # construct the 2ndary pattern
+            # construct the secondary pattern.  If the race name is something
+            # like "TheRaceSet1.shtml", then the secondary races will be
+            # "TheRaceSet[2345].shmtl" etc.
             parts = race_file.split('.')
-            s = parts[0][:-1]
-            secondary_pattern = re.compile(s, re.DOTALL)
-            for inner_anchor in inner_anchors:
+            base = parts[-2][0:-1]
+            pat = '<a href="(?P<inner_url>\.\/' + base + '\d+\.shtml)">'
+            inner_regex = re.compile(pat)
+            for matchobj in inner_regex.finditer(markup):
 
-                href = inner_anchor['href']
-                if href is None:
-                    continue
-                match = secondary_pattern.search(href)
-                if match is None:
-                    continue
-
-                parts = href.split('/')
-                if parts[-1] in urls:
-                    # yes we did
+                relative_inner_url = matchobj.group('inner_url')
+                if relative_inner_url in top_level_url:
+                    # Already seen this one.
                     continue
 
-                urls.add(parts[-1])
+                # Strip off the leading "./" to get the name we use for the 
+                # local file.
+                race_file = relative_inner_url[2:]
 
-                inner_race_file = self.download_race(inner_anchor,
-                                                     inner_url=True,
-                                                     state=state)
-                if inner_race_file is None:
-                    continue
-
-                self.compile_race_results(inner_race_file)
+                # Form the full inner url by swapping out the top level
+                # url
+                lst = top_level_url.split('/')
+                lst[-1] = race_file
+                inner_url = '/'.join(lst)
+                self.logger.info(inner_url)
+                self.download_file(inner_url, local_file=race_file)
+                self.compile_race_results(race_file)
 
     def compile_vanilla_results(self, race_file):
         """
@@ -186,13 +168,13 @@ class CoolRunning(RaceResults):
         """
         with open(race_file, 'r') as f:
             markup = f.read()
-        soup = BeautifulSoup(markup, 'lxml')
+        soup = BeautifulSoup(markup, 'html.parser')
 
         text = soup.pre.text
         results = []
         for line in text.split('\n'):
             if self.match_against_membership(line):
-                results.append(line + '\n')
+                results.append(line)
 
         return results
 
@@ -204,7 +186,7 @@ class CoolRunning(RaceResults):
         #pattern = './/body/table/tr/td/table/tr/td/table/tr/td/div/pre'
         with open(race_file, 'r') as f:
             markup = f.read()
-        soup = BeautifulSoup(markup, 'lxml')
+        soup = BeautifulSoup(markup, 'html.parser')
 
         if soup.pre is None:
             return False
@@ -231,7 +213,7 @@ class CoolRunning(RaceResults):
             raise
 
         root = tree.getroot()
-        self.remove_namespace(root)
+        root = remove_namespace(root)
         nodes = root.findall(pattern)
         if len(nodes) > 0:
             return True
@@ -250,7 +232,7 @@ class CoolRunning(RaceResults):
 
         tree = ET.parse(race_file)
         root = tree.getroot()
-        self.remove_namespace(root)
+        root = remove_namespace(root)
 
         trs = root.findall(pattern)
 
@@ -306,20 +288,25 @@ class CoolRunning(RaceResults):
         hr.set('class', 'race_header')
         div.append(hr)
 
-        # The H1 tag has the race name.
-        # The H1 tag comes from the only H1 tag in the race file.
         with open(race_file, 'r') as f:
             markup = f.read()
-        root = BeautifulSoup(markup, 'lxml')
+
+        # The H1 tag has the race name.  The H2 tag has the location and date.
+        # Both are the only such tabs in the file.
+        #
+        # Use re.DOTALL since . must match across lines.
+        regex = re.compile('<h1>(?P<h1>.*)</h1>.*<h2>(?P<h2>.*)</h2>',
+                           re.DOTALL)
+        matchobj = regex.search(markup)
+        if matchobj is None:
+            raise RuntimeError("Could not find H1/H2 tags in {0}".format(race_file))
 
         h1 = ET.Element('h1')
-        h1.text = root.h1.text
+        h1.text = matchobj.group('h1')
         div.append(h1)
 
-        # The first H2 tag has the location and date.
-        # The H2 tag comes from the only H2 tag in the race file.
         h2 = ET.Element('h2')
-        h2.text = root.h2.text
+        h2.text = matchobj.group('h2')
         div.append(h2)
 
         # Append the URL if possible.
@@ -368,7 +355,7 @@ class CoolRunning(RaceResults):
 
         with open(race_file, 'r') as f:
             markup = f.read()
-        soup = BeautifulSoup(markup, 'lxml')
+        soup = BeautifulSoup(markup, 'html.parser')
 
         banner_text = self.parse_banner(soup.pre)
 
@@ -421,12 +408,12 @@ class CoolRunning(RaceResults):
 
         """
         self.logger.info('Processing %s...' % state)
-        local_state_file = state + '.shtml'
-        fmt = 'http://www.coolrunning.com/results/%s/%s'
-        url = fmt % (self.start_date.strftime('%y'), local_state_file)
-        self.logger.info('Downloading %s.' % url)
-        self.download_file(url, local_state_file)
-        self.local_tidy(local_state_file)
+        state_file = '{0}.shtml'.format(state)
+        url = 'http://www.coolrunning.com/results/{0}/{1}'
+        url = url.format(self.start_date.strftime('%y'), state_file)
+        self.logger.info('Downloading {0}.'.format(url))
+        self.download_file(url, local_file=state_file)
+        self.local_tidy(state_file)
 
     def download_race(self, anchor, inner_url=False, state=''):
         """
@@ -443,7 +430,7 @@ class CoolRunning(RaceResults):
         url = 'http://www.coolrunning.com/%s' % href
         local_file = href.split('/')[-1]
         self.logger.info('Downloading %s...' % url)
-        self.download_file(url, local_file)
+        self.download_file(url, local_file=local_file)
         self.downloaded_url = url
         try:
             self.local_tidy(local_file)
@@ -454,25 +441,25 @@ class CoolRunning(RaceResults):
 
         return(local_file)
 
-    def local_tidy(self, html_file):
+    def local_tidy(self, local_file=None):
         """Clean up the HTML, as it is often invalid."""
 
         # This is an IE conditional comment that Excel likes to produce.
         # Have only seen this on CoolRunning.
         # Get rid of it before running through the common tidy process.
         try:
-            with open(html_file, 'r', encoding='utf-8') as fp:
+            with open(local_file, 'r', encoding='utf-8') as fp:
                 html = fp.read()
         except UnicodeDecodeError:
-            with open(html_file, 'r', encoding='iso-8859-1') as fp:
+            with open(local_file, 'r', encoding='iso-8859-1') as fp:
                 html = fp.read()
         html = html.replace('<![if supportMisalignedColumns]>', '')
         html = html.replace('<![endif]>', '')
-        with open(html_file, 'w') as f:
+        with open(local_file, 'w') as f:
             f.write(html)
 
         # And now call the common tidy process.
-        RaceResults.local_tidy(self, html_file)
+        RaceResults.local_tidy(self, local_file)
 
     def compile_local_results(self):
         """

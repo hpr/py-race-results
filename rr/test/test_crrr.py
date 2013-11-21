@@ -107,7 +107,7 @@ class TestCoolRunning(unittest.TestCase):
 
     def test_consecutive_newlines(self):
         """
-        Verify that we don't get two consecutive newlines in the 
+        Verify that we don't get two consecutive newlines in the
         race results, which makes them look bad.
 
         See Issue 33
