@@ -8,8 +8,6 @@ import re
 import warnings
 import xml.etree.cElementTree as ET
 
-from bs4 import BeautifulSoup
-
 from .common import RaceResults
 
 
@@ -147,10 +145,18 @@ class BestRace(RaceResults):
         hr.set('class', 'race_header')
         div.append(hr)
 
-        root = BeautifulSoup(self.html, 'html.parser')
+        # Get the title, but don't bother with the date information.
+        # <title>  Purple Stride 5K     - November 10, 2013   </title>
+        regex = re.compile(r"""<title>\s+
+                               (?P<the_title>.*)-\s+
+                               \w*\s\d+,\s+\d\d\d\d\s*
+                               </title>""", re.VERBOSE | re.IGNORECASE)
+        matchobj = regex.search(self.html)
+        if matchobj is None:
+            raise RuntimeError("Could not find the title.")
 
         h1 = ET.Element('h1')
-        h1.text = root.title.text
+        h1.text = matchobj.group('the_title')
         div.append(h1)
 
         # Append the URL if possible.
@@ -172,39 +178,27 @@ class BestRace(RaceResults):
         pre = ET.Element('pre')
         pre.set('class', 'actual_results')
 
-        banner_text = self.parse_banner(root)
+        # Parse out the banner.
+        regex = re.compile(r"""<b>
+                               (?P<mixed_content_1>[^<>]*)
+                               <u>(?P<mixed_content_2>[^<>]*)</u>
+                               </b>""",
+                               re.VERBOSE | re.IGNORECASE)
+        matchobj = regex.search(self.html)
+        if matchobj is None:
+            raise RuntimeError("Could not parse out the banner.")
 
-        pre.text = banner_text + ''.join(results_lst)
+        # Construct the banner as mixed content XML.  Difficult to do this
+        # any other way and still get this to look right.
+        text = '<pre class="actual_results">\n'
+        text += matchobj.group()
+        text += '\n' + '\n'.join(results_lst)
+        text += '</pre>'
+        pre = ET.fromstring(text)
+
         div.append(pre)
 
         return div
-
-    def parse_banner(self, root):
-        """Retrieve the banner from the race file.
-
-        Example of a banner
-
-                   The Andrea Holden 5k Thanksgiving Race
-         PLC    Time  Pace  PLC/Group  PLC/Sex Bib#   Name
-           1   16:40  5:23    1 30-39    1 M   142 Brian Allen
-
-        """
-        try:
-            pre = root.find_all('pre')[0]
-        except IndexError:
-            return('')
-
-        # Stop when we find the first "1"
-        banner = ''
-        for line in pre.text.split('\n'):
-            if re.match('\s+1', line):
-                # found it
-                break
-            else:
-                banner += line + '\n'
-
-        banner += '\n'
-        return(banner)
 
     def match_against_membership(self, line):
         """
