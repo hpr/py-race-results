@@ -6,8 +6,6 @@ import shutil
 import tempfile
 import unittest
 
-from bs4 import BeautifulSoup
-
 import rr
 
 
@@ -65,9 +63,8 @@ class TestBestRace(unittest.TestCase):
 
         with open(self.results_file.name, 'r') as f:
             html = f.read()
-            soup = BeautifulSoup(html, 'lxml')
-            self.assertTrue("MICHAEL CARR" in soup.div.pre.contents[0])
-            self.assertTrue("MARK STRAWN" in soup.div.pre.contents[0])
+            self.assertTrue("MICHAEL CARR" in html)
+            self.assertTrue("MARK STRAWN" in html)
 
     def test_consecutive_newlines(self):
         """
@@ -87,14 +84,7 @@ class TestBestRace(unittest.TestCase):
 
         with open(self.results_file.name, 'r') as f:
             html = f.read()
-            soup = BeautifulSoup(html, 'lxml')
-            text = soup.pre.contents[0]
-
-            # Ok, first we need to jump over the banner, because that
-            # does have consecutive newlines.
-            start = re.search('MICHAEL', text).start()
-            m = re.search('\n\n', text[start:])
-            self.assertIsNone(m)
+            self.assertFalse('\n\n' in html)
 
     def test_web_download(self):
         """
@@ -112,8 +102,7 @@ class TestBestRace(unittest.TestCase):
 
         with open(self.results_file.name, 'r') as f:
             html = f.read()
-            soup = BeautifulSoup(html, 'lxml')
-            self.assertTrue("MARK STRAWN" in soup.div.pre.contents[0])
+            self.assertTrue("MARK STRAWN" in html)
 
 
 if __name__ == "__main__":
