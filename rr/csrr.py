@@ -51,21 +51,17 @@ class CompuScore(RaceResults):
         """
         Load the membership list and run through all the results.
         """
-        names = self.parse_membership_list()
-
-        fname = names.first
-        lname = names.last
-
         first_name_regex = []
         last_name_regex = []
-        for j in range(len(fname)):
+        for last_name, first_name in self.parse_membership_list():
             # Example to match:
             #
             #   '60.Gene Gugliotta       North Plainfiel,NJ 53 M U '
             #
-            pattern = '\.' + fname[j] + '\s'
+            # Use word boundaries for the regexps except at the very beginning.
+            pattern = '\\.' + first_name + '\\b'
             first_name_regex.append(re.compile(pattern, re.IGNORECASE))
-            pattern = '\s' + lname[j] + '\s'
+            pattern = '\\b' + last_name + '\\b'
             last_name_regex.append(re.compile(pattern, re.IGNORECASE))
 
         self.first_name_regex = first_name_regex
