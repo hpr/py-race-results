@@ -221,18 +221,11 @@ class CompuScore(RaceResults):
         if matchobj is None:
             pre.text = '\n' + '\n'.join(results)
         else:
-            import pdb; pdb.set_trace()
-            br = ET.Element('br')
-            strong1 = ET.Element('strong')
-            strong1.text = matchobj.group('strong1')
-            strong2 = ET.Element('strong')
-            u = ET.Element('u')
-            u.text = matchobj.group('strong2')
-            strong2.append(u)
-            strong2.tail = '\n' + '\n'.join(results)
-            pre.append(br)
-            pre.append(strong1)
-            pre.append(strong2)
+            # This <pre> element must be mixed content in order to look
+            # right.  Difficult to do this without using "fromstring".
+            inner = '\n' + matchobj.group() + '\n' + '\n'.join(results)
+            mixed_content = '<pre>' + inner + '</pre>'
+            pre = ET.fromstring(mixed_content)
         div.append(pre)
 
         return div
