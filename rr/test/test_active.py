@@ -5,8 +5,6 @@ import tempfile
 import time
 import unittest
 
-from bs4 import BeautifulSoup
-
 #from rr import Active
 
 
@@ -51,11 +49,7 @@ class TestActive(unittest.TestCase):
 
         with open(self.results_file.name, 'r') as f:
             html = f.read()
-            soup = BeautifulSoup(html, 'lxml')
-            divs = soup.findAll('div')
-
-            self.assertTrue("Jason Kennedy" in
-                            divs[0].table.contents[3].contents[5].contents[0])
+            self.assertTrue("Jason Kennedy" in html)
 
     def test_raw_file_download(self):
         """
@@ -75,10 +69,7 @@ class TestActive(unittest.TestCase):
 
         with open(self.results_file.name, 'r') as f:
             html = f.read()
-            soup = BeautifulSoup(html, 'lxml')
-            divs = soup.findAll('div')
-
-            self.assertTrue("PAUL HIMBERGER" in divs[0].pre.contents[0])
+            self.assertTrue("PAUL HIMBERGER" in html)
 
 
 if __name__ == "__main__":
