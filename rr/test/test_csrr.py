@@ -5,8 +5,7 @@ import re
 import shutil
 import tempfile
 import unittest
-
-from bs4 import BeautifulSoup
+import warnings
 
 import rr
 
@@ -177,8 +176,7 @@ class TestCompuscore(unittest.TestCase):
         # "no results" means that the body of the output file is empty.
         with open(self.results_file.name, 'r') as f:
             html = f.read()
-            soup = BeautifulSoup(html, 'lxml')
-            self.assertEqual(soup.body.contents[0], '\n')
+            self.assertRegex(html, r"<body>\s*</body>")
 
 
 if __name__ == "__main__":
