@@ -181,10 +181,6 @@ class NewYorkRR(RaceResults):
         """Turn the results into the output form that we want.
         """
 
-        # The table we want is the 3rd one.  We need
-        # to sanitize it, though.
-        table = self.sanitize_table(tables[2])
-
         # maybe abstract this into a webify function.
         div = ET.Element('div')
         div.set('class', 'race')
@@ -193,7 +189,7 @@ class NewYorkRR(RaceResults):
         div.append(hr)
 
         # Append the race metadata.
-        tds = tables[0].findall('.//td')
+        tds = tables[1].findall('.//td')
         td = tds[2]
         race_meta = ET.Element('div')
         ch = td.getchildren()
@@ -218,7 +214,9 @@ class NewYorkRR(RaceResults):
         pdiv.append(span)
         div.append(pdiv)
 
-        # And finally, append the race results.
+        # The table we want is the 3rd one.  We need
+        # to sanitize it, though.
+        table = self.sanitize_table(tables[3])
         div.append(table)
         return div
 
