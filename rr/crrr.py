@@ -258,11 +258,42 @@ class CoolRunning(RaceResults):
 
         return results
 
+    def get_author(self, race_file):
+        """
+        Get the race company identifier.
+        
+        Example
+        -------
+            <meta name="Author" content="colonial" />
+        """
+        regex1 = re.compile(r"""<meta\s
+                                name=\"Author\"\scontent=\"(?P<content>.*)\"\s*
+                                />""", re.VERBOSE)
+        regex2 = re.compile(r"""<meta\s
+                                content=\"(?P<content>.*)\"\sname=\"Author\"\s*
+                                />""", re.VERBOSE)
+        with open(race_file, 'rt') as fptr:
+            import pdb; pdb.set_trace()
+            html = fptr.read()
+            matchobj = regex1.search(html)
+            if matchobj is not None:
+                return matchobj.group('content')
+
+            matchobj = regex2.search(html)
+            if matchobj is not None:
+                return matchobj.group('content')
+            else:
+                raise RuntimeError("Could not parse the race company identifier")
+
+
+
     def compile_race_results(self, race_file):
         """
         Go through a race file and collect results.
         """
         html = None
+        variant = self.get_author(race_file)
+        import pdb; pdb.set_trace()
         if self.is_vanilla_pattern(race_file):
             self.logger.debug('Vanilla Coolrunning pattern')
             results = self.compile_vanilla_results(race_file)
