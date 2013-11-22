@@ -275,10 +275,14 @@ class CoolRunning(RaceResults):
             # This is a local race series.  Gawd-awful excel-to-bastardized-
             # html.  The hell with it.
             self.logger.info('Skipping colonial series.')
-            pass
+        elif variant in ['Harriers']:
+            self.logger.info('Skipping harriers (snowstorm classic?) series.')
+        elif variant == 'sri':
+            msg = 'Skipping {0} pattern (unhandled XML pattern).'
+            self.logger.info(msg.format(variant))
         else:
-            msg = 'Unknown pattern, going to try vanilla CR parsing.'
-            self.logger.warning(msg)
+            msg = 'Unknown pattern (\"{0}\"), going to try vanilla CR parsing.'
+            self.logger.warning(msg.format(variant))
             results = self.compile_vanilla_results(race_file)
             if len(results) > 0:
                 html = self.webify_vanilla_results(results, race_file)
