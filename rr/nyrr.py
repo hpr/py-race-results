@@ -93,7 +93,9 @@ class NewYorkRR(RaceResults):
         links = p.find_all('a')
         for link in links:
 
-            race_name = re.sub('\n *', '', link.text[0])
+            # strip out leading/following white space.
+            race_name = re.sub('^\s*', '', link.text)
+            race_name = re.sub('\s*$', '', race_name)
             url = link['href']
 
             # The next sibling is the race date.  In ElementTree parliance,
@@ -120,7 +122,12 @@ class NewYorkRR(RaceResults):
         with open(local_file, 'r', encoding='utf-8') as fp:
             markup = fp.read()
         root = BeautifulSoup(markup, 'html.parser')
-        form = root.find_all('form')[0]
+        forms = root.find_all('form')
+        if len(forms) == 0:
+            self.logger.info("No search form for this race.  Skipping.")
+            return
+
+        form = forms[0]
 
         # The page for POSTing the search needs POST params.
         post_params = {}
