@@ -3,12 +3,13 @@
 import copy
 import codecs
 import csv
+import http
 import logging
+import urllib
 import xml.dom.minidom
 import xml.etree.cElementTree as ET
 
 from bs4 import BeautifulSoup
-import requests
 
 
 class RaceResults:
@@ -94,35 +95,37 @@ class RaceResults:
             fptr.write(soup.prettify())
             fptr.close()
 
-    def download_file(self, url, params=None, local_file=None):
+    def download_file(self, url, local_file=None, params=None):
         """
-        Download a URL.
+        Download a URL to a local file.
 
-        Parameters
-        ----------
-        url : The URL to retrieve
-        params : POST parameters to supply
+        Args
+        ----
+            url:  The URL to retrieve
+            local_file:  Name of the file where we will store the web page.
+            params:  POST parameters to supply
         """
+        # cookie support needed for NYRR results.
+        if self.cookies is None:
+            self.cookies = http.cookiejar.LWPCookieJar()
+        cookie_processor = urllib.request.HTTPCookieProcessor(self.cookies)
+        opener = urllib.request.build_opener(cookie_processor)
+        urllib.request.install_opener(opener)
 
         headers = {'User-Agent': self.user_agent}
-        if params is None:
-            request = requests.get(url, headers=headers)
-        else:
-            kwargs = {'headers': headers}
-            kwargs['params'] = params
-            if self.cookies is not None:
-                kwargs['cookies'] = self.cookies
-            request = requests.post(url, **kwargs)
-
-        # Save any cookies for the next download.
-        self.cookies = copy.deepcopy(request.cookies)
+        req = urllib.request.Request(url, None, headers)
+        response = urllib.request.urlopen(req, params)
+        html = response.readall()
+        try:
+            html = html.decode('utf-8')
+        except UnicodeDecodeError:
+            html = html.decode('latin1')
 
         if local_file is not None:
-            with open(local_file, 'w') as fptr:
-                fptr.write(request.text)
+            with open(local_file, 'wb') as f:
+                f.write(html.encode())
         else:
-            self.html = request.text
-        request.close()
+            self.html = html
 
     def initialize_output_file(self):
         """
