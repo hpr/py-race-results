@@ -3,6 +3,8 @@ import logging
 import os
 import re
 import sys
+import urllib
+import warnings
 import xml.etree.cElementTree as ET
 
 from .common import RaceResults
@@ -109,7 +111,14 @@ class CompuScore(RaceResults):
 
         for url in lst:
             self.logger.info('Downloading {0}...'.format(url))
-            self.download_file(url)
+
+            response = urllib.request.urlopen(url)
+            try:
+                self.html = response.read().decode('utf-8')
+            except UnicodeDecodeError as err:
+                msg = "Problem with {0}, skipping....  \"{1}\"."
+                warnings.warn(msg.format(url, err))
+
             self.downloaded_url = url
             if self.race_date_in_range():
                 self.compile_race_results()
@@ -264,7 +273,10 @@ class CompuScore(RaceResults):
         url = 'http://compuscore.com/cs{0}/{1}/index.htm'
         url = url.format(self.start_date.year, self.monthstr)
         self.logger.info('Downloading master file {0}.'.format(url))
-        self.download_file(url)
+
+        response = urllib.request.urlopen(url)
+        self.html = response.read().decode('utf-8')
+
         self.local_tidy()
 
     def compile_local_results(self):

@@ -178,48 +178,6 @@ class CoolRunning(RaceResults):
 
         return results
 
-    def is_vanilla_pattern(self, race_file):
-        """
-        Check to see if the current race file matches the usual
-        pattern found on CoolRunning.
-        """
-        #pattern = './/body/table/tr/td/table/tr/td/table/tr/td/div/pre'
-        with open(race_file, 'r') as f:
-            markup = f.read()
-        soup = BeautifulSoup(markup, 'html.parser')
-
-        if soup.pre is None:
-            return False
-        else:
-            return True
-
-    def is_ccrr_pattern(self, race_file):
-        """
-        Check to see if the current race file matches what the Cape Cod
-        Road Runners seem to use.
-
-        See
-        http://www.coolrunning.com/results/12/ma/Jan8_CapeCo_set1.shtml
-        for an example.
-        """
-        pattern = './/body/table/tr/td/table/tr/td/table/tr/td/div/table/tr'
-
-        try:
-            tree = ET.parse(race_file)
-        except ET.ParseError:
-            self.logger.debug('CCRR XHTML ParseError on %s' % race_file)
-            return False
-        except:
-            raise
-
-        root = tree.getroot()
-        root = remove_namespace(root)
-        nodes = root.findall(pattern)
-        if len(nodes) > 0:
-            return True
-        else:
-            return False
-
     def compile_ccrr_race_results(self, race_file):
         """
         This is the format generally used by Cape Cod
@@ -258,25 +216,73 @@ class CoolRunning(RaceResults):
 
         return results
 
+    def get_author(self, race_file):
+        """
+        Get the race company identifier.
+        
+        Example
+        -------
+            <meta name="Author" content="colonial" />
+        """
+        regex1 = re.compile(r"""<meta\s
+                                name=\"Author\"\s
+                                content=\"(?P<content>.*)\"\s*
+                                \/?>""",  # Sometimes there's no /
+                                re.VERBOSE | re.IGNORECASE)
+        regex2 = re.compile(r"""<meta\s
+                                content=\"(?P<content>.*)\"\s*
+                                name=\"Author\"\s*
+                                \/?>""",  # Sometimes there's no /
+                                re.VERBOSE | re.IGNORECASE)
+        with open(race_file, 'rt') as fptr:
+            html = fptr.read()
+            matchobj = regex1.search(html)
+            if matchobj is not None:
+                return matchobj.group('content')
+
+            matchobj = regex2.search(html)
+            if matchobj is not None:
+                return matchobj.group('content')
+            else:
+                import pdb; pdb.set_trace()
+                raise RuntimeError("Could not parse the race company identifier")
+
+
+
     def compile_race_results(self, race_file):
         """
         Go through a race file and collect results.
         """
         html = None
-        if self.is_vanilla_pattern(race_file):
-            self.logger.debug('Vanilla Coolrunning pattern')
-            results = self.compile_vanilla_results(race_file)
-            if len(results) > 0:
-                html = self.webify_vanilla_results(results, race_file)
-                self.insert_race_results(html)
-        elif self.is_ccrr_pattern(race_file):
+        variant = self.get_author(race_file)
+        self.logger.debug('Variant is {0}'.format(variant))
+        if variant in ['CapeCodRoadRunners']:
             self.logger.debug('Cape Cod Road Runners pattern')
             results = self.compile_ccrr_race_results(race_file)
             if len(results) > 0:
                 html = self.webify_ccrr_results(results, race_file)
                 self.insert_race_results(html)
+        elif variant in ['kick610', 'JB Race', 'gstate', 'ab-mac', 'FTO',
+                         'opportunity', 'NSTC', 'ndatrackxc', 'wcrc',
+                         'Spitler']:
+            # Assume the usual coolrunning pattern.
+            self.logger.debug('Vanilla Coolrunning pattern')
+            results = self.compile_vanilla_results(race_file)
+            if len(results) > 0:
+                html = self.webify_vanilla_results(results, race_file)
+                self.insert_race_results(html)
+        elif variant == 'colonial':
+            # This is a local race series.  Gawd-awful excel-to-bastardized-
+            # html.  The hell with it.
+            self.logger.info('Skipping colonial series.')
+            pass
         else:
-            self.logger.warning('Unknown pattern.')
+            msg = 'Unknown pattern, going to try vanilla CR parsing.'
+            self.logger.warning(msg)
+            results = self.compile_vanilla_results(race_file)
+            if len(results) > 0:
+                html = self.webify_vanilla_results(results, race_file)
+                self.insert_race_results(html)
 
     def construct_common_div(self, race_file):
         """
