@@ -93,7 +93,9 @@ class NewYorkRR(RaceResults):
         links = p.find_all('a')
         for link in links:
 
-            race_name = re.sub('\n *', '', link.text[0])
+            # strip out leading/following white space.
+            race_name = re.sub('^\s*', '', link.text)
+            race_name = re.sub('\s*$', '', race_name)
             url = link['href']
 
             # The next sibling is the race date.  In ElementTree parliance,
@@ -120,7 +122,12 @@ class NewYorkRR(RaceResults):
         with open(local_file, 'r', encoding='utf-8') as fp:
             markup = fp.read()
         root = BeautifulSoup(markup, 'html.parser')
-        form = root.find_all('form')[0]
+        forms = root.find_all('form')
+        if len(forms) == 0:
+            self.logger.info("No search form for this race.  Skipping.")
+            return
+
+        form = forms[0]
 
         # The page for POSTing the search needs POST params.
         post_params = {}
@@ -181,10 +188,6 @@ class NewYorkRR(RaceResults):
         """Turn the results into the output form that we want.
         """
 
-        # The table we want is the 3rd one.  We need
-        # to sanitize it, though.
-        table = self.sanitize_table(tables[2])
-
         # maybe abstract this into a webify function.
         div = ET.Element('div')
         div.set('class', 'race')
@@ -193,7 +196,7 @@ class NewYorkRR(RaceResults):
         div.append(hr)
 
         # Append the race metadata.
-        tds = tables[0].findall('.//td')
+        tds = tables[1].findall('.//td')
         td = tds[2]
         race_meta = ET.Element('div')
         ch = td.getchildren()
@@ -218,7 +221,9 @@ class NewYorkRR(RaceResults):
         pdiv.append(span)
         div.append(pdiv)
 
-        # And finally, append the race results.
+        # The table we want is the 3rd one.  We need
+        # to sanitize it, though.
+        table = self.sanitize_table(tables[3])
         div.append(table)
         return div
 
