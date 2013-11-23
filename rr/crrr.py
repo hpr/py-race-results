@@ -7,9 +7,8 @@ import logging
 import os
 import re
 import sys
+import warnings
 import xml.etree.cElementTree as ET
-
-from bs4 import BeautifulSoup
 
 from .common import RaceResults, remove_namespace
 
@@ -168,9 +167,17 @@ class CoolRunning(RaceResults):
         """
         with open(race_file, 'r') as f:
             markup = f.read()
-        soup = BeautifulSoup(markup, 'html.parser')
 
-        text = soup.pre.text
+        regex = re.compile(r"""<pre>              # banner follows the <pre>
+                               (?P<race_text>.*?) # regex should NOT be greedy!
+                               </pre>""",         # stop here
+                               re.VERBOSE | re.IGNORECASE | re.DOTALL)
+        matchobj = regex.search(markup)
+        if matchobj is None:
+            warnings.warn('Vanilla CRRR regex did not match.')
+            return []
+
+        text = matchobj.group('race_text')
         results = []
         for line in text.split('\n'):
             if self.match_against_membership(line):
@@ -244,7 +251,6 @@ class CoolRunning(RaceResults):
             if matchobj is not None:
                 return matchobj.group('content')
             else:
-                import pdb; pdb.set_trace()
                 raise RuntimeError("Could not parse the race company identifier")
 
 
@@ -255,7 +261,7 @@ class CoolRunning(RaceResults):
         """
         html = None
         variant = self.get_author(race_file)
-        self.logger.debug('Variant is {0}'.format(variant))
+        self.logger.info('Variant is {0}'.format(variant))
         if variant in ['CapeCodRoadRunners']:
             self.logger.debug('Cape Cod Road Runners pattern')
             results = self.compile_ccrr_race_results(race_file)
@@ -277,7 +283,7 @@ class CoolRunning(RaceResults):
             self.logger.info('Skipping colonial series.')
         elif variant in ['Harriers']:
             self.logger.info('Skipping harriers (snowstorm classic?) series.')
-        elif variant == 'sri':
+        elif variant in ['FFAST', 'lungne', 'northeastracers', 'sri']:
             msg = 'Skipping {0} pattern (unhandled XML pattern).'
             self.logger.info(msg.format(variant))
         else:
@@ -365,9 +371,14 @@ class CoolRunning(RaceResults):
 
         with open(race_file, 'r') as f:
             markup = f.read()
-        soup = BeautifulSoup(markup, 'html.parser')
-
-        banner_text = self.parse_banner(soup.pre)
+        regex = re.compile(r"""<pre>           # banner text follows the <pre>
+                               (?P<banner>.*?\n) # regex should NOT be greedy!
+                               \s*1\b           # stop matching upon 1st place
+                               .*              # the results are here
+                               </pre>""",      # stop here
+                               re.VERBOSE | re.IGNORECASE | re.DOTALL)
+        matchobj = regex.search(markup)
+        banner_text = matchobj.group('banner')
 
         pre.text = banner_text + '\n'.join(result_lst) + '\n'
         div.append(pre)
