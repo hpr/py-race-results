@@ -11,7 +11,7 @@ setup(
         'test/testdata/*.shtml',
         'test/testdata/*.htm']},
     scripts=['bin/active', 'bin/brrr', 'bin/crrr', 'bin/csrr', 'bin/nyrr',
-             'bin/genrr'],
+             'bin/genrr', 'bin/lmsports'],
     license='LICENSE.txt',
     description='Race results parsing',
     classifiers=["Programming Language :: Python",
