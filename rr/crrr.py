@@ -269,7 +269,7 @@ class CoolRunning(RaceResults):
                 html = self.webify_ccrr_results(results, race_file)
                 self.insert_race_results(html)
         elif variant in ['kick610', 'JB Race', 'gstate', 'ab-mac', 'FTO',
-                         'opportunity', 'NSTC', 'ndatrackxc', 'wcrc',
+                         'NSTC', 'ndatrackxc', 'wcrc',
                          'Spitler']:
             # Assume the usual coolrunning pattern.
             self.logger.debug('Vanilla Coolrunning pattern')
@@ -277,14 +277,19 @@ class CoolRunning(RaceResults):
             if len(results) > 0:
                 html = self.webify_vanilla_results(results, race_file)
                 self.insert_race_results(html)
-        elif variant == 'colonial':
-            # This is a local race series.  Gawd-awful excel-to-bastardized-
+        elif variant in ['colonial', 'opportunity']:
+            # 'colonial' is a local race series.  Gawd-awful excel-to-bastardized-
             # html.  The hell with it.
-            self.logger.info('Skipping colonial series.')
+            # 
+            # 'opportunity' seems to be CMS 52 Week Series
+            self.logger.info('Skipping {0} race series.'.format(variant))
         elif variant in ['Harriers']:
             self.logger.info('Skipping harriers (snowstorm classic?) series.')
         elif variant in ['FFAST', 'lungne', 'northeastracers', 'sri']:
             msg = 'Skipping {0} pattern (unhandled XML pattern).'
+            self.logger.info(msg.format(variant))
+        elif variant in ['WCRCSCOTT']:
+            msg = 'Skipping {0} XML pattern (looks like a race series).'
             self.logger.info(msg.format(variant))
         else:
             msg = 'Unknown pattern (\"{0}\"), going to try vanilla CR parsing.'
