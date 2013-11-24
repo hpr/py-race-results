@@ -105,6 +105,9 @@ class RaceResults:
             local_file:  Name of the file where we will store the web page.
             params:  POST parameters to supply
         """
+        # Store the url in case we need it later.
+        self.downloaded_url = url
+
         # cookie support needed for NYRR results.
         if self.cookies is None:
             self.cookies = http.cookiejar.LWPCookieJar()

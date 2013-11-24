@@ -29,6 +29,11 @@ class NewYorkRR(RaceResults):
 
         self.cookie_jar = None
 
+        # This URL is used in a regular expression that teases out the URLs
+        # for all of the results.
+        self.result_url_base = "http://web2.nyrrc.org/cgi-bin/start.cgi/"
+        self.result_url_base += "aes-programs/results/startup.html"
+
     def run(self):
         """
         This page has the URLs for the recent results.
@@ -82,30 +87,34 @@ class NewYorkRR(RaceResults):
         # particular table.
         with open(local_file, 'r') as f:
             markup = f.read()
-        soup = BeautifulSoup(markup, 'lxml')
-        tables = soup.find_all('table')
-        table = tables[7]
 
-        # This is awful, all the entries are in a single table element.
-        # The TD element has a P element, which has the list that we want.
-        p = table.td.p
+        pattern = r"""<a\shref="(?P<url>{0}         # This part too long
+                      \?result.id=
+                      (?P<result_id>[0-9a-z]*)&amp; # Unique for each result.
+                      result.year=\d\d\d\d)">       # End of URL
+                      (?P<race_name>.*?)            # Name of the race.
+                      </a>\s*                       # End of anchor.
+                      (?P<month>\d\d)/
+                      (?P<day>\d\d)/
+                      (?P<year>\d\d)"""             # Race date.
+        pattern = pattern.format(self.result_url_base)
+        regex = re.compile(pattern, re.VERBOSE | re.DOTALL)
+        for matchobj in regex.finditer(markup):
 
-        links = p.find_all('a')
-        for link in links:
+            url = matchobj.group('url')
+            url = re.sub('&amp;', '&', url)
 
-            # strip out leading/following white space.
-            race_name = re.sub('^\s*', '', link.text)
+            # Get rid of leading and trailing white space in the race name.
+            race_name = matchobj.group('race_name')
+            race_name = re.sub('^\s*', '', race_name)
             race_name = re.sub('\s*$', '', race_name)
-            url = link['href']
 
-            # The next sibling is the race date.  In ElementTree parliance,
-            # this would be the "tail" of the anchor link.
-            race_date = re.sub('\s', '', link.nextSibling)
-            race_date = datetime.datetime.strptime(race_date, "%m/%d/%y")
-            race_date = datetime.date(race_date.year, race_date.month,
-                                      race_date.day)
+            race_date = datetime.date(int(matchobj.group('year')) + 2000,
+                                      int(matchobj.group('month')),
+                                      int(matchobj.group('day')))
+
             if self.start_date <= race_date and race_date <= self.stop_date:
-                self.logger.info("Keeping %s" % race_name)
+                self.logger.info("Keeping {0}".format(race_name))
                 self.process_event(url)
             else:
                 self.logger.info("Skipping %s" % race_name)
@@ -118,18 +127,23 @@ class NewYorkRR(RaceResults):
         self.download_file(url, local_file)
         self.local_tidy(local_file)
 
-        # There should be a single form.
         with open(local_file, 'r', encoding='utf-8') as fp:
             markup = fp.read()
-        root = BeautifulSoup(markup, 'html.parser')
-        forms = root.find_all('form')
-        if len(forms) == 0:
-            self.logger.info("No search form for this race.  Skipping.")
-            return
 
-        form = forms[0]
+        # There should be a single form.
+        regex = re.compile(r"""<form\s*
+                               action="(?P<action>.*?)"\s*
+                               .*?
+                               </form>""", re.VERBOSE | re.DOTALL)
+        matchobj = regex.search(markup)
+        if matchobj is None:
+            warnings.warn("Unable to match the expected form.")
+        url = matchobj.group('action')
 
         # The page for POSTing the search needs POST params.
+        # Provide all the search parameters for this race.  This includes, most
+        # importantly, the team code, i.e. RARI for Raritan Valley Road
+        # Runners.
         post_params = {}
         post_params['search.method'] = 'search.team'
         post_params['input.lname'] = ''
@@ -147,10 +161,6 @@ class NewYorkRR(RaceResults):
         data = urllib.parse.urlencode(post_params)
         data = data.encode()
 
-        # Provide all the search parameters for this race.  This includes, most
-        # importantly, the team code, i.e. RARI for Raritan Valley Road
-        # Runners.
-        url = form.get('action')
         local_file = 'nyrrresult.html'
         self.download_file(url, local_file, data)
         self.local_tidy(local_file)
