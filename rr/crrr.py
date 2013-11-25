@@ -376,16 +376,19 @@ class CoolRunning(RaceResults):
 
         with open(race_file, 'r') as f:
             markup = f.read()
-        regex = re.compile(r"""<pre>           # banner text follows the <pre>
+        regex = re.compile(r"""<pre>             # banner text follows the <pre>
                                (?P<banner>.*?\n) # regex should NOT be greedy!
-                               \s*1\b           # stop matching upon 1st place
-                               .*              # the results are here
-                               </pre>""",      # stop here
+                               \s*1\b            # stop matching upon 1st place
+                               .*                # the results are here
+                               </pre>""",        # stop here
                                re.VERBOSE | re.IGNORECASE | re.DOTALL)
         matchobj = regex.search(markup)
         banner_text = matchobj.group('banner')
 
-        pre.text = banner_text + '\n'.join(result_lst) + '\n'
+        text = '<pre class="actual_results">\n'
+        text += banner_text + '\n'.join(result_lst) + '\n'
+        text += '</pre>'
+        pre = ET.XML(text)
         div.append(pre)
 
         return div
