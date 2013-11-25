@@ -1,19 +1,20 @@
 """
-Module for BestRace.
+Module for L & M Computer Sports timing company.
 """
 import datetime
 import logging
 import os
 import re
+import urllib
 import warnings
 import xml.etree.cElementTree as ET
 
 from .common import RaceResults
 
 
-class BestRace(RaceResults):
+class LMSports(RaceResults):
     """
-    Process races found on BestRace.com.
+    Process races found on lmsports.com.
 
     Attributes:
         start_date, stop_date:  date range to restrict race searches
@@ -31,6 +32,8 @@ class BestRace(RaceResults):
         RaceResults.__init__(self)
         self.__dict__.update(**kwargs)
 
+        self.base_url = 'http://www.lmsports.com/'
+
         # Set the appropriate logging level.
         self.logger.setLevel(getattr(logging, self.verbose.upper()))
 
@@ -38,7 +41,7 @@ class BestRace(RaceResults):
         self.load_membership_list()
         self.compile_results()
         # Make the output human-readable.
-        RaceResults.local_tidy(self, local_file=self.output_file)
+        self.local_tidy(local_file=self.output_file)
 
     def load_membership_list(self):
         """
@@ -58,16 +61,6 @@ class BestRace(RaceResults):
 
         self.first_name_regex = first_name_regex
         self.last_name_regex = last_name_regex
-
-    def local_tidy(self, local_file=None):
-        """
-        Clean up the HTML file.
-
-        LIBTIDY doesn't seem to like p:colorspace, so get rid of it before
-        calling LIBTIDY.
-        """
-        self.html = self.html.replace(':colorscheme', '')
-        RaceResults.local_tidy(self, local_file=local_file)
 
     def compile_results(self):
         """
@@ -91,35 +84,39 @@ class BestRace(RaceResults):
 
     def process_master_file(self):
         """
-        Compile results for the specified state.
+        We have the full year of results, now fish out the ones that are in
+        the specified time range.
         """
-        pattern = 'http://www.bestrace.com/results/{0}/{1}{2}'
-        pattern = pattern.format(self.start_date.strftime('%y'),
-                                 self.start_date.strftime('%y'),
-                                 self.start_date.strftime('%m'))
+        # <a href="trail13.htm">Trail of Two Cities 5k Run</a>
+        # - Saturday, November 2, 2013 - OC/Somers Point, NJ -
+        # ( <a href="trail12.htm">2012 results</a> )
+        pattern = r"""<a\s
+                      href=\"(?P<href>\w*?\d\d.htm)\">\s*
+                      (?P<race_name>.*?)\s*
+                      </a>\s*
+                      -\s*
+                      (?P<day_of_week>[A-Z][a-z]*?),\s*
+                      (?P<month>.*?)\s+
+                      (?P<day>\d+),\s+
+                      (?P<year>\d+)\s*-"""
+        regex = re.compile(pattern, re.VERBOSE | re.DOTALL | re.IGNORECASE)
+        for matchobj in regex.finditer(self.html):
+            datestring = '{0} {1:02d}, {2}'.format(matchobj.group('month'),
+                                                   int(matchobj.group('day')),
+                                                   matchobj.group('year'))
+            dt = datetime.datetime.strptime(datestring, "%B %d, %Y")
+            dt = datetime.date(dt.year, dt.month, dt.day)
+            if not (self.start_date <= dt and dt <= self.stop_date):
+                msg = 'Skipping {0}...'.format(matchobj.group('race_name'))
+                self.logger.info(msg)
+                continue
 
-        day_range = '('
-        for day in range(self.start_date.day, self.stop_date.day):
-            day_range += "%02d|" % day
-        day_range += '%02d)' % self.stop_date.day
+            url = self.base_url + matchobj.group('href')
+            self.logger.info('Downloading {0}.'.format(url))
 
-        pattern += day_range
-
-        pattern += "\w+\.HTM"
-        self.logger.debug('pattern is "%s"' % pattern)
-
-        matchiter = re.finditer(pattern, self.html)
-        lst = []
-        for match in matchiter:
-            span = match.span()
-            start = span[0]
-            stop = span[1]
-            url = self.html[start:stop]
-            lst.append(url)
-
-        for url in lst:
-            self.logger.info('Downloading %s...' % url)
-            self.download_race(url)
+            self.downloaded_url = url
+            response = urllib.request.urlopen(url)
+            self.html = response.readall().decode('utf-8')
             self.compile_race_results()
 
     def compile_race_results(self):
@@ -145,12 +142,9 @@ class BestRace(RaceResults):
         hr.set('class', 'race_header')
         div.append(hr)
 
-        # Get the title, but don't bother with the date information.
-        # <title>  Purple Stride 5K     - November 10, 2013   </title>
-        regex = re.compile(r"""<title>\s+
-                               (?P<the_title>.*)-\s+
-                               \w*\s\d+,\s+\d\d\d\d\s*
-                               </title>""", re.VERBOSE | re.IGNORECASE)
+        # <TITLE>Cooper Norcross Run the Bridge 10k</TITLE>
+        regex = re.compile(r"""<title>(?P<the_title>.*)</title>""",
+                           re.VERBOSE | re.IGNORECASE)
         matchobj = regex.search(self.html)
         if matchobj is None:
             raise RuntimeError("Could not find the title.")
@@ -171,7 +165,7 @@ class BestRace(RaceResults):
             a.text = 'here'
             p.append(a)
             span = ET.Element('span')
-            span.text = ' on BestRace.'
+            span.text = ' on L&M Sports.'
             p.append(span)
             div.append(p)
 
@@ -179,11 +173,9 @@ class BestRace(RaceResults):
         pre.set('class', 'actual_results')
 
         # Parse out the banner.
-        regex = re.compile(r"""<b>
-                               (?P<mixed_content_1>[^<>]*)
-                               <u>(?P<mixed_content_2>[^<>]*)</u>
-                               </b>""",
-                           re.VERBOSE | re.IGNORECASE)
+        # age|#in
+        regex = re.compile(r"""\r\n(?P<banner>\s*age.*?=====)\r\n""",
+                           re.DOTALL)
         matchobj = regex.search(self.html)
         if matchobj is None:
             raise RuntimeError("Could not parse out the banner.")
@@ -191,7 +183,7 @@ class BestRace(RaceResults):
         # Construct the banner as mixed content XML.  Difficult to do this
         # any other way and still get this to look right.
         text = '<pre class="actual_results">\n'
-        text += matchobj.group()
+        text += matchobj.group('banner')
         text += '\n' + '\n'.join(results_lst)
         text += '</pre>'
         pre = ET.fromstring(text)
@@ -212,18 +204,19 @@ class BestRace(RaceResults):
         return(False)
 
     def download_master_file(self):
-        """Download results for the specified state.
+        """Download results for the entire year.
 
         The URL will have the pattern
 
-        http://www.bestrace.com/YYYYschedule.shtml
+        http://www.lmsports.com/resultsYY.htm
 
+        where YY is the two-digit year.
         """
-        fmt = 'http://www.bestrace.com/%sschedule.html'
-        url = fmt % self.start_date.strftime('%Y')
-        self.logger.info('Downloading %s.' % url)
-        self.download_file(url)
-        self.local_tidy()
+        url = 'http://www.lmsports.com/results{0}.htm'
+        url = url.format(self.start_date.strftime('%y'))
+        self.logger.info('Downloading {0}.'.format(url))
+        response = urllib.request.urlopen(url)
+        self.html = response.read().decode('utf-8')
 
     def download_race(self, url):
         """

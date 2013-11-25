@@ -315,4 +315,3 @@ class NewYorkRR(RaceResults):
 
         with open(local_file, 'wb') as f:
             f.write(html)
-

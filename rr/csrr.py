@@ -1,8 +1,10 @@
+"""
+Module for parsing Compuscore race results.
+"""
+
 import datetime
 import logging
-import os
 import re
-import sys
 import urllib
 import warnings
 import xml.etree.cElementTree as ET
@@ -13,7 +15,7 @@ logging.basicConfig()
 
 # Need to match the month of the search window to the month strings that
 # Compuscore uses.
-monthstrs = {1: 'janfeb',
+MONTHSTRS = {1: 'janfeb',
              2: 'janfeb',
              3: 'march',
              4: 'april',
@@ -28,24 +30,32 @@ monthstrs = {1: 'janfeb',
 
 
 class CompuScore(RaceResults):
+    """
+    Class for handling compuscore results.
+    """
     def __init__(self, **kwargs):
         """
         memb_list:  membership list
         race_list:  file containing list of races
         output_file:  final race results file
         verbose:  how much output to produce
+        first_name_regex, last_name_regex : regular expressions
+            One pair for each running club member.
         """
         RaceResults.__init__(self)
         self.__dict__.update(**kwargs)
 
         if self.start_date is not None:
-            self.monthstr = monthstrs[self.start_date.month]
+            self.monthstr = MONTHSTRS[self.start_date.month]
 
         # Need to remember the current URL.
         self.downloaded_url = None
 
         # Set the appropriate logging level.
         self.logger.setLevel(getattr(logging, self.verbose.upper()))
+
+        self.first_name_regex = None
+        self.last_name_regex = None
 
     def run(self):
         """
@@ -96,7 +106,7 @@ class CompuScore(RaceResults):
         easily restrict based on the time frame here.
         """
         year = self.start_date.year
-        monthstr = monthstrs[self.start_date.month]
+        monthstr = MONTHSTRS[self.start_date.month]
         pattern = 'http://www.compuscore.com/cs{0}/{1}/(?P<race>\w+)\.htm'
         pattern = pattern.format(year, monthstr)
         matchiter = re.finditer(pattern, self.html)
@@ -179,6 +189,7 @@ class CompuScore(RaceResults):
         """
         div = ET.Element('div')
         div.set('class', 'race')
+
         hr = ET.Element('hr')
         hr.set('class', 'race_header')
         div.append(hr)
@@ -199,7 +210,33 @@ class CompuScore(RaceResults):
         h3.text = dt.strftime('Race Date:  %b %d, %Y')
         div.append(h3)
 
-        # Append the URL if possible.
+        self.append_url(div)
+
+        # Append the actual race results.  Consists of the column headings
+        # (banner) plus the individual results.
+        pre = ET.Element('pre')
+        pre.set('class', 'actual_results')
+
+        regex = re.compile(r"""<strong>(?P<strong1>[^<>]*)</strong>\s*
+                               <strong><u>(?P<strong2>[^<>]*)</u></strong>""",
+                           re.VERBOSE)
+        matchobj = regex.search(self.html)
+        if matchobj is None:
+            pre.text = '\n' + '\n'.join(results)
+        else:
+            # This <pre> element must be mixed content in order to look
+            # right.  Difficult to do this without using "fromstring".
+            inner = '\n' + matchobj.group() + '\n' + '\n'.join(results)
+            mixed_content = '<pre>' + inner + '</pre>'
+            pre = ET.fromstring(mixed_content)
+        div.append(pre)
+
+        return div
+
+    def append_url(self, div):
+        """
+        Append the URL from whence this information came if possible.
+        """
         if self.downloaded_url is not None:
             p = ET.Element('p')
             p.set('class', 'provenance')
@@ -217,37 +254,6 @@ class CompuScore(RaceResults):
             p.append(span2)
 
             div.append(p)
-
-        # Append the actual race results.  Consists of the column headings
-        # (banner) plus the individual results.
-        pre = ET.Element('pre')
-        pre.set('class', 'actual_results')
-
-        regex = re.compile(r"""<strong>(?P<strong1>[^<>]*)</strong>\s*
-                               <strong><u>(?P<strong2>[^<>]*)</u></strong>""",
-                               re.VERBOSE)
-        matchobj = regex.search(self.html)
-        if matchobj is None:
-            pre.text = '\n' + '\n'.join(results)
-        else:
-            # This <pre> element must be mixed content in order to look
-            # right.  Difficult to do this without using "fromstring".
-            inner = '\n' + matchobj.group() + '\n' + '\n'.join(results)
-            mixed_content = '<pre>' + inner + '</pre>'
-            pre = ET.fromstring(mixed_content)
-        div.append(pre)
-
-        return div
-
-    def parse_banner(self):
-        """
-        Find the HTML preceeding the results that sets up the column
-        titles.
-        """
-        regex = re.compile(r"""<strong>(?P<strong1>[^<>]*)</strong>\s*
-                               <strong><u>(?P<strong2>[^<>]*)</u></strong>""",
-                               re.VERBOSE)
-        return re.search(self.html)
 
     def match_against_membership(self, line):
         """
@@ -283,8 +289,8 @@ class CompuScore(RaceResults):
         """
         Compile results from list of local files.
         """
-        with open(self.race_list) as fp:
-            for racefile in fp.readlines():
+        with open(self.race_list) as fptr:
+            for racefile in fptr.readlines():
                 racefile = racefile.rstrip()
                 self.logger.info('Processing %s...' % racefile)
                 self.local_tidy(racefile)

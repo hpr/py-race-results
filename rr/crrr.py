@@ -121,7 +121,7 @@ class CoolRunning(RaceResults):
             markup = f.read()
 
         relative_urls = regex.findall(markup)
-        
+
         for relative_url in relative_urls:
 
             top_level_url = 'http://www.coolrunning.com' + relative_url
@@ -148,7 +148,7 @@ class CoolRunning(RaceResults):
                     # Already seen this one.
                     continue
 
-                # Strip off the leading "./" to get the name we use for the 
+                # Strip off the leading "./" to get the name we use for the
                 # local file.
                 race_file = relative_inner_url[2:]
 
@@ -170,8 +170,8 @@ class CoolRunning(RaceResults):
 
         regex = re.compile(r"""<pre>              # banner follows the <pre>
                                (?P<race_text>.*?) # regex should NOT be greedy!
-                               </pre>""",         # stop here
-                               re.VERBOSE | re.IGNORECASE | re.DOTALL)
+                               </pre>""",
+                           re.VERBOSE | re.IGNORECASE | re.DOTALL)
         matchobj = regex.search(markup)
         if matchobj is None:
             warnings.warn('Vanilla CRRR regex did not match.')
@@ -226,7 +226,7 @@ class CoolRunning(RaceResults):
     def get_author(self, race_file):
         """
         Get the race company identifier.
-        
+
         Example
         -------
             <meta name="Author" content="colonial" />
@@ -235,12 +235,12 @@ class CoolRunning(RaceResults):
                                 name=\"Author\"\s
                                 content=\"(?P<content>.*)\"\s*
                                 \/?>""",  # Sometimes there's no /
-                                re.VERBOSE | re.IGNORECASE)
+                            re.VERBOSE | re.IGNORECASE)
         regex2 = re.compile(r"""<meta\s
                                 content=\"(?P<content>.*)\"\s*
                                 name=\"Author\"\s*
                                 \/?>""",  # Sometimes there's no /
-                                re.VERBOSE | re.IGNORECASE)
+                            re.VERBOSE | re.IGNORECASE)
         with open(race_file, 'rt') as fptr:
             html = fptr.read()
             matchobj = regex1.search(html)
@@ -251,9 +251,8 @@ class CoolRunning(RaceResults):
             if matchobj is not None:
                 return matchobj.group('content')
             else:
-                raise RuntimeError("Could not parse the race company identifier")
-
-
+                msg = "Could not parse the race company identifier"
+                raise RuntimeError(msg)
 
     def compile_race_results(self, race_file):
         """
@@ -269,7 +268,7 @@ class CoolRunning(RaceResults):
                 html = self.webify_ccrr_results(results, race_file)
                 self.insert_race_results(html)
         elif variant in ['kick610', 'JB Race', 'gstate', 'ab-mac', 'FTO',
-                         'opportunity', 'NSTC', 'ndatrackxc', 'wcrc',
+                         'NSTC', 'ndatrackxc', 'wcrc',
                          'Spitler']:
             # Assume the usual coolrunning pattern.
             self.logger.debug('Vanilla Coolrunning pattern')
@@ -277,14 +276,19 @@ class CoolRunning(RaceResults):
             if len(results) > 0:
                 html = self.webify_vanilla_results(results, race_file)
                 self.insert_race_results(html)
-        elif variant == 'colonial':
-            # This is a local race series.  Gawd-awful excel-to-bastardized-
-            # html.  The hell with it.
-            self.logger.info('Skipping colonial series.')
+        elif variant in ['colonial', 'opportunity']:
+            # 'colonial' is a local race series.  Gawd-awful
+            # excel-to-bastardized-html.  The hell with it.
+            #
+            # 'opportunity' seems to be CMS 52 Week Series
+            self.logger.info('Skipping {0} race series.'.format(variant))
         elif variant in ['Harriers']:
             self.logger.info('Skipping harriers (snowstorm classic?) series.')
         elif variant in ['FFAST', 'lungne', 'northeastracers', 'sri']:
             msg = 'Skipping {0} pattern (unhandled XML pattern).'
+            self.logger.info(msg.format(variant))
+        elif variant in ['WCRCSCOTT']:
+            msg = 'Skipping {0} XML pattern (looks like a race series).'
             self.logger.info(msg.format(variant))
         else:
             msg = 'Unknown pattern (\"{0}\"), going to try vanilla CR parsing.'
@@ -315,7 +319,8 @@ class CoolRunning(RaceResults):
                            re.DOTALL)
         matchobj = regex.search(markup)
         if matchobj is None:
-            raise RuntimeError("Could not find H1/H2 tags in {0}".format(race_file))
+            msg = "Could not find H1/H2 tags in {0}".format(race_file)
+            raise RuntimeError(msg)
 
         h1 = ET.Element('h1')
         h1.text = matchobj.group('h1')
@@ -371,16 +376,19 @@ class CoolRunning(RaceResults):
 
         with open(race_file, 'r') as f:
             markup = f.read()
-        regex = re.compile(r"""<pre>           # banner text follows the <pre>
+        regex = re.compile(r"""<pre>             # banner text follows
                                (?P<banner>.*?\n) # regex should NOT be greedy!
-                               \s*1\b           # stop matching upon 1st place
-                               .*              # the results are here
-                               </pre>""",      # stop here
-                               re.VERBOSE | re.IGNORECASE | re.DOTALL)
+                               \s*1\b            # stop matching upon 1st place
+                               .*                # the results are here
+                               </pre>""",        # stop here
+                           re.VERBOSE | re.IGNORECASE | re.DOTALL)
         matchobj = regex.search(markup)
         banner_text = matchobj.group('banner')
 
-        pre.text = banner_text + '\n'.join(result_lst) + '\n'
+        text = '<pre class="actual_results">\n'
+        text += banner_text + '\n'.join(result_lst) + '\n'
+        text += '</pre>'
+        pre = ET.XML(text)
         div.append(pre)
 
         return div
