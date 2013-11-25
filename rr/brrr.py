@@ -183,7 +183,7 @@ class BestRace(RaceResults):
                                (?P<mixed_content_1>[^<>]*)
                                <u>(?P<mixed_content_2>[^<>]*)</u>
                                </b>""",
-                               re.VERBOSE | re.IGNORECASE)
+                           re.VERBOSE | re.IGNORECASE)
         matchobj = regex.search(self.html)
         if matchobj is None:
             raise RuntimeError("Could not parse out the banner.")

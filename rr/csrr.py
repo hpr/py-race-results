@@ -219,7 +219,7 @@ class CompuScore(RaceResults):
 
         regex = re.compile(r"""<strong>(?P<strong1>[^<>]*)</strong>\s*
                                <strong><u>(?P<strong2>[^<>]*)</u></strong>""",
-                               re.VERBOSE)
+                           re.VERBOSE)
         matchobj = regex.search(self.html)
         if matchobj is None:
             pre.text = '\n' + '\n'.join(results)

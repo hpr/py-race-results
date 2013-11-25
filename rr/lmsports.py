@@ -87,7 +87,7 @@ class LMSports(RaceResults):
         We have the full year of results, now fish out the ones that are in
         the specified time range.
         """
-        # <a href="trail13.htm">Trail of Two Cities 5k Run</a> 
+        # <a href="trail13.htm">Trail of Two Cities 5k Run</a>
         # - Saturday, November 2, 2013 - OC/Somers Point, NJ -
         # ( <a href="trail12.htm">2012 results</a> )
         pattern = r"""<a\s
@@ -107,7 +107,8 @@ class LMSports(RaceResults):
             dt = datetime.datetime.strptime(datestring, "%B %d, %Y")
             dt = datetime.date(dt.year, dt.month, dt.day)
             if not (self.start_date <= dt and dt <= self.stop_date):
-                self.logger.info('Skipping {0}...'.format(matchobj.group('race_name')))
+                msg = 'Skipping {0}...'.format(matchobj.group('race_name'))
+                self.logger.info(msg)
                 continue
 
             url = self.base_url + matchobj.group('href')
@@ -117,7 +118,6 @@ class LMSports(RaceResults):
             response = urllib.request.urlopen(url)
             self.html = response.readall().decode('utf-8')
             self.compile_race_results()
-
 
     def compile_race_results(self):
         """
@@ -144,10 +144,9 @@ class LMSports(RaceResults):
 
         # <TITLE>Cooper Norcross Run the Bridge 10k</TITLE>
         regex = re.compile(r"""<title>(?P<the_title>.*)</title>""",
-                               re.VERBOSE | re.IGNORECASE)
+                           re.VERBOSE | re.IGNORECASE)
         matchobj = regex.search(self.html)
         if matchobj is None:
-            import pdb; pdb.set_trace()
             raise RuntimeError("Could not find the title.")
 
         h1 = ET.Element('h1')
@@ -175,7 +174,8 @@ class LMSports(RaceResults):
 
         # Parse out the banner.
         # age|#in
-        regex = re.compile(r"""\r\n(?P<banner>\s*age.*?=====)\r\n""", re.DOTALL)
+        regex = re.compile(r"""\r\n(?P<banner>\s*age.*?=====)\r\n""",
+                           re.DOTALL)
         matchobj = regex.search(self.html)
         if matchobj is None:
             raise RuntimeError("Could not parse out the banner.")
