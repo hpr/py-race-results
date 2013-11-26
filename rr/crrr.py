@@ -38,7 +38,6 @@ class CoolRunning(RaceResults):
     def run(self):
         self.load_membership_list()
         self.compile_results()
-        self.local_tidy(self.output_file)
 
     def load_membership_list(self):
         """
@@ -387,6 +386,23 @@ class CoolRunning(RaceResults):
         pre = etree.Element('pre')
         pre.set('class', 'actual_results')
 
+        banner_text = self.parse_banner(race_file)
+
+        text = '<pre class="actual_results">\n'
+        text += banner_text + '\n'.join(result_lst) + '\n'
+        text += '</pre>'
+        pre = etree.XML(text)
+        div.append(pre)
+
+        return div
+
+    def parse_banner(self, race_file):
+        """
+        Tease out the "banner" from the race file.
+
+        This will usually be found following the <pre> tag that contains the
+        results.
+        """
         with open(race_file, 'r') as f:
             markup = f.read()
         regex = re.compile(r"""<pre>             # banner text follows
@@ -398,35 +414,19 @@ class CoolRunning(RaceResults):
         matchobj = regex.search(markup)
         banner_text = matchobj.group('banner')
 
-        text = '<pre class="actual_results">\n'
-        text += banner_text + '\n'.join(result_lst) + '\n'
-        text += '</pre>'
-        pre = etree.XML(text)
-        div.append(pre)
-
-        return div
-
-    def parse_banner(self, tag):
-        """
-                   The Andrea Holden 5k Thanksgiving Race
-         PLC    Time  Pace  PLC/Group  PLC/Sex Bib#   Name
-           1   16:40  5:23    1 30-39    1 M   142 Brian Allen
-
-        """
-        banner = ''
-        if (len(tag.findChildren()) > 1):
-            # Don't bother if the PRE tag has mixed content.
-            return banner
-
-        # Stop when we find the first leading "1"
-        text = tag.contents[0].split('\n')
-        for line in text:
-            if re.match('\s+1', line):
-                # found it
-                break
-            banner += line + '\n'
-
-        return banner
+        # Clean it up if necessary.  Some of the clumsier race directors will
+        # put ampersands into the text without making them XML entities.
+        #regex = re.compile(r"""&                    # match the ampersand,
+        #                       (?!                  # negative lookahead
+        #                         [A-Za-z]+[0-9]*;   # named entity
+        #                        | 
+        #                         #[0-9]+;             # decimal entity
+        #                        |
+        #                         #x[0-9a-fA-F]+;)""", # hexidecimal entity
+        #                   re.VERBOSE)
+        banner_text = re.sub(r'&(?![A-Za-z]+[0-9]*;|#[0-9]+;|#x[0-9a-fA-F]+;)',
+                             r'&amp;', banner_text)
+        return banner_text
 
     def match_against_membership(self, line):
         """
@@ -455,7 +455,6 @@ class CoolRunning(RaceResults):
         url = url.format(self.start_date.strftime('%y'), state_file)
         self.logger.info('Downloading {0}.'.format(url))
         self.download_file(url, local_file=state_file)
-        self.local_tidy(state_file)
 
     def download_race(self, anchor, inner_url=False, state=''):
         """
@@ -474,39 +473,8 @@ class CoolRunning(RaceResults):
         self.logger.info('Downloading %s...' % url)
         self.download_file(url, local_file=local_file)
         self.downloaded_url = url
-        try:
-            self.local_tidy(local_file)
-        except IOError:
-            fmt = 'Encountered an error processing %s, skipping it.'
-            self.logger.debug(fmt % local_file)
-            local_file = None
 
         return(local_file)
-
-    def local_tidy(self, local_file=None):
-        """Clean up the HTML, as it is often invalid."""
-
-        # This is an IE conditional comment that Excel likes to produce.
-        # Have only seen this on CoolRunning.
-        # Get rid of it before running through the common tidy process.
-        try:
-            with open(local_file, 'r', encoding='utf-8') as fp:
-                html = fp.read()
-        except UnicodeDecodeError:
-            with open(local_file, 'r', encoding='iso-8859-1') as fp:
-                html = fp.read()
-        html = html.replace('<![if supportMisalignedColumns]>', '')
-        html = html.replace('<![endif]>', '')
-        with open(local_file, 'w') as f:
-            f.write(html)
-
-        # And now call the common tidy process.
-        parser = etree.HTMLParser()
-        tree = etree.parse(local_file, parser)
-        root = tree.getroot()
-        result = etree.tostring(root, pretty_print=True, method="html")
-        with open(local_file, 'wb') as fptr:
-            fptr.write(result)
 
     def compile_local_results(self):
         """
@@ -517,7 +485,6 @@ class CoolRunning(RaceResults):
                 racefile = racefile.rstrip()
                 try:
                     self.logger.info('Processing file %s' % racefile)
-                    self.local_tidy(racefile)
                     self.compile_race_results(racefile)
                 except IOError:
                     fmt = 'Encountered an error processing %s, skipping it.'

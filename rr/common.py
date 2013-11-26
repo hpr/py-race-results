@@ -9,6 +9,8 @@ import urllib
 import xml.dom.minidom
 import xml.etree.cElementTree as ET
 
+from lxml import etree
+
 from bs4 import BeautifulSoup
 
 
@@ -94,6 +96,15 @@ class RaceResults:
             fptr = codecs.open(local_file, encoding='utf-8', mode='w')
             fptr.write(soup.prettify())
             fptr.close()
+
+            # And now call the common tidy process.
+            #parser = etree.HTMLParser()
+            #tree = etree.parse(local_file, parser)
+            #root = tree.getroot()
+            #result = etree.tostring(root, pretty_print=True, method="html")
+            #with open(local_file, 'wb') as fptr:
+            #    fptr.write(result)
+
 
     def download_file(self, url, local_file=None, params=None):
         """
