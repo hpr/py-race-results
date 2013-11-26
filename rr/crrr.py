@@ -8,7 +8,8 @@ import os
 import re
 import sys
 import warnings
-import xml.etree.cElementTree as ET
+
+from lxml import etree
 
 from .common import RaceResults, remove_namespace
 
@@ -194,8 +195,8 @@ class CoolRunning(RaceResults):
             List of <TR> elements, each row containing an individual result.
         """
         pattern = './/body/table/tr/td/table/tr/td/table/tr/td/div/table/tr'
-
-        tree = ET.parse(race_file)
+        parser = etree.HTMLParser()
+        tree = etree.parse(race_file, parser)
         root = tree.getroot()
         root = remove_namespace(root)
 
@@ -302,9 +303,9 @@ class CoolRunning(RaceResults):
         """
         Construct an XHTML element to contain race results.
         """
-        div = ET.Element('div')
+        div = etree.Element('div')
         div.set('class', 'race')
-        hr = ET.Element('hr')
+        hr = etree.Element('hr')
         hr.set('class', 'race_header')
         div.append(hr)
 
@@ -322,25 +323,25 @@ class CoolRunning(RaceResults):
             msg = "Could not find H1/H2 tags in {0}".format(race_file)
             raise RuntimeError(msg)
 
-        h1 = ET.Element('h1')
+        h1 = etree.Element('h1')
         h1.text = matchobj.group('h1')
         div.append(h1)
 
-        h2 = ET.Element('h2')
+        h2 = etree.Element('h2')
         h2.text = matchobj.group('h2')
         div.append(h2)
 
         # Append the URL if possible.
         if self.downloaded_url is not None:
-            p = ET.Element('p')
-            span = ET.Element('span')
+            p = etree.Element('p')
+            span = etree.Element('span')
             span.text = 'Complete results '
             p.append(span)
-            a = ET.Element('a')
+            a = etree.Element('a')
             a.set('href', self.downloaded_url)
             a.text = 'here'
             p.append(a)
-            span = ET.Element('span')
+            span = etree.Element('span')
             span.text = ' on Coolrunning.'
             p.append(span)
             div.append(p)
@@ -357,7 +358,7 @@ class CoolRunning(RaceResults):
         """
         div = self.construct_common_div(race_file)
 
-        table = ET.Element('table')
+        table = etree.Element('table')
         for tr in results:
             if tr is not None:
                 table.append(tr)
@@ -365,13 +366,25 @@ class CoolRunning(RaceResults):
         div.append(table)
         return div
 
+    def insert_race_results(self, results):
+        """
+        Insert HTML-ized results into the output file.
+        """
+        tree = etree.parse(self.output_file)
+        root = tree.getroot()
+        root = remove_namespace(root)
+        body = root.findall('.//body')[0]
+        body.append(results)
+        etree.ElementTree(root).write(self.output_file)
+
+
     def webify_vanilla_results(self, result_lst, race_file):
         """
         Insert CoolRunning results into the output file.
         """
         div = self.construct_common_div(race_file)
 
-        pre = ET.Element('pre')
+        pre = etree.Element('pre')
         pre.set('class', 'actual_results')
 
         with open(race_file, 'r') as f:
@@ -388,7 +401,7 @@ class CoolRunning(RaceResults):
         text = '<pre class="actual_results">\n'
         text += banner_text + '\n'.join(result_lst) + '\n'
         text += '</pre>'
-        pre = ET.XML(text)
+        pre = etree.XML(text)
         div.append(pre)
 
         return div
@@ -488,7 +501,12 @@ class CoolRunning(RaceResults):
             f.write(html)
 
         # And now call the common tidy process.
-        RaceResults.local_tidy(self, local_file)
+        parser = etree.HTMLParser()
+        tree = etree.parse(local_file, parser)
+        root = tree.getroot()
+        result = etree.tostring(root, pretty_print=True, method="html")
+        with open(local_file, 'wb') as fptr:
+            fptr.write(result)
 
     def compile_local_results(self):
         """
