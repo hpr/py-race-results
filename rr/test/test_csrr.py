@@ -176,7 +176,8 @@ class TestCompuscore(unittest.TestCase):
         # "no results" means that the body of the output file is empty.
         with open(self.results_file.name, 'r') as f:
             html = f.read()
-            self.assertRegex(html, r"<body>\s*</body>")
+            regex = re.compile(r"""(<body>\s*</body> | <body/>)""", re.VERBOSE)
+            self.assertRegex(html, regex)
 
 
 if __name__ == "__main__":

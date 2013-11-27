@@ -54,13 +54,6 @@ class CompuScore(RaceResults):
         # Set the appropriate logging level.
         self.logger.setLevel(getattr(logging, self.verbose.upper()))
 
-        self.first_name_regex = None
-        self.last_name_regex = None
-
-    def run(self):
-        """
-        Load the membership list and run through all the results.
-        """
         first_name_regex = []
         last_name_regex = []
         for last_name, first_name in self.parse_membership_list():
@@ -77,8 +70,11 @@ class CompuScore(RaceResults):
         self.first_name_regex = first_name_regex
         self.last_name_regex = last_name_regex
 
+    def run(self):
+        """
+        Load the membership list and run through all the results.
+        """
         self.compile_results()
-        self.local_tidy(self.output_file)
 
     def compile_results(self):
         """
@@ -283,7 +279,6 @@ class CompuScore(RaceResults):
         response = urllib.request.urlopen(url)
         self.html = response.read().decode('utf-8')
 
-        self.local_tidy()
 
     def compile_local_results(self):
         """
@@ -293,7 +288,6 @@ class CompuScore(RaceResults):
             for racefile in fptr.readlines():
                 racefile = racefile.rstrip()
                 self.logger.info('Processing %s...' % racefile)
-                self.local_tidy(racefile)
 
                 with open(racefile, 'rt') as fptr:
                     self.html = fptr.read()

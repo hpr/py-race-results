@@ -38,7 +38,6 @@ class BestRace(RaceResults):
         self.load_membership_list()
         self.compile_results()
         # Make the output human-readable.
-        RaceResults.local_tidy(self, local_file=self.output_file)
 
     def load_membership_list(self):
         """
@@ -58,16 +57,6 @@ class BestRace(RaceResults):
 
         self.first_name_regex = first_name_regex
         self.last_name_regex = last_name_regex
-
-    def local_tidy(self, local_file=None):
-        """
-        Clean up the HTML file.
-
-        LIBTIDY doesn't seem to like p:colorspace, so get rid of it before
-        calling LIBTIDY.
-        """
-        self.html = self.html.replace(':colorscheme', '')
-        RaceResults.local_tidy(self, local_file=local_file)
 
     def compile_results(self):
         """
@@ -223,7 +212,6 @@ class BestRace(RaceResults):
         url = fmt % self.start_date.strftime('%Y')
         self.logger.info('Downloading %s.' % url)
         self.download_file(url)
-        self.local_tidy()
 
     def download_race(self, url):
         """
@@ -233,7 +221,6 @@ class BestRace(RaceResults):
         self.logger.info('Downloading %s...' % name)
         self.download_file(url)
         self.downloaded_url = url
-        self.local_tidy()
 
     def compile_local_results(self):
         """Compile results from list of local files.
