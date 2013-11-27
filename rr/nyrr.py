@@ -7,7 +7,7 @@ import urllib.request
 import warnings
 import xml.etree.cElementTree as ET
 
-from bs4 import BeautifulSoup
+from lxml import etree
 
 from .common import RaceResults, remove_namespace
 
@@ -169,13 +169,6 @@ class NewYorkRR(RaceResults):
         self.download_file(url, local_file, data)
         self.local_tidy(local_file)
 
-        # Use Beautifulsoup/lxml to make it compliant.
-        with open(local_file, 'r', encoding='utf-8') as fp:
-            markup = fp.read()
-            soup = BeautifulSoup(markup, 'lxml')
-        with open(local_file, 'w') as fp:
-            fp.write(soup.prettify())
-
         # If there were no results for the specified team, then the html will
         # contain some red text to the effect of "Your search returns no
         # match."
@@ -185,8 +178,10 @@ class NewYorkRR(RaceResults):
             return
 
         # So now we have a result.  Parse it for the result table.
-        root = ET.parse(local_file).getroot()
-        root = remove_namespace(root)
+        parser = etree.HTMLParser()
+        tree = etree.parse(local_file, parser)
+        root = tree.getroot()
+        #root = remove_namespace(root)
 
         # 3rd table is the one we want.
         pattern = './/table'
@@ -203,34 +198,39 @@ class NewYorkRR(RaceResults):
         """
 
         # maybe abstract this into a webify function.
-        div = ET.Element('div')
+        div = etree.Element('div')
         div.set('class', 'race')
-        hr = ET.Element('hr')
+        hr = etree.Element('hr')
         hr.set('class', 'race_header')
         div.append(hr)
 
         # Append the race metadata.
         tds = tables[1].findall('.//td')
         td = tds[2]
-        race_meta = ET.Element('div')
-        ch = td.getchildren()
-        race_meta.append(ch[0])
-        race_meta.append(ch[1])
-        race_meta.append(ch[2])
-        race_meta.append(ch[3])
+        race_meta = etree.Element('div')
+
+        # race name
+        elts = td.findall('.//span')
+        race_meta.append(elts[0])
+
+        # list by team
+        race_meta.append(elts[1])
+
+        # distance, race time, location
+        race_meta.append(elts[2])
         div.append(race_meta)
 
         # Append the URL from whence we came..
-        pdiv = ET.Element('div')
+        pdiv = etree.Element('div')
         pdiv.set('class', 'provenance')
-        span = ET.Element('span')
+        span = etree.Element('span')
         span.text = 'Results courtesy of '
         pdiv.append(span)
-        anchor = ET.Element('a')
+        anchor = etree.Element('a')
         anchor.set('href', 'http://www.nyrr.org')
         anchor.text = 'New York Road Runners'
         pdiv.append(anchor)
-        span = ET.Element('span')
+        span = etree.Element('span')
         span.text = '.'
         pdiv.append(span)
         div.append(pdiv)
@@ -241,15 +241,30 @@ class NewYorkRR(RaceResults):
         div.append(table)
         return div
 
+    def insert_race_results(self, results):
+        """
+        Insert HTML-ized results into the output file.
+        """
+        parser = etree.HTMLParser()
+        tree = etree.parse(self.output_file, parser)
+        root = tree.getroot()
+        body = root.findall('.//body')[0]
+        body.append(results)
+
+        result = etree.tostring(root, pretty_print=True, method="html")
+        with open(self.output_file, 'wb') as fptr:
+            fptr.write(result)
+        self.local_tidy(local_file=self.output_file)
+
     def sanitize_table(self, old_table):
         """The table as-is has a few links that we need to remove.
         """
-        new_table = ET.Element('table')
+        new_table = etree.Element('table')
         new_table.set('cellpadding', '3')
         new_table.set('cellspacing', '0')
         new_table.set('border', '1')
 
-        new_tr = ET.Element('tr')
+        new_tr = etree.Element('tr')
         new_tr.set('bgcolor', '#EEEEEE')
 
         trs = old_table.getchildren()
@@ -257,13 +272,13 @@ class NewYorkRR(RaceResults):
         old_tds = tr.getchildren()
 
         # 1st two TD elements need to be replaced.
-        td = ET.Element('td')
-        td.text = old_tds[0].getchildren()[0].text
+        td = etree.Element('td')
+        td.text = old_tds[1].getchildren()[0].text
         new_tr.append(td)
 
         # 1st two TD elements need to be replaced.
-        td = ET.Element('td')
-        td.text = old_tds[1].getchildren()[0].text
+        td = etree.Element('td')
+        td.text = old_tds[2].getchildren()[0].text
         new_tr.append(td)
 
         # Append the rest of the TD elements in the first row.
@@ -281,19 +296,12 @@ class NewYorkRR(RaceResults):
         """
         Tidy up the HTML.
         """
-        try:
-            with open(local_file, encoding='utf-8') as fp:
-                markup = fp.read()
-        except UnicodeDecodeError:
-            with open(local_file, encoding='iso-8859-1') as fp:
-                markup = fp.read()
-        #soup = BeautifulSoup(markup, "lxml")
-        soup = BeautifulSoup(markup, "html.parser")
-
-        import codecs
-        fp = codecs.open(local_file, encoding='utf-8', mode='w')
-        fp.write(soup.prettify())
-        fp.close()
+        parser = etree.HTMLParser()
+        tree = etree.parse(local_file, parser)
+        root = tree.getroot()
+        result = etree.tostring(root, pretty_print=True, method="html")
+        with open(local_file, 'wb') as fptr:
+            fptr.write(result)
 
     def download_file(self, url, local_file, params=None):
         """

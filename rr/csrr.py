@@ -7,7 +7,8 @@ import logging
 import re
 import urllib
 import warnings
-import xml.etree.cElementTree as ET
+
+from lxml import etree
 
 from .common import RaceResults
 
@@ -183,17 +184,17 @@ class CompuScore(RaceResults):
         """
         Take the list of results and turn it into output HTML.
         """
-        div = ET.Element('div')
+        div = etree.Element('div')
         div.set('class', 'race')
 
-        hr = ET.Element('hr')
+        hr = etree.Element('hr')
         hr.set('class', 'race_header')
         div.append(hr)
 
         # The single H2 element in the file has the race name.
         regex = re.compile(r'<h2.*>(?P<h2>.*)</h2>')
         matchobj = regex.search(self.html)
-        h2 = ET.Element('h2')
+        h2 = etree.Element('h2')
         if matchobj is None:
             h2.text = ''
         else:
@@ -202,7 +203,7 @@ class CompuScore(RaceResults):
 
         # The single H3 element in the file has the race date.
         dt = self.get_race_date()
-        h3 = ET.Element('h3')
+        h3 = etree.Element('h3')
         h3.text = dt.strftime('Race Date:  %b %d, %Y')
         div.append(h3)
 
@@ -210,7 +211,7 @@ class CompuScore(RaceResults):
 
         # Append the actual race results.  Consists of the column headings
         # (banner) plus the individual results.
-        pre = ET.Element('pre')
+        pre = etree.Element('pre')
         pre.set('class', 'actual_results')
 
         regex = re.compile(r"""<strong>(?P<strong1>[^<>]*)</strong>\s*
@@ -224,7 +225,7 @@ class CompuScore(RaceResults):
             # right.  Difficult to do this without using "fromstring".
             inner = '\n' + matchobj.group() + '\n' + '\n'.join(results)
             mixed_content = '<pre>' + inner + '</pre>'
-            pre = ET.fromstring(mixed_content)
+            pre = etree.fromstring(mixed_content)
         div.append(pre)
 
         return div
@@ -234,15 +235,15 @@ class CompuScore(RaceResults):
         Append the URL from whence this information came if possible.
         """
         if self.downloaded_url is not None:
-            p = ET.Element('p')
+            p = etree.Element('p')
             p.set('class', 'provenance')
 
-            span1 = ET.Element('span')
+            span1 = etree.Element('span')
             span1.text = 'Complete results '
-            anchor = ET.Element('a')
+            anchor = etree.Element('a')
             anchor.set('href', self.downloaded_url)
             anchor.text = 'here'
-            span2 = ET.Element('span')
+            span2 = etree.Element('span')
             span2.text = ' on Compuscore.'
 
             p.append(span1)
@@ -279,6 +280,21 @@ class CompuScore(RaceResults):
         response = urllib.request.urlopen(url)
         self.html = response.read().decode('utf-8')
 
+
+    def insert_race_results(self, results):
+        """
+        Insert HTML-ized results into the output file.
+        """
+        parser = etree.HTMLParser()
+        tree = etree.parse(self.output_file, parser)
+        root = tree.getroot()
+        body = root.findall('.//body')[0]
+        body.append(results)
+
+        result = etree.tostring(root, pretty_print=True, method="html")
+        with open(self.output_file, 'wb') as fptr:
+            fptr.write(result)
+        self.local_tidy(local_file=self.output_file)
 
     def compile_local_results(self):
         """

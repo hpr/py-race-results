@@ -6,7 +6,8 @@ import logging
 import os
 import re
 import warnings
-import xml.etree.cElementTree as ET
+
+from lxml import etree
 
 from .common import RaceResults
 
@@ -128,9 +129,9 @@ class BestRace(RaceResults):
         """
         Take the list of results and turn it into output HTML.
         """
-        div = ET.Element('div')
+        div = etree.Element('div')
         div.set('class', 'race')
-        hr = ET.Element('hr')
+        hr = etree.Element('hr')
         hr.set('class', 'race_header')
         div.append(hr)
 
@@ -144,27 +145,27 @@ class BestRace(RaceResults):
         if matchobj is None:
             raise RuntimeError("Could not find the title.")
 
-        h1 = ET.Element('h1')
+        h1 = etree.Element('h1')
         h1.text = matchobj.group('the_title')
         div.append(h1)
 
         # Append the URL if possible.
         if self.downloaded_url is not None:
-            p = ET.Element('p')
+            p = etree.Element('p')
             p.set('class', 'provenance')
-            span = ET.Element('span')
+            span = etree.Element('span')
             span.text = 'Complete results '
             p.append(span)
-            a = ET.Element('a')
+            a = etree.Element('a')
             a.set('href', self.downloaded_url)
             a.text = 'here'
             p.append(a)
-            span = ET.Element('span')
+            span = etree.Element('span')
             span.text = ' on BestRace.'
             p.append(span)
             div.append(p)
 
-        pre = ET.Element('pre')
+        pre = etree.Element('pre')
         pre.set('class', 'actual_results')
 
         # Parse out the banner.
@@ -183,7 +184,7 @@ class BestRace(RaceResults):
         text += matchobj.group()
         text += '\n' + '\n'.join(results_lst)
         text += '</pre>'
-        pre = ET.fromstring(text)
+        pre = etree.fromstring(text)
 
         div.append(pre)
 
@@ -221,6 +222,21 @@ class BestRace(RaceResults):
         self.logger.info('Downloading %s...' % name)
         self.download_file(url)
         self.downloaded_url = url
+
+    def insert_race_results(self, results):
+        """
+        Insert HTML-ized results into the output file.
+        """
+        parser = etree.HTMLParser()
+        tree = etree.parse(self.output_file, parser)
+        root = tree.getroot()
+        body = root.findall('.//body')[0]
+        body.append(results)
+
+        result = etree.tostring(root, pretty_print=True, method="html")
+        with open(self.output_file, 'wb') as fptr:
+            fptr.write(result)
+        self.local_tidy(local_file=self.output_file)
 
     def compile_local_results(self):
         """Compile results from list of local files.
