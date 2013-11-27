@@ -4,6 +4,7 @@ import logging
 import os
 import re
 import urllib.request
+import warnings
 import xml.etree.cElementTree as ET
 
 from bs4 import BeautifulSoup
@@ -125,16 +126,19 @@ class NewYorkRR(RaceResults):
         """
         local_file = 'event_search.html'
         self.download_file(url, local_file)
-        self.local_tidy(local_file)
 
-        with open(local_file, 'r', encoding='utf-8') as fp:
-            markup = fp.read()
+        try:
+            with open(local_file, 'r', encoding='utf-8') as fp:
+                markup = fp.read()
+        except UnicodeDecodeError:
+            with open(local_file, 'r', encoding='latin1') as fp:
+                markup = fp.read()
 
         # There should be a single form.
         regex = re.compile(r"""<form\s*
-                               action="(?P<action>.*?)"\s*
-                               .*?
-                               </form>""", re.VERBOSE | re.DOTALL)
+                               method=post\s*
+                               action=(?P<action>.*?)\s*
+                               >""", re.VERBOSE | re.DOTALL)
         matchobj = regex.search(markup)
         if matchobj is None:
             warnings.warn("Unable to match the expected form.")
