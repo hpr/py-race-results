@@ -174,17 +174,6 @@ class LMSports(RaceResults):
 
         return div
 
-    def match_against_membership(self, line):
-        """
-        Given a line of text, does it contain a member's name?
-        """
-        for idx in range(0, len(self.first_name_regex)):
-            fregex = self.first_name_regex[idx]
-            lregex = self.last_name_regex[idx]
-            if fregex.search(line) and lregex.search(line):
-                return(True)
-        return(False)
-
     def download_master_file(self):
         """Download results for the entire year.
 

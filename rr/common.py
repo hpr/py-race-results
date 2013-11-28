@@ -58,6 +58,18 @@ class RaceResults:
         self.html = None
         self.cookies = None
 
+    def match_against_membership(self, line):
+        """
+        We have a line of text from the race file.  Match it against the
+        membership list.
+        """
+        for idx in range(0, len(self.first_name_regex)):
+            fregex = self.first_name_regex[idx]
+            lregex = self.last_name_regex[idx]
+            if fregex.search(line) and lregex.search(line):
+                return(True)
+        return(False)
+
     def load_membership_list(self):
         """
         Construct regular expressions for each person in the membership list.
