@@ -1,3 +1,7 @@
+"""
+Module for compiling NYRR race resuts.
+"""
+
 import datetime
 import logging
 import re
@@ -47,8 +51,8 @@ class NewYorkRR(RaceResults):
         # There are two forms used for searches.  The one that we want (list
         # all the results for an entire year) is the 2nd on that this regex
         # retrieves.
-        with open(local_file) as fp:
-            html = fp.read()
+        with open(local_file) as fptr:
+            html = fptr.read()
         regex = re.compile(r"""<form
                                \s+name="(?P<name>\w+)"
                                \s+method=post
@@ -169,8 +173,8 @@ class NewYorkRR(RaceResults):
         # If there were no results for the specified team, then the html will
         # contain some red text to the effect of "Your search returns no
         # match."
-        with open(local_file, 'r', encoding='utf-8') as fp:
-            html = fp.read()
+        with open(local_file, 'r', encoding='utf-8') as fptr:
+            html = fptr.read()
         if re.search("Your search returns no match.", html) is not None:
             return
 
