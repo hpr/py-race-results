@@ -281,21 +281,6 @@ class CompuScore(RaceResults):
         self.html = response.read().decode('utf-8')
 
 
-    def insert_race_results(self, results):
-        """
-        Insert HTML-ized results into the output file.
-        """
-        parser = etree.HTMLParser()
-        tree = etree.parse(self.output_file, parser)
-        root = tree.getroot()
-        body = root.findall('.//body')[0]
-        body.append(results)
-
-        result = etree.tostring(root, pretty_print=True, method="html")
-        with open(self.output_file, 'wb') as fptr:
-            fptr.write(result)
-        self.local_tidy(local_file=self.output_file)
-
     def compile_local_results(self):
         """
         Compile results from list of local files.

@@ -89,6 +89,21 @@ class RaceResults:
             fptr.write(result)
 
 
+    def insert_race_results(self, results):
+        """
+        Insert HTML-ized results into the output file.
+        """
+        parser = etree.HTMLParser()
+        tree = etree.parse(self.output_file, parser)
+        root = tree.getroot()
+        body = root.findall('.//body')[0]
+        body.append(results)
+
+        result = etree.tostring(root, pretty_print=True, method="html")
+        with open(self.output_file, 'wb') as fptr:
+            fptr.write(result)
+        self.local_tidy(local_file=self.output_file)
+
     def download_file(self, url, local_file=None, params=None):
         """
         Download a URL to a local file.
@@ -147,18 +162,6 @@ class RaceResults:
         ET.SubElement(ofile, 'body')
         ET.ElementTree(ofile).write(self.output_file)
         pretty_print_xml(self.output_file)
-
-    def insert_race_results(self, results):
-        """
-        Insert HTML-ized results into the output file.
-        """
-        tree = ET.parse(self.output_file)
-        root = tree.getroot()
-        root = remove_namespace(root)
-        body = root.findall('.//body')[0]
-        body.append(results)
-        ET.ElementTree(root).write(self.output_file)
-        self.local_tidy(local_file=self.output_file)
 
 
 def pretty_print_xml(xml_file):

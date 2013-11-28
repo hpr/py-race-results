@@ -365,18 +365,6 @@ class CoolRunning(RaceResults):
         div.append(table)
         return div
 
-    def insert_race_results(self, results):
-        """
-        Insert HTML-ized results into the output file.
-        """
-        tree = etree.parse(self.output_file)
-        root = tree.getroot()
-        root = remove_namespace(root)
-        body = root.findall('.//body')[0]
-        body.append(results)
-        etree.ElementTree(root).write(self.output_file)
-
-
     def webify_vanilla_results(self, result_lst, race_file):
         """
         Insert CoolRunning results into the output file.
