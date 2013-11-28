@@ -7,7 +7,8 @@ import logging
 import re
 import urllib
 import warnings
-import xml.etree.cElementTree as ET
+
+from lxml import etree
 
 from .common import RaceResults
 
@@ -54,12 +55,11 @@ class CompuScore(RaceResults):
         # Set the appropriate logging level.
         self.logger.setLevel(getattr(logging, self.verbose.upper()))
 
-        self.first_name_regex = None
-        self.last_name_regex = None
+        self.load_membership_list()
 
-    def run(self):
+    def load_membership_list(self):
         """
-        Load the membership list and run through all the results.
+        Construct regular expressions for each person in the membership list.
         """
         first_name_regex = []
         last_name_regex = []
@@ -77,8 +77,11 @@ class CompuScore(RaceResults):
         self.first_name_regex = first_name_regex
         self.last_name_regex = last_name_regex
 
+    def run(self):
+        """
+        Load the membership list and run through all the results.
+        """
         self.compile_results()
-        self.local_tidy(self.output_file)
 
     def compile_results(self):
         """
@@ -187,17 +190,17 @@ class CompuScore(RaceResults):
         """
         Take the list of results and turn it into output HTML.
         """
-        div = ET.Element('div')
+        div = etree.Element('div')
         div.set('class', 'race')
 
-        hr = ET.Element('hr')
+        hr = etree.Element('hr')
         hr.set('class', 'race_header')
         div.append(hr)
 
         # The single H2 element in the file has the race name.
         regex = re.compile(r'<h2.*>(?P<h2>.*)</h2>')
         matchobj = regex.search(self.html)
-        h2 = ET.Element('h2')
+        h2 = etree.Element('h2')
         if matchobj is None:
             h2.text = ''
         else:
@@ -206,15 +209,16 @@ class CompuScore(RaceResults):
 
         # The single H3 element in the file has the race date.
         dt = self.get_race_date()
-        h3 = ET.Element('h3')
+        h3 = etree.Element('h3')
         h3.text = dt.strftime('Race Date:  %b %d, %Y')
         div.append(h3)
 
-        self.append_url(div)
+        if self.downloaded_url is not None:
+            div.append(self.construct_source_url_reference('Compuscore'))
 
         # Append the actual race results.  Consists of the column headings
         # (banner) plus the individual results.
-        pre = ET.Element('pre')
+        pre = etree.Element('pre')
         pre.set('class', 'actual_results')
 
         regex = re.compile(r"""<strong>(?P<strong1>[^<>]*)</strong>\s*
@@ -228,44 +232,10 @@ class CompuScore(RaceResults):
             # right.  Difficult to do this without using "fromstring".
             inner = '\n' + matchobj.group() + '\n' + '\n'.join(results)
             mixed_content = '<pre>' + inner + '</pre>'
-            pre = ET.fromstring(mixed_content)
+            pre = etree.fromstring(mixed_content)
         div.append(pre)
 
         return div
-
-    def append_url(self, div):
-        """
-        Append the URL from whence this information came if possible.
-        """
-        if self.downloaded_url is not None:
-            p = ET.Element('p')
-            p.set('class', 'provenance')
-
-            span1 = ET.Element('span')
-            span1.text = 'Complete results '
-            anchor = ET.Element('a')
-            anchor.set('href', self.downloaded_url)
-            anchor.text = 'here'
-            span2 = ET.Element('span')
-            span2.text = ' on Compuscore.'
-
-            p.append(span1)
-            p.append(anchor)
-            p.append(span2)
-
-            div.append(p)
-
-    def match_against_membership(self, line):
-        """
-        We have a line of text from the race file.  Match it against the
-        membership list.
-        """
-        for idx in range(0, len(self.first_name_regex)):
-            fregex = self.first_name_regex[idx]
-            lregex = self.last_name_regex[idx]
-            if fregex.search(line) and lregex.search(line):
-                return(True)
-        return(False)
 
     def download_master_file(self):
         """
@@ -282,20 +252,3 @@ class CompuScore(RaceResults):
 
         response = urllib.request.urlopen(url)
         self.html = response.read().decode('utf-8')
-
-        self.local_tidy()
-
-    def compile_local_results(self):
-        """
-        Compile results from list of local files.
-        """
-        with open(self.race_list) as fptr:
-            for racefile in fptr.readlines():
-                racefile = racefile.rstrip()
-                self.logger.info('Processing %s...' % racefile)
-                self.local_tidy(racefile)
-
-                with open(racefile, 'rt') as fptr:
-                    self.html = fptr.read()
-
-                self.compile_race_results()

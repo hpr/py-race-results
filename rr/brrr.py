@@ -1,12 +1,10 @@
 """
 Module for BestRace.
 """
-import datetime
 import logging
-import os
 import re
-import warnings
-import xml.etree.cElementTree as ET
+
+from lxml import etree
 
 from .common import RaceResults
 
@@ -31,45 +29,12 @@ class BestRace(RaceResults):
         RaceResults.__init__(self)
         self.__dict__.update(**kwargs)
 
+        self.load_membership_list()
+
         # Set the appropriate logging level.
         self.logger.setLevel(getattr(logging, self.verbose.upper()))
 
     def run(self):
-        self.load_membership_list()
-        self.compile_results()
-        # Make the output human-readable.
-        RaceResults.local_tidy(self, local_file=self.output_file)
-
-    def load_membership_list(self):
-        """
-        Construct regular expressions for each person in the membership list.
-        """
-        first_name_regex = []
-        last_name_regex = []
-        for last_name, first_name in self.parse_membership_list():
-            # Use word boundaries to prevent false positives, e.g. "Ed Ford"
-            # does not cause every fricking person from "New Bedford" to
-            # match.  Here's an example line to match.
-            #   '60 Gene Gugliotta       North Plainfiel,NJ 53 M U '
-            pattern = '\\b' + first_name + '\\b'
-            first_name_regex.append(re.compile(pattern, re.IGNORECASE))
-            pattern = '\\b' + last_name + '\\b'
-            last_name_regex.append(re.compile(pattern, re.IGNORECASE))
-
-        self.first_name_regex = first_name_regex
-        self.last_name_regex = last_name_regex
-
-    def local_tidy(self, local_file=None):
-        """
-        Clean up the HTML file.
-
-        LIBTIDY doesn't seem to like p:colorspace, so get rid of it before
-        calling LIBTIDY.
-        """
-        self.html = self.html.replace(':colorscheme', '')
-        RaceResults.local_tidy(self, local_file=local_file)
-
-    def compile_results(self):
         """
         Start collecting race result files.
         """
@@ -139,11 +104,11 @@ class BestRace(RaceResults):
         """
         Take the list of results and turn it into output HTML.
         """
-        div = ET.Element('div')
+        div = etree.Element('div')
         div.set('class', 'race')
-        hr = ET.Element('hr')
-        hr.set('class', 'race_header')
-        div.append(hr)
+        hr_elt = etree.Element('hr')
+        hr_elt.set('class', 'race_header')
+        div.append(hr_elt)
 
         # Get the title, but don't bother with the date information.
         # <title>  Purple Stride 5K     - November 10, 2013   </title>
@@ -155,27 +120,15 @@ class BestRace(RaceResults):
         if matchobj is None:
             raise RuntimeError("Could not find the title.")
 
-        h1 = ET.Element('h1')
-        h1.text = matchobj.group('the_title')
-        div.append(h1)
+        h1_elt = etree.Element('h1')
+        h1_elt.text = matchobj.group('the_title')
+        div.append(h1_elt)
 
         # Append the URL if possible.
         if self.downloaded_url is not None:
-            p = ET.Element('p')
-            p.set('class', 'provenance')
-            span = ET.Element('span')
-            span.text = 'Complete results '
-            p.append(span)
-            a = ET.Element('a')
-            a.set('href', self.downloaded_url)
-            a.text = 'here'
-            p.append(a)
-            span = ET.Element('span')
-            span.text = ' on BestRace.'
-            p.append(span)
-            div.append(p)
+            div.append(self.construct_source_url_reference('BestRace'))
 
-        pre = ET.Element('pre')
+        pre = etree.Element('pre')
         pre.set('class', 'actual_results')
 
         # Parse out the banner.
@@ -194,22 +147,11 @@ class BestRace(RaceResults):
         text += matchobj.group()
         text += '\n' + '\n'.join(results_lst)
         text += '</pre>'
-        pre = ET.fromstring(text)
+        pre = etree.fromstring(text)
 
         div.append(pre)
 
         return div
-
-    def match_against_membership(self, line):
-        """
-        Given a line of text, does it contain a member's name?
-        """
-        for idx in range(0, len(self.first_name_regex)):
-            fregex = self.first_name_regex[idx]
-            lregex = self.last_name_regex[idx]
-            if fregex.search(line) and lregex.search(line):
-                return(True)
-        return(False)
 
     def download_master_file(self):
         """Download results for the specified state.
@@ -223,7 +165,6 @@ class BestRace(RaceResults):
         url = fmt % self.start_date.strftime('%Y')
         self.logger.info('Downloading %s.' % url)
         self.download_file(url)
-        self.local_tidy()
 
     def download_race(self, url):
         """
@@ -233,14 +174,3 @@ class BestRace(RaceResults):
         self.logger.info('Downloading %s...' % name)
         self.download_file(url)
         self.downloaded_url = url
-        self.local_tidy()
-
-    def compile_local_results(self):
-        """Compile results from list of local files.
-        """
-        with open(self.race_list) as fp:
-            for line in fp.readlines():
-                filename = line.rstrip()
-                with open(filename, 'rt') as fptr:
-                    self.html = fptr.read()
-                self.compile_race_results()

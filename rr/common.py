@@ -4,12 +4,14 @@ import copy
 import codecs
 import csv
 import http
+import http.cookiejar
 import logging
+import re
 import urllib
 import xml.dom.minidom
 import xml.etree.cElementTree as ET
 
-from bs4 import BeautifulSoup
+from lxml import etree
 
 
 class RaceResults:
@@ -57,6 +59,40 @@ class RaceResults:
         self.html = None
         self.cookies = None
 
+        self.first_name_regex = None
+        self.last_name_regex = None
+
+    def match_against_membership(self, line):
+        """
+        We have a line of text from the race file.  Match it against the
+        membership list.
+        """
+        for idx in range(0, len(self.first_name_regex)):
+            fregex = self.first_name_regex[idx]
+            lregex = self.last_name_regex[idx]
+            if fregex.search(line) and lregex.search(line):
+                return(True)
+        return(False)
+
+    def load_membership_list(self):
+        """
+        Construct regular expressions for each person in the membership list.
+        """
+        first_name_regex = []
+        last_name_regex = []
+        for last_name, first_name in self.parse_membership_list():
+            # Use word boundaries to prevent false positives, e.g. "Ed Ford"
+            # does not cause every fricking person from "New Bedford" to
+            # match.  Here's an example line to match.
+            #   '60 Gene Gugliotta       North Plainfiel,NJ 53 M U '
+            pattern = '\\b' + first_name + '\\b'
+            first_name_regex.append(re.compile(pattern, re.IGNORECASE))
+            pattern = '\\b' + last_name + '\\b'
+            last_name_regex.append(re.compile(pattern, re.IGNORECASE))
+
+        self.first_name_regex = first_name_regex
+        self.last_name_regex = last_name_regex
+
     def parse_membership_list(self):
         """
         Assume a comma-delimited membership list, last name first,
@@ -81,19 +117,28 @@ class RaceResults:
         """
         Tidy up the HTML.
         """
-        if local_file is None:
-            html = self.html
-        else:
-            with open(local_file, encoding='utf-8') as fptr:
-                html = fptr.read()
-        soup = BeautifulSoup(html, "html.parser")
+        parser = etree.HTMLParser()
+        tree = etree.parse(local_file, parser)
+        root = tree.getroot()
+        result = etree.tostring(root, pretty_print=True, method="html")
+        with open(local_file, 'wb') as fptr:
+            fptr.write(result)
 
-        if local_file is None:
-            self.html = soup.prettify()
-        else:
-            fptr = codecs.open(local_file, encoding='utf-8', mode='w')
-            fptr.write(soup.prettify())
-            fptr.close()
+
+    def insert_race_results(self, results):
+        """
+        Insert HTML-ized results into the output file.
+        """
+        parser = etree.HTMLParser()
+        tree = etree.parse(self.output_file, parser)
+        root = tree.getroot()
+        body = root.findall('.//body')[0]
+        body.append(results)
+
+        result = etree.tostring(root, pretty_print=True, method="html")
+        with open(self.output_file, 'wb') as fptr:
+            fptr.write(result)
+        self.local_tidy(local_file=self.output_file)
 
     def download_file(self, url, local_file=None, params=None):
         """
@@ -130,6 +175,39 @@ class RaceResults:
         else:
             self.html = html
 
+    def construct_source_url_reference(self, source):
+        """
+        Construct HTML that references the source of the race information.
+
+        Parameters
+        ----------
+        source : str
+            Name for web site from which the information comes, such as 
+            "CoolRunning" or "Compuscore".
+        """
+        p = etree.Element('p')
+        span = etree.Element('span')
+        span.text = 'Complete results '
+        p.append(span)
+        a = etree.Element('a')
+        a.set('href', self.downloaded_url)
+        a.text = 'here'
+        p.append(a)
+        span = etree.Element('span')
+        span.text = ' on {0}.'.format(source)
+        p.append(span)
+        return p
+
+    def compile_local_results(self):
+        """Compile results from list of local files.
+        """
+        with open(self.race_list) as fp:
+            for line in fp.readlines():
+                filename = line.rstrip()
+                with open(filename, 'rt') as fptr:
+                    self.html = fptr.read()
+                self.compile_race_results()
+
     def initialize_output_file(self):
         """
         Construct a skeleton of the results of parsing race results from
@@ -153,18 +231,6 @@ class RaceResults:
         ET.SubElement(ofile, 'body')
         ET.ElementTree(ofile).write(self.output_file)
         pretty_print_xml(self.output_file)
-
-    def insert_race_results(self, results):
-        """
-        Insert HTML-ized results into the output file.
-        """
-        tree = ET.parse(self.output_file)
-        root = tree.getroot()
-        root = remove_namespace(root)
-        body = root.findall('.//body')[0]
-        body.append(results)
-        ET.ElementTree(root).write(self.output_file)
-        self.local_tidy(local_file=self.output_file)
 
 
 def pretty_print_xml(xml_file):

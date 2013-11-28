@@ -155,24 +155,6 @@ class TestCoolRunning(unittest.TestCase):
             html = f.read()
             self.assertTrue("MIKE NORTON" in html)
 
-    def test_misaligned_columns(self):
-        """
-        TIDY will not properly strip some IE-specific elements such as
-
-        <![if supportMisalignedColumns]>
-        <![endif]>
-
-        It needs to be stripped out.
-        """
-        self.populate_racelist_file([self.colonialrr_file.name])
-        o = rr.CoolRunning()
-        o.local_tidy(self.colonialrr_file.name)
-
-        # The test succeeds if the file can be parsed.
-        with open(self.colonialrr_file.name, 'r') as f:
-            html = f.read()
-            tree = ET.fromstring(html)
-
     def test_web_download(self):
         """
         Verify that we can get results from the web.

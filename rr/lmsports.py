@@ -3,11 +3,10 @@ Module for L & M Computer Sports timing company.
 """
 import datetime
 import logging
-import os
 import re
 import urllib
-import warnings
-import xml.etree.cElementTree as ET
+
+from lxml import etree as ET
 
 from .common import RaceResults
 
@@ -37,30 +36,11 @@ class LMSports(RaceResults):
         # Set the appropriate logging level.
         self.logger.setLevel(getattr(logging, self.verbose.upper()))
 
-    def run(self):
         self.load_membership_list()
+
+    def run(self):
         self.compile_results()
-        # Make the output human-readable.
         self.local_tidy(local_file=self.output_file)
-
-    def load_membership_list(self):
-        """
-        Construct regular expressions for each person in the membership list.
-        """
-        first_name_regex = []
-        last_name_regex = []
-        for last_name, first_name in self.parse_membership_list():
-            # Use word boundaries to prevent false positives, e.g. "Ed Ford"
-            # does not cause every fricking person from "New Bedford" to
-            # match.  Here's an example line to match.
-            #   '60 Gene Gugliotta       North Plainfiel,NJ 53 M U '
-            pattern = '\\b' + first_name + '\\b'
-            first_name_regex.append(re.compile(pattern, re.IGNORECASE))
-            pattern = '\\b' + last_name + '\\b'
-            last_name_regex.append(re.compile(pattern, re.IGNORECASE))
-
-        self.first_name_regex = first_name_regex
-        self.last_name_regex = last_name_regex
 
     def compile_results(self):
         """
@@ -155,19 +135,7 @@ class LMSports(RaceResults):
 
         # Append the URL if possible.
         if self.downloaded_url is not None:
-            p = ET.Element('p')
-            p.set('class', 'provenance')
-            span = ET.Element('span')
-            span.text = 'Complete results '
-            p.append(span)
-            a = ET.Element('a')
-            a.set('href', self.downloaded_url)
-            a.text = 'here'
-            p.append(a)
-            span = ET.Element('span')
-            span.text = ' on L&M Sports.'
-            p.append(span)
-            div.append(p)
+            div.append(self.construct_source_url_reference('L&amp;M Sports'))
 
         pre = ET.Element('pre')
         pre.set('class', 'actual_results')
@@ -191,17 +159,6 @@ class LMSports(RaceResults):
         div.append(pre)
 
         return div
-
-    def match_against_membership(self, line):
-        """
-        Given a line of text, does it contain a member's name?
-        """
-        for idx in range(0, len(self.first_name_regex)):
-            fregex = self.first_name_regex[idx]
-            lregex = self.last_name_regex[idx]
-            if fregex.search(line) and lregex.search(line):
-                return(True)
-        return(False)
 
     def download_master_file(self):
         """Download results for the entire year.
@@ -227,13 +184,3 @@ class LMSports(RaceResults):
         self.download_file(url)
         self.downloaded_url = url
         self.local_tidy()
-
-    def compile_local_results(self):
-        """Compile results from list of local files.
-        """
-        with open(self.race_list) as fp:
-            for line in fp.readlines():
-                filename = line.rstrip()
-                with open(filename, 'rt') as fptr:
-                    self.html = fptr.read()
-                self.compile_race_results()
