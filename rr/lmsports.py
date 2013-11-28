@@ -7,7 +7,8 @@ import os
 import re
 import urllib
 import warnings
-import xml.etree.cElementTree as ET
+
+from lxml import etree as ET
 
 from .common import RaceResults
 
