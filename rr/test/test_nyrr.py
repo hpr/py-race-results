@@ -3,8 +3,6 @@ import os
 import tempfile
 import unittest
 
-from bs4 import BeautifulSoup
-
 import rr
 
 
@@ -31,11 +29,8 @@ class TestNYRR(unittest.TestCase):
 
         with open(self.results_file.name, 'r') as f:
             html = f.read()
-            soup = BeautifulSoup(html, 'lxml')
-            self.assertTrue("Petit" in
-                            soup.div.table.contents[3].contents[1].contents[0])
-            self.assertTrue("Ron" in
-                            soup.div.table.contents[3].contents[3].contents[0])
+            self.assertTrue("Petit" in html)
+            self.assertTrue("Ron" in html)
 
 
 if __name__ == "__main__":

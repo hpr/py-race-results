@@ -1,55 +1,43 @@
-<?xml version="1.0"?>
-<!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta name="generator" content=
-    "HTML Tidy for HTML5 (experimental) for Mac OS X https://github.com/w3c/tidy-html5/tree/c63cc39" />
+    <meta name="generator" content="HTML Tidy for HTML5 (experimental) for Mac OS X https://github.com/w3c/tidy-html5/tree/c63cc39">
+    <meta name="Author" content="CapeCodRoadRunners">
     <title>
       Cool Running | Cape Cod Road Runners 33rd Annual Winter Fun
       Run Race Results
     </title>
   </head>
   <body bgcolor="#FFFFFF" text="#000000">
-    <table border="0" cellspacing="0" cellpadding="0" align=
-    "center" class="margin5">
+    <table border="0" cellspacing="0" cellpadding="0" align="center" class="margin5">
       <tr>
       </tr>
       <tr>
         <td align="left">
           <table border="0" cellspacing="0" cellpadding="0">
             <tr>
-              <td width="141" align="left" valign="top" bgcolor=
-              "#CCCCCC" class="heavyLeft">
+              <td width="141" align="left" valign="top" bgcolor="#CCCCCC" class="heavyLeft">
               </td>
               <td align="left" valign="top" class="grayLeft">
-                <table border="0" cellspacing="0" cellpadding="0"
-                width="433">
+                <table border="0" cellspacing="0" cellpadding="0" width="433">
                   <tr>
                   </tr>
                   <tr>
                     <td align="left" valign="top">
-                      <table border="0" cellspacing="0"
-                      cellpadding="0" width="100%">
+                      <table border="0" cellspacing="0" cellpadding="0" width="100%">
                         <tr>
                           <td align="left">
-                            <img src=
-                            "/templatepix/results_topleft.gif"
-                            width="17" height="17" alt="" />
+                            <img src="/templatepix/results_topleft.gif" width="17" height="17" alt="">
                           </td>
                           <td>
-                            <img src="/templatepix/spacer.gif"
-                            width="305" height="1" />
+                            <img src="/templatepix/spacer.gif" width="305" height="1">
                           </td>
                           <td align="right">
-                            <img src=
-                            "/templatepix/results_topright.gif"
-                            width="17" height="17" alt="" />
+                            <img src="/templatepix/results_topright.gif" width="17" height="17" alt="">
                           </td>
                         </tr>
                       </table>
                       <div class="margin5">
-                        <a href=
-                        "/bin/res_load/res_print.cgi?r=13/ma/Jan6_CapeCo_set1.shtml">
+                        <a href="/bin/res_load/res_print.cgi?r=13/ma/Jan6_CapeCo_set1.shtml">
                         &gt; Printer-friendly page</a>
                         <h1>
                           Cape Cod Road Runners 33rd Annual Winter
@@ -62,17 +50,15 @@
                           Overall Results
                         </h3>
                         <p class="subhead">
-                          For more race information, see <a href=
-                          "http://www.capecodroadrunners.com">Cape
+                          For more race information, see <a href="http://www.capecodroadrunners.com">Cape
                           Cod Road Runners home page</a>.
                         </p>
                         <p class="subhead">
-                          For a story about this race, see <a href=
-                          "./Jan6_CapeCo_story.shtml"><i>CCRR
+                          For a story about this race, see <a href="./Jan6_CapeCo_story.shtml"><i>CCRR
                           Winter Fun Run 2013</i></a>.
-                        </p><br />
-                        <table border="0" cellpadding="5"
-                        cellspacing="2">
+                        </p>
+<br>
+                        <table border="0" cellpadding="5" cellspacing="2">
                           <tr>
                             <td>
                               Place
@@ -121,15 +107,17 @@
                               70+
                             </td>
                           </tr>
-                        </table><br />
-                      </div><br />
-                      <br />
+                        </table>
+<br>
+                      </div>
+<br>
+                      <br>
                     </td>
                   </tr>
-                </table><br />
+                </table>
+<br>
               </td>
-              <td width="171" class="grayLeft" align="center"
-              valign="top" bgcolor="#CCCCCC">
+              <td width="171" class="grayLeft" align="center" valign="top" bgcolor="#CCCCCC">
               </td>
               <td width="5" bgcolor="#003399">
               </td>

@@ -5,8 +5,7 @@ import re
 import shutil
 import tempfile
 import unittest
-
-from bs4 import BeautifulSoup
+import warnings
 
 import rr
 
@@ -83,14 +82,7 @@ class TestCompuscore(unittest.TestCase):
 
         with open(self.results_file.name, 'r') as f:
             html = f.read()
-            soup = BeautifulSoup(html, 'lxml')
-            text = soup.pre.contents[0]
-
-            # Ok, first we need to jump over the banner, because that
-            # does have consecutive newlines.
-            start = re.search('Robert Fitzgerald', text).start()
-            m = re.search('\n\n', text[start:])
-            self.assertIsNone(m)
+            self.assertTrue("Robert Fitzgerald" in html)
 
     def test_consecutive_newlines(self):
         """
@@ -111,8 +103,9 @@ class TestCompuscore(unittest.TestCase):
 
         with open(self.results_file.name, 'r') as f:
             html = f.read()
-            soup = BeautifulSoup(html, 'lxml')
-            self.assertTrue("Robert Fitzgerald" in soup.div.pre.contents[0])
+            self.assertTrue("Robert Fitzgerald" in html)
+            # There should not be a single case of \n\n.
+            self.assertEqual(html.find('\n\n'), -1)
 
     @unittest.skip("Must await CompuScore refactoring.")
     def test_xcountry_banner(self):
@@ -161,8 +154,7 @@ class TestCompuscore(unittest.TestCase):
 
         with open(self.results_file.name, 'r') as f:
             html = f.read()
-            soup = BeautifulSoup(html, 'lxml')
-            self.assertTrue("Joanna Stevens" in soup.div.pre.contents[0])
+            self.assertTrue("Joanna Stevens" in html)
 
     def test_empty_results_because_of_date(self):
         """
@@ -184,8 +176,8 @@ class TestCompuscore(unittest.TestCase):
         # "no results" means that the body of the output file is empty.
         with open(self.results_file.name, 'r') as f:
             html = f.read()
-            soup = BeautifulSoup(html, 'lxml')
-            self.assertEqual(soup.body.contents[0], '\n')
+            regex = re.compile(r"""(<body>\s*</body> | <body/>)""", re.VERBOSE)
+            self.assertRegex(html, regex)
 
 
 if __name__ == "__main__":

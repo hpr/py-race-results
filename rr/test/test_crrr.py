@@ -5,8 +5,7 @@ import re
 import shutil
 import tempfile
 import unittest
-
-from bs4 import BeautifulSoup
+from xml.etree import cElementTree as ET
 
 import rr
 
@@ -101,9 +100,8 @@ class TestCoolRunning(unittest.TestCase):
 
         with open(self.results_file.name, 'r') as f:
             html = f.read()
-            soup = BeautifulSoup(html, 'lxml')
-            self.assertTrue("Caleb Gartner" in soup.div.pre.contents[0])
-            self.assertTrue("Sean Spalding" in soup.div.pre.contents[0])
+            self.assertTrue("Caleb Gartner" in html)
+            self.assertTrue("Sean Spalding" in html)
 
     def test_consecutive_newlines(self):
         """
@@ -121,9 +119,7 @@ class TestCoolRunning(unittest.TestCase):
 
         with open(self.results_file.name, 'r') as f:
             html = f.read()
-            soup = BeautifulSoup(html, 'lxml')
-            text = soup.pre.contents[0]
-            m = re.search(text, '\n\n')
+            m = re.search(html, '\n\n')
             self.assertIsNone(m)
 
     def test_multiple_racelist(self):
@@ -140,9 +136,8 @@ class TestCoolRunning(unittest.TestCase):
 
         with open(self.results_file.name, 'r') as f:
             html = f.read()
-            soup = BeautifulSoup(html, 'lxml')
-            self.assertTrue("Caleb Gartner" in soup.div.pre.contents[0])
-            self.assertTrue("Sean Spalding" in soup.div.pre.contents[0])
+            self.assertTrue("Caleb Gartner" in html)
+            self.assertTrue("Sean Spalding" in html)
 
     def test_cape_cod_road_runners(self):
         """
@@ -158,27 +153,7 @@ class TestCoolRunning(unittest.TestCase):
 
         with open(self.results_file.name, 'r') as f:
             html = f.read()
-            soup = BeautifulSoup(html, 'lxml')
-            self.assertTrue("MIKE NORTON" in
-                            soup.div.table.contents[3].contents[3].contents[0])
-
-    def test_misaligned_columns(self):
-        """
-        TIDY will not properly strip some IE-specific elements such as
-
-        <![if supportMisalignedColumns]>
-        <![endif]>
-
-        It needs to be stripped out.
-        """
-        self.populate_racelist_file([self.colonialrr_file.name])
-        o = rr.CoolRunning()
-        o.local_tidy(self.colonialrr_file.name)
-
-        # The test succeeds if the file can be parsed.
-        with open(self.colonialrr_file.name, 'r') as f:
-            html = f.read()
-            soup = BeautifulSoup(html, 'lxml')
+            self.assertTrue("MIKE NORTON" in html)
 
     def test_web_download(self):
         """
@@ -195,8 +170,7 @@ class TestCoolRunning(unittest.TestCase):
 
         with open(self.results_file.name, 'r') as f:
             html = f.read()
-            soup = BeautifulSoup(html, 'lxml')
-            self.assertTrue("John Banner" in soup.div.pre.contents[0])
+            self.assertTrue("John Banner" in html)
 
     def test_black_cat(self):
         """
@@ -213,9 +187,7 @@ class TestCoolRunning(unittest.TestCase):
 
         with open(self.results_file.name, 'r') as f:
             html = f.read()
-            soup = BeautifulSoup(html, 'lxml')
-            self.assertTrue("MICHAEL POPHAM" in
-                            soup.pre.contents[0])
+            self.assertTrue("MICHAEL POPHAM" in html)
 
     def test_ras_na_eireann(self):
         """
@@ -231,11 +203,8 @@ class TestCoolRunning(unittest.TestCase):
 
         with open(self.results_file.name, 'r') as f:
             html = f.read()
-            soup = BeautifulSoup(html, 'lxml')
-            self.assertTrue("Karen Smith-Rohrberg" in
-                            soup.pre.contents[0])
-            self.assertTrue("Dan Harrington" not in
-                            soup.pre.contents[0])
+            self.assertTrue("Karen Smith-Rohrberg" in html)
+            self.assertTrue("Dan Harrington" not in html)
 
 
 if __name__ == "__main__":
