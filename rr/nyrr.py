@@ -292,17 +292,6 @@ class NewYorkRR(RaceResults):
 
         return(new_table)
 
-    def local_tidy(self, local_file=None):
-        """
-        Tidy up the HTML.
-        """
-        parser = etree.HTMLParser()
-        tree = etree.parse(local_file, parser)
-        root = tree.getroot()
-        result = etree.tostring(root, pretty_print=True, method="html")
-        with open(local_file, 'wb') as fptr:
-            fptr.write(result)
-
     def download_file(self, url, local_file, params=None):
         """
         Download a URL to a local file.
