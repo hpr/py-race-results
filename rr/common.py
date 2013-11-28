@@ -4,6 +4,7 @@ import copy
 import codecs
 import csv
 import http
+import http.cookiejar
 import logging
 import re
 import urllib
@@ -57,6 +58,9 @@ class RaceResults:
 
         self.html = None
         self.cookies = None
+
+        self.first_name_regex = None
+        self.last_name_regex = None
 
     def match_against_membership(self, line):
         """
@@ -193,6 +197,16 @@ class RaceResults:
         span.text = ' on {0}.'.format(source)
         p.append(span)
         return p
+
+    def compile_local_results(self):
+        """Compile results from list of local files.
+        """
+        with open(self.race_list) as fp:
+            for line in fp.readlines():
+                filename = line.rstrip()
+                with open(filename, 'rt') as fptr:
+                    self.html = fptr.read()
+                self.compile_race_results()
 
     def initialize_output_file(self):
         """

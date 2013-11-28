@@ -1,15 +1,12 @@
 import datetime
-import http.cookiejar
 import logging
-import os
 import re
 import urllib.request
 import warnings
-import xml.etree.cElementTree as ET
 
 from lxml import etree
 
-from .common import RaceResults, remove_namespace
+from .common import RaceResults
 
 
 class NewYorkRR(RaceResults):
@@ -57,11 +54,11 @@ class NewYorkRR(RaceResults):
                                \s+method=post
                                \s+action=(?P<action>\S+)
                                .*\s""", re.VERBOSE)
-        m = regex.findall(html)
-        if len(m) != 2:
+        lst = regex.findall(html)
+        if len(lst) != 2:
             msg = "resultsarchive did not yield right number of results."
             raise RuntimeError(msg)
-        url = m[0][1]
+        url = lst[0][1]
 
         # The page for POSTing the search needs POST params.
         post_params = {}
@@ -76,18 +73,18 @@ class NewYorkRR(RaceResults):
 
         # This is not valid HTML.  Need to get rid of some bad FORMs,
         # none of which are needed.
-        with open(local_file, 'r', encoding='utf-8') as fp:
-            html = fp.read()
+        with open(local_file, 'r', encoding='utf-8') as fptr:
+            html = fptr.read()
         html = html.replace('form', 'div')
-        with open(local_file, 'w') as f:
-            f.write(html)
+        with open(local_file, 'w') as fptr:
+            fptr.write(html)
 
         self.local_tidy(local_file)
 
         # Parse out the list of races.  They are all in a
         # particular table.
-        with open(local_file, 'r') as f:
-            markup = f.read()
+        with open(local_file, 'r') as fptr:
+            markup = fptr.read()
 
         pattern = r"""<a\shref="(?P<url>{0}         # This part too long
                       \?result.id=
@@ -128,11 +125,11 @@ class NewYorkRR(RaceResults):
         self.download_file(url, local_file)
 
         try:
-            with open(local_file, 'r', encoding='utf-8') as fp:
-                markup = fp.read()
+            with open(local_file, 'r', encoding='utf-8') as fptr:
+                markup = fptr.read()
         except UnicodeDecodeError:
-            with open(local_file, 'r', encoding='latin1') as fp:
-                markup = fp.read()
+            with open(local_file, 'r', encoding='latin1') as fptr:
+                markup = fptr.read()
 
         # There should be a single form.
         regex = re.compile(r"""<form\s*

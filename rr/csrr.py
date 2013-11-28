@@ -252,18 +252,3 @@ class CompuScore(RaceResults):
 
         response = urllib.request.urlopen(url)
         self.html = response.read().decode('utf-8')
-
-
-    def compile_local_results(self):
-        """
-        Compile results from list of local files.
-        """
-        with open(self.race_list) as fptr:
-            for racefile in fptr.readlines():
-                racefile = racefile.rstrip()
-                self.logger.info('Processing %s...' % racefile)
-
-                with open(racefile, 'rt') as fptr:
-                    self.html = fptr.read()
-
-                self.compile_race_results()

@@ -1,11 +1,8 @@
 """
 Module for BestRace.
 """
-import datetime
 import logging
-import os
 import re
-import warnings
 
 from lxml import etree
 
@@ -38,9 +35,6 @@ class BestRace(RaceResults):
         self.logger.setLevel(getattr(logging, self.verbose.upper()))
 
     def run(self):
-        self.compile_results()
-
-    def compile_results(self):
         """
         Start collecting race result files.
         """
@@ -112,9 +106,9 @@ class BestRace(RaceResults):
         """
         div = etree.Element('div')
         div.set('class', 'race')
-        hr = etree.Element('hr')
-        hr.set('class', 'race_header')
-        div.append(hr)
+        hr_elt = etree.Element('hr')
+        hr_elt.set('class', 'race_header')
+        div.append(hr_elt)
 
         # Get the title, but don't bother with the date information.
         # <title>  Purple Stride 5K     - November 10, 2013   </title>
@@ -126,9 +120,9 @@ class BestRace(RaceResults):
         if matchobj is None:
             raise RuntimeError("Could not find the title.")
 
-        h1 = etree.Element('h1')
-        h1.text = matchobj.group('the_title')
-        div.append(h1)
+        h1_elt = etree.Element('h1')
+        h1_elt.text = matchobj.group('the_title')
+        div.append(h1_elt)
 
         # Append the URL if possible.
         if self.downloaded_url is not None:
@@ -180,13 +174,3 @@ class BestRace(RaceResults):
         self.logger.info('Downloading %s...' % name)
         self.download_file(url)
         self.downloaded_url = url
-
-    def compile_local_results(self):
-        """Compile results from list of local files.
-        """
-        with open(self.race_list) as fp:
-            for line in fp.readlines():
-                filename = line.rstrip()
-                with open(filename, 'rt') as fptr:
-                    self.html = fptr.read()
-                self.compile_race_results()
