@@ -2,7 +2,7 @@ from distutils.core import setup
 
 setup(
     name='RaceResults',
-    version='0.3.0',
+    version='0.3.1',
     author='John Evans',
     author_email='john.g.evans.ne@gmail.com',
     url='http://pypi.python.org/pypi/RaceResults',
@@ -20,6 +20,7 @@ setup(
                  "License :: OSI Approved :: MIT License",
                  "Development Status :: 4 - Beta",
                  "Operating System :: MacOS",
+                 "Operating System :: POSIX :: Linux",
                  "Intended Audience :: Developers",
                  "Topic :: Internet :: WWW/HTTP",
                  "Topic :: Text Processing :: Markup :: HTML",
