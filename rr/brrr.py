@@ -132,19 +132,7 @@ class BestRace(RaceResults):
 
         # Append the URL if possible.
         if self.downloaded_url is not None:
-            p = etree.Element('p')
-            p.set('class', 'provenance')
-            span = etree.Element('span')
-            span.text = 'Complete results '
-            p.append(span)
-            a = etree.Element('a')
-            a.set('href', self.downloaded_url)
-            a.text = 'here'
-            p.append(a)
-            span = etree.Element('span')
-            span.text = ' on BestRace.'
-            p.append(span)
-            div.append(p)
+            div.append(self.construct_source_url_reference('BestRace'))
 
         pre = etree.Element('pre')
         pre.set('class', 'actual_results')

@@ -314,18 +314,7 @@ class CoolRunning(RaceResults):
 
         # Append the URL if possible.
         if self.downloaded_url is not None:
-            p = etree.Element('p')
-            span = etree.Element('span')
-            span.text = 'Complete results '
-            p.append(span)
-            a = etree.Element('a')
-            a.set('href', self.downloaded_url)
-            a.text = 'here'
-            p.append(a)
-            span = etree.Element('span')
-            span.text = ' on Coolrunning.'
-            p.append(span)
-            div.append(p)
+            div.append(self.construct_source_url_reference('Coolrunning'))
 
         return(div)
 

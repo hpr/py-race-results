@@ -213,7 +213,8 @@ class CompuScore(RaceResults):
         h3.text = dt.strftime('Race Date:  %b %d, %Y')
         div.append(h3)
 
-        self.append_url(div)
+        if self.downloaded_url is not None:
+            div.append(self.construct_source_url_reference('Compuscore'))
 
         # Append the actual race results.  Consists of the column headings
         # (banner) plus the individual results.
@@ -235,28 +236,6 @@ class CompuScore(RaceResults):
         div.append(pre)
 
         return div
-
-    def append_url(self, div):
-        """
-        Append the URL from whence this information came if possible.
-        """
-        if self.downloaded_url is not None:
-            p = etree.Element('p')
-            p.set('class', 'provenance')
-
-            span1 = etree.Element('span')
-            span1.text = 'Complete results '
-            anchor = etree.Element('a')
-            anchor.set('href', self.downloaded_url)
-            anchor.text = 'here'
-            span2 = etree.Element('span')
-            span2.text = ' on Compuscore.'
-
-            p.append(span1)
-            p.append(anchor)
-            p.append(span2)
-
-            div.append(p)
 
     def download_master_file(self):
         """

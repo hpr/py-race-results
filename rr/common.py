@@ -171,6 +171,29 @@ class RaceResults:
         else:
             self.html = html
 
+    def construct_source_url_reference(self, source):
+        """
+        Construct HTML that references the source of the race information.
+
+        Parameters
+        ----------
+        source : str
+            Name for web site from which the information comes, such as 
+            "CoolRunning" or "Compuscore".
+        """
+        p = etree.Element('p')
+        span = etree.Element('span')
+        span.text = 'Complete results '
+        p.append(span)
+        a = etree.Element('a')
+        a.set('href', self.downloaded_url)
+        a.text = 'here'
+        p.append(a)
+        span = etree.Element('span')
+        span.text = ' on {0}.'.format(source)
+        p.append(span)
+        return p
+
     def initialize_output_file(self):
         """
         Construct a skeleton of the results of parsing race results from

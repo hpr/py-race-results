@@ -137,19 +137,7 @@ class LMSports(RaceResults):
 
         # Append the URL if possible.
         if self.downloaded_url is not None:
-            p = ET.Element('p')
-            p.set('class', 'provenance')
-            span = ET.Element('span')
-            span.text = 'Complete results '
-            p.append(span)
-            a = ET.Element('a')
-            a.set('href', self.downloaded_url)
-            a.text = 'here'
-            p.append(a)
-            span = ET.Element('span')
-            span.text = ' on L&M Sports.'
-            p.append(span)
-            div.append(p)
+            div.append(self.construct_source_url_reference('L&amp;M Sports'))
 
         pre = ET.Element('pre')
         pre.set('class', 'actual_results')
