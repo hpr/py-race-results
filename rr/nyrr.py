@@ -291,28 +291,3 @@ class NewYorkRR(RaceResults):
             new_table.append(tr)
 
         return(new_table)
-
-    def download_file(self, url, local_file, params=None):
-        """
-        Download a URL to a local file.
-
-        Args
-        ----
-            url:  The URL to retrieve
-            local_file:  Name of the file where we will store the web page.
-            params:  POST parameters to supply
-        """
-        # cookie support needed for NYRR results.
-        if self.cookie_jar is None:
-            self.cookie_jar = http.cookiejar.LWPCookieJar()
-        cookie_processor = urllib.request.HTTPCookieProcessor(self.cookie_jar)
-        opener = urllib.request.build_opener(cookie_processor)
-        urllib.request.install_opener(opener)
-
-        headers = {'User-Agent': self.user_agent}
-        req = urllib.request.Request(url, None, headers)
-        response = urllib.request.urlopen(req, params)
-        html = response.readall()
-
-        with open(local_file, 'wb') as f:
-            f.write(html)
