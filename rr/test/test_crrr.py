@@ -55,6 +55,9 @@ class TestCoolRunning(unittest.TestCase):
         filename = pkg_resources.resource_filename(rr.__name__, relfile)
         shutil.copyfile(filename, self.baystate_file.name)
 
+        self.harriers_file = pkg_resources.resource_filename(rr.test.__name__,
+                                                             'testdata/crrr_harrier.shtml')
+
         # Create other fixtures that are easy to clean up later.
         self.membership_file = tempfile.NamedTemporaryFile(suffix=".txt")
         self.racelist_file = tempfile.NamedTemporaryFile(suffix=".txt")
@@ -227,6 +230,22 @@ class TestCoolRunning(unittest.TestCase):
         with open(self.results_file.name, 'r') as f:
             html = f.read()
             self.assertTrue("Dan Chebot" in html)
+
+    def test_harriers(self):
+        """
+        Verify that we handle races from harriers race management.
+        """
+        self.populate_membership_file('Dennis,MULDOON')
+        self.populate_racelist_file([self.harriers_file])
+        o = rr.CoolRunning(verbose='critical',
+                           memb_list=self.membership_file.name,
+                           race_list=self.racelist_file.name,
+                           output_file=self.results_file.name)
+        o.run()
+
+        with open(self.results_file.name, 'r') as f:
+            html = f.read()
+            self.assertTrue("DENNIS MULDOON" in html)
 
 
 if __name__ == "__main__":

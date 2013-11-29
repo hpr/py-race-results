@@ -251,7 +251,7 @@ class CoolRunning(RaceResults):
             if len(results) > 0:
                 html = self.webify_ccrr_results(results)
                 self.insert_race_results(html)
-        elif variant in ['baystate']:
+        elif variant in ['baystate', 'Harriers']:
             # These cases are verified in the test suite.
             self.logger.debug('Vanilla Coolrunning pattern')
             results = self.compile_vanilla_results()
