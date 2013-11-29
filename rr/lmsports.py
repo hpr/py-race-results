@@ -82,19 +82,6 @@ class LMSports(RaceResults):
             self.html = response.readall().decode('utf-8')
             self.compile_race_results()
 
-    def compile_race_results(self):
-        """
-        Go through a single race file and collect results.
-        """
-        results = []
-        for line in self.html.split('\n'):
-            if self.match_against_membership(line):
-                results.append(line)
-
-        if len(results) > 0:
-            results = self.webify_results(results)
-            self.insert_race_results(results)
-
     def webify_results(self, results_lst):
         """
         Take the list of results and turn it into output HTML.
