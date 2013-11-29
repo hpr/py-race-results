@@ -55,8 +55,17 @@ class TestCoolRunning(unittest.TestCase):
         filename = pkg_resources.resource_filename(rr.__name__, relfile)
         shutil.copyfile(filename, self.baystate_file.name)
 
+        self.granite_state_file = pkg_resources.resource_filename(rr.test.__name__,
+                                                                  'testdata/crrr_gstate.shtml')
+
         self.harriers_file = pkg_resources.resource_filename(rr.test.__name__,
                                                              'testdata/crrr_harrier.shtml')
+
+        self.spitler_file = pkg_resources.resource_filename(rr.test.__name__,
+                                                            'testdata/crrr_spitler.shtml')
+
+        self.yankee_file = pkg_resources.resource_filename(rr.test.__name__,
+                                                           'testdata/crrr_yankee.shtml')
 
         # Create other fixtures that are easy to clean up later.
         self.membership_file = tempfile.NamedTemporaryFile(suffix=".txt")
@@ -231,6 +240,22 @@ class TestCoolRunning(unittest.TestCase):
             html = f.read()
             self.assertTrue("Dan Chebot" in html)
 
+    def test_gstate(self):
+        """
+        Verify that we handle races from granite state race management.
+        """
+        self.populate_membership_file('BRIAN,SCHELL')
+        self.populate_racelist_file([self.granite_state_file])
+        o = rr.CoolRunning(verbose='critical',
+                           memb_list=self.membership_file.name,
+                           race_list=self.racelist_file.name,
+                           output_file=self.results_file.name)
+        o.run()
+
+        with open(self.results_file.name, 'r') as f:
+            html = f.read()
+            self.assertTrue("Brian Schell" in html)
+
     def test_harriers(self):
         """
         Verify that we handle races from harriers race management.
@@ -246,6 +271,38 @@ class TestCoolRunning(unittest.TestCase):
         with open(self.results_file.name, 'r') as f:
             html = f.read()
             self.assertTrue("DENNIS MULDOON" in html)
+
+    def test_spitler(self):
+        """
+        Verify that we handle races from spitler race management.
+        """
+        self.populate_membership_file('CHARLIE,COFFMAN')
+        self.populate_racelist_file([self.spitler_file])
+        o = rr.CoolRunning(verbose='critical',
+                           memb_list=self.membership_file.name,
+                           race_list=self.racelist_file.name,
+                           output_file=self.results_file.name)
+        o.run()
+
+        with open(self.results_file.name, 'r') as f:
+            html = f.read()
+            self.assertTrue("Charlie Coffman" in html)
+
+    def test_yankee(self):
+        """
+        Verify that we handle races from yankee race management.
+        """
+        self.populate_membership_file('ZACH,DAY')
+        self.populate_racelist_file([self.yankee_file])
+        o = rr.CoolRunning(verbose='critical',
+                           memb_list=self.membership_file.name,
+                           race_list=self.racelist_file.name,
+                           output_file=self.results_file.name)
+        o.run()
+
+        with open(self.results_file.name, 'r') as f:
+            html = f.read()
+            self.assertTrue("ZACH DAY" in html)
 
 
 if __name__ == "__main__":

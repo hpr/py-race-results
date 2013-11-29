@@ -244,25 +244,22 @@ class CoolRunning(RaceResults):
         """
         html = None
         variant = self.get_author()
-        self.logger.info('Variant is {0}'.format(variant))
         if variant in ['CapeCodRoadRunners']:
             self.logger.debug('Cape Cod Road Runners pattern')
             results = self.compile_ccrr_race_results()
             if len(results) > 0:
                 html = self.webify_ccrr_results(results)
                 self.insert_race_results(html)
-        elif variant in ['baystate', 'Harriers']:
+        elif variant in ['baystate', 'Harriers', 'Spitler', 'yk']:
             # These cases are verified in the test suite.
-            self.logger.debug('Vanilla Coolrunning pattern')
             results = self.compile_vanilla_results()
             if len(results) > 0:
                 html = self.webify_vanilla_results(results)
                 self.insert_race_results(html)
         elif variant in ['kick610', 'JB Race', 'gstate', 'ab-mac', 'FTO',
-                         'NSTC', 'ndatrackxc', 'wcrc',
-                         'Spitler']:
+                         'NSTC', 'ndatrackxc', 'wcrc']:
             # Assume the usual coolrunning pattern.
-            self.logger.debug('Vanilla Coolrunning pattern')
+            self.logger.debug('{0} ==> assuming vanilla Coolrunning pattern')
             results = self.compile_vanilla_results()
             if len(results) > 0:
                 html = self.webify_vanilla_results(results)
