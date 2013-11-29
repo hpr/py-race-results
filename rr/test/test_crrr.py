@@ -49,24 +49,6 @@ class TestCoolRunning(unittest.TestCase):
         filename = pkg_resources.resource_filename(rr.__name__, relfile)
         shutil.copyfile(filename, self.ras_na_eireann_file.name)
 
-        # Baystate racing services.
-        self.baystate_file = tempfile.NamedTemporaryFile(suffix=".shtml")
-        relfile = "test/testdata/baystate.shtml"
-        filename = pkg_resources.resource_filename(rr.__name__, relfile)
-        shutil.copyfile(filename, self.baystate_file.name)
-
-        self.granite_state_file = pkg_resources.resource_filename(rr.test.__name__,
-                                                                  'testdata/crrr_gstate.shtml')
-
-        self.harriers_file = pkg_resources.resource_filename(rr.test.__name__,
-                                                             'testdata/crrr_harrier.shtml')
-
-        self.spitler_file = pkg_resources.resource_filename(rr.test.__name__,
-                                                            'testdata/crrr_spitler.shtml')
-
-        self.yankee_file = pkg_resources.resource_filename(rr.test.__name__,
-                                                           'testdata/crrr_yankee.shtml')
-
         # Create other fixtures that are easy to clean up later.
         self.membership_file = tempfile.NamedTemporaryFile(suffix=".txt")
         self.racelist_file = tempfile.NamedTemporaryFile(suffix=".txt")
@@ -224,12 +206,89 @@ class TestCoolRunning(unittest.TestCase):
             self.assertTrue("Karen Smith-Rohrberg" in html)
             self.assertTrue("Dan Harrington" not in html)
 
+
+class TestRacingCompanies(unittest.TestCase):
+    """
+    Test parsing results from CoolRunning, various racing companies
+    """
+    def setUp(self):
+
+        self.accu_file = pkg_resources.resource_filename(rr.test.__name__,
+                                                                  'testdata/crrr_accu.shtml')
+
+        self.baystate_file = pkg_resources.resource_filename(rr.test.__name__,
+                                                             'testdata/baystate.shtml')
+
+        self.granite_state_file = pkg_resources.resource_filename(rr.test.__name__,
+                                                                  'testdata/crrr_gstate.shtml')
+
+        self.harriers_file = pkg_resources.resource_filename(rr.test.__name__,
+                                                             'testdata/crrr_harrier.shtml')
+
+        self.spitler_file = pkg_resources.resource_filename(rr.test.__name__,
+                                                            'testdata/crrr_spitler.shtml')
+
+        self.yankee_file = pkg_resources.resource_filename(rr.test.__name__,
+                                                           'testdata/crrr_yankee.shtml')
+
+        # Create other fixtures that are easy to clean up later.
+        self.membership_file = tempfile.NamedTemporaryFile(suffix=".txt")
+        self.racelist_file = tempfile.NamedTemporaryFile(suffix=".txt")
+        self.results_file = tempfile.NamedTemporaryFile(suffix=".txt")
+        self.populate_membership_file()
+
+    def tearDown(self):
+        self.membership_file.close()
+        self.racelist_file.close()
+        self.results_file.close()
+
+    def populate_membership_file(self, lst=None):
+        """
+        Put some names into a faux membership file.
+        """
+        if lst is None:
+            with open(self.membership_file.name, 'w') as fp:
+                fp.write('GARTNER,CALEB\n')
+                fp.write('SPALDING,SEAN\n')
+                fp.write('BANNER,JOHN\n')
+                fp.write('NORTON,MIKE\n')
+                fp.flush()
+        else:
+            with open(self.membership_file.name, 'w') as fp:
+                for name_line in lst:
+                    fp.write(name_line)
+
+    def populate_racelist_file(self, race_files):
+        """
+        Put a test race into a racelist file.
+        """
+        with open(self.racelist_file.name, 'w') as fp:
+            for racefile in race_files:
+                fp.write(racefile + '\n')
+            fp.flush()
+
+    def test_accu(self):
+        """
+        Verify that we handle races from accu race management.
+        """
+        self.populate_membership_file('ANDREW,PITTS')
+        self.populate_racelist_file([self.accu_file])
+        o = rr.CoolRunning(verbose='critical',
+                           memb_list=self.membership_file.name,
+                           race_list=self.racelist_file.name,
+                           output_file=self.results_file.name)
+        o.run()
+
+        with open(self.results_file.name, 'r') as f:
+            html = f.read()
+            self.assertTrue("ANDREW PITTS" in html)
+
     def test_baystate(self):
         """
         Verify that we handle races from baystate racing services.
         """
         self.populate_membership_file('Dan,Chebot')
-        self.populate_racelist_file([self.baystate_file.name])
+        self.populate_racelist_file([self.baystate_file])
         o = rr.CoolRunning(verbose='critical',
                            memb_list=self.membership_file.name,
                            race_list=self.racelist_file.name,
