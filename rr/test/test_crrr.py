@@ -330,6 +330,16 @@ class TestRacingCompanies(unittest.TestCase):
         self.populate_membership_file('JONATHAN,JOYCE')
         self.run_test(racefile, "Jonathan Joyce")
 
+    def test_mooserd(self):
+        """
+        Verify that we handle races from mooserd (
+        """
+        racefile = pkg_resources.resource_filename(rr.test.__name__,
+                                                   'testdata/crrr_mooserd.shtml')
+
+        self.populate_membership_file('CHRIS,GREENLEE')
+        self.run_test(racefile, "CHRIS GREENLEE")
+
     def test_netiming(self):
         """
         Verify that we handle races from new england timing management.
