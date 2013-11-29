@@ -49,6 +49,12 @@ class TestCoolRunning(unittest.TestCase):
         filename = pkg_resources.resource_filename(rr.__name__, relfile)
         shutil.copyfile(filename, self.ras_na_eireann_file.name)
 
+        # Baystate racing services.
+        self.baystate_file = tempfile.NamedTemporaryFile(suffix=".shtml")
+        relfile = "test/testdata/baystate.shtml"
+        filename = pkg_resources.resource_filename(rr.__name__, relfile)
+        shutil.copyfile(filename, self.baystate_file.name)
+
         # Create other fixtures that are easy to clean up later.
         self.membership_file = tempfile.NamedTemporaryFile(suffix=".txt")
         self.racelist_file = tempfile.NamedTemporaryFile(suffix=".txt")
@@ -205,6 +211,22 @@ class TestCoolRunning(unittest.TestCase):
             html = f.read()
             self.assertTrue("Karen Smith-Rohrberg" in html)
             self.assertTrue("Dan Harrington" not in html)
+
+    def test_baystate(self):
+        """
+        Verify that we handle races from baystate racing services.
+        """
+        self.populate_membership_file('Dan,Chebot')
+        self.populate_racelist_file([self.baystate_file.name])
+        o = rr.CoolRunning(verbose='critical',
+                           memb_list=self.membership_file.name,
+                           race_list=self.racelist_file.name,
+                           output_file=self.results_file.name)
+        o.run()
+
+        with open(self.results_file.name, 'r') as f:
+            html = f.read()
+            self.assertTrue("Dan Chebot" in html)
 
 
 if __name__ == "__main__":
