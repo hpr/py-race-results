@@ -251,6 +251,13 @@ class CoolRunning(RaceResults):
             if len(results) > 0:
                 html = self.webify_ccrr_results(results)
                 self.insert_race_results(html)
+        elif variant in ['baystate']:
+            # These cases are verified in the test suite.
+            self.logger.debug('Vanilla Coolrunning pattern')
+            results = self.compile_vanilla_results()
+            if len(results) > 0:
+                html = self.webify_vanilla_results(results)
+                self.insert_race_results(html)
         elif variant in ['kick610', 'JB Race', 'gstate', 'ab-mac', 'FTO',
                          'NSTC', 'ndatrackxc', 'wcrc',
                          'Spitler']:
