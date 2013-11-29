@@ -108,8 +108,8 @@ class NewYorkRR(RaceResults):
 
             # Get rid of leading and trailing white space in the race name.
             race_name = matchobj.group('race_name')
-            race_name = re.sub('^\s*', '', race_name)
-            race_name = re.sub('\s*$', '', race_name)
+            race_name = re.sub(r'^\s*', '', race_name)
+            race_name = re.sub(r'\s*$', '', race_name)
 
             race_date = datetime.date(int(matchobj.group('year')) + 2000,
                                       int(matchobj.group('month')),

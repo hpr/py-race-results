@@ -105,8 +105,6 @@ class RaceResults:
         members = []
         with open(self.memb_list) as csvfile:
             mlreader = csv.reader(csvfile, delimiter=',')
-            first_name = []
-            last_name = []
             for row in mlreader:
                 # members.append((lname, fname))
                 members.append((row[0], row[1]))

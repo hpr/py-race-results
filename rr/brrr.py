@@ -45,7 +45,7 @@ class BestRace(RaceResults):
         """
         Compile results for the specified state.
         """
-        pattern = 'http://www.bestrace.com/results/{0}/{1}{2}'
+        pattern = 'http://www.bestrace.com/results/{}/{}{}'
         pattern = pattern.format(self.start_date.strftime('%y'),
                                  self.start_date.strftime('%y'),
                                  self.start_date.strftime('%m'))
@@ -57,7 +57,7 @@ class BestRace(RaceResults):
 
         pattern += day_range
 
-        pattern += "\w+\.HTM"
+        pattern += r"\w+\.HTM"
         self.logger.debug('pattern is "%s"' % pattern)
 
         matchiter = re.finditer(pattern, self.html)
