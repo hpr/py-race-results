@@ -250,9 +250,11 @@ class CoolRunning(RaceResults):
             if len(results) > 0:
                 html = self.webify_ccrr_results(results)
                 self.insert_race_results(html)
-        elif variant in ['ACCU', 'baystate', 'gstate', 'Harrier', 'Spitler',
-                         'yk']:
+        elif variant in ['ACCU', 'baystate', 'charlie', 'gstate', 'Harrier',
+                         'netiming', 'JFRC', 'mmg1214', 'Spitler', 'yk']:
             # These cases are verified in the test suite.
+            # "charlie" is "Last Mile"
+            # "mmg1214" is "Wilbur Racing Systems"
             results = self.compile_vanilla_results()
             if len(results) > 0:
                 html = self.webify_vanilla_results(results)
@@ -260,7 +262,8 @@ class CoolRunning(RaceResults):
         elif variant in ['kick610', 'JB Race', 'ab-mac', 'FTO',
                          'NSTC', 'ndatrackxc', 'wcrc']:
             # Assume the usual coolrunning pattern.
-            self.logger.debug('{0} ==> assuming vanilla Coolrunning pattern')
+            msg = '{0} ==> assuming vanilla Coolrunning pattern'
+            self.logger.debug(msg.format(variant))
             results = self.compile_vanilla_results()
             if len(results) > 0:
                 html = self.webify_vanilla_results(results)

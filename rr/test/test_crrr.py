@@ -213,24 +213,6 @@ class TestRacingCompanies(unittest.TestCase):
     """
     def setUp(self):
 
-        self.accu_file = pkg_resources.resource_filename(rr.test.__name__,
-                                                                  'testdata/crrr_accu.shtml')
-
-        self.baystate_file = pkg_resources.resource_filename(rr.test.__name__,
-                                                             'testdata/baystate.shtml')
-
-        self.granite_state_file = pkg_resources.resource_filename(rr.test.__name__,
-                                                                  'testdata/crrr_gstate.shtml')
-
-        self.harriers_file = pkg_resources.resource_filename(rr.test.__name__,
-                                                             'testdata/crrr_harrier.shtml')
-
-        self.spitler_file = pkg_resources.resource_filename(rr.test.__name__,
-                                                            'testdata/crrr_spitler.shtml')
-
-        self.yankee_file = pkg_resources.resource_filename(rr.test.__name__,
-                                                           'testdata/crrr_yankee.shtml')
-
         # Create other fixtures that are easy to clean up later.
         self.membership_file = tempfile.NamedTemporaryFile(suffix=".txt")
         self.racelist_file = tempfile.NamedTemporaryFile(suffix=".txt")
@@ -267,12 +249,17 @@ class TestRacingCompanies(unittest.TestCase):
                 fp.write(racefile + '\n')
             fp.flush()
 
-    def test_accu(self):
+    def run_test(self, racefile, test_string):
         """
-        Verify that we handle races from accu race management.
+        Parameters
+        ----------
+        racefile : str
+            Path to race results file to be tested.
+        test_string : str
+            String that must be present in the results file in order for the
+            test to pass.
         """
-        self.populate_membership_file('ANDREW,PITTS')
-        self.populate_racelist_file([self.accu_file])
+        self.populate_racelist_file([racefile])
         o = rr.CoolRunning(verbose='critical',
                            memb_list=self.membership_file.name,
                            race_list=self.racelist_file.name,
@@ -281,87 +268,106 @@ class TestRacingCompanies(unittest.TestCase):
 
         with open(self.results_file.name, 'r') as f:
             html = f.read()
-            self.assertTrue("ANDREW PITTS" in html)
+            self.assertTrue(test_string in html)
+
+
+    def test_accu(self):
+        """
+        Verify that we handle races from accu race management.
+        """
+        racefile = pkg_resources.resource_filename(rr.test.__name__,
+                                                   'testdata/crrr_accu.shtml')
+        self.populate_membership_file('ANDREW,PITTS')
+        self.run_test(racefile, "ANDREW PITTS")
 
     def test_baystate(self):
         """
         Verify that we handle races from baystate racing services.
         """
-        self.populate_membership_file('Dan,Chebot')
-        self.populate_racelist_file([self.baystate_file])
-        o = rr.CoolRunning(verbose='critical',
-                           memb_list=self.membership_file.name,
-                           race_list=self.racelist_file.name,
-                           output_file=self.results_file.name)
-        o.run()
+        racefile = pkg_resources.resource_filename(rr.test.__name__,
+                                                   'testdata/baystate.shtml')
 
-        with open(self.results_file.name, 'r') as f:
-            html = f.read()
-            self.assertTrue("Dan Chebot" in html)
+        self.populate_membership_file('Dan,Chebot')
+        self.run_test(racefile, "Dan Chebot")
 
     def test_gstate(self):
         """
         Verify that we handle races from granite state race management.
         """
-        self.populate_membership_file('BRIAN,SCHELL')
-        self.populate_racelist_file([self.granite_state_file])
-        o = rr.CoolRunning(verbose='critical',
-                           memb_list=self.membership_file.name,
-                           race_list=self.racelist_file.name,
-                           output_file=self.results_file.name)
-        o.run()
+        racefile = pkg_resources.resource_filename(rr.test.__name__,
+                                                   'testdata/crrr_gstate.shtml')
 
-        with open(self.results_file.name, 'r') as f:
-            html = f.read()
-            self.assertTrue("Brian Schell" in html)
+        self.populate_membership_file('BRIAN,SCHELL')
+        self.run_test(racefile, "Brian Schell")
 
     def test_harriers(self):
         """
         Verify that we handle races from harriers race management.
         """
-        self.populate_membership_file('Dennis,MULDOON')
-        self.populate_racelist_file([self.harriers_file])
-        o = rr.CoolRunning(verbose='critical',
-                           memb_list=self.membership_file.name,
-                           race_list=self.racelist_file.name,
-                           output_file=self.results_file.name)
-        o.run()
+        racefile = pkg_resources.resource_filename(rr.test.__name__,
+                                                   'testdata/crrr_harrier.shtml')
 
-        with open(self.results_file.name, 'r') as f:
-            html = f.read()
-            self.assertTrue("DENNIS MULDOON" in html)
+        self.populate_membership_file('Dennis,MULDOON')
+        self.run_test(racefile, "DENNIS MULDOON")
+
+    def test_jfrc(self):
+        """
+        Verify that we handle races from jfrc race management.
+        """
+        racefile = pkg_resources.resource_filename(rr.test.__name__,
+                                                   'testdata/crrr_jfrc.shtml')
+
+        self.populate_membership_file('CHRIS,MCCANN')
+        self.run_test(racefile, "Chris McCann")
+
+    def test_lastmile(self):
+        """
+        Verify that we handle races from last mile race management.
+        """
+        racefile = pkg_resources.resource_filename(rr.test.__name__,
+                                                   'testdata/crrr_lastmile.shtml')
+
+        self.populate_membership_file('JONATHAN,JOYCE')
+        self.run_test(racefile, "Jonathan Joyce")
+
+    def test_netiming(self):
+        """
+        Verify that we handle races from new england timing management.
+        """
+        racefile = pkg_resources.resource_filename(rr.test.__name__,
+                                                   'testdata/crrr_ne.shtml')
+
+        self.populate_membership_file('AARON,KEENE')
+        self.run_test(racefile, "Aaron Keene")
 
     def test_spitler(self):
         """
         Verify that we handle races from spitler race management.
         """
         self.populate_membership_file('CHARLIE,COFFMAN')
-        self.populate_racelist_file([self.spitler_file])
-        o = rr.CoolRunning(verbose='critical',
-                           memb_list=self.membership_file.name,
-                           race_list=self.racelist_file.name,
-                           output_file=self.results_file.name)
-        o.run()
+        racefile = pkg_resources.resource_filename(rr.test.__name__,
+                                                   'testdata/crrr_spitler.shtml')
+        self.run_test(racefile, "Charlie Coffman")
 
-        with open(self.results_file.name, 'r') as f:
-            html = f.read()
-            self.assertTrue("Charlie Coffman" in html)
+    def test_wilbur(self):
+        """
+        Verify that we handle races from wilbur race management.
+        """
+        racefile = pkg_resources.resource_filename(rr.test.__name__,
+                                                   'testdata/crrr_wilbur.shtml')
+
+        self.populate_membership_file('KEVIN,JOHNSON')
+        self.run_test(racefile, "JOHNSON, KEVIN")
 
     def test_yankee(self):
         """
         Verify that we handle races from yankee race management.
         """
-        self.populate_membership_file('ZACH,DAY')
-        self.populate_racelist_file([self.yankee_file])
-        o = rr.CoolRunning(verbose='critical',
-                           memb_list=self.membership_file.name,
-                           race_list=self.racelist_file.name,
-                           output_file=self.results_file.name)
-        o.run()
+        racefile = pkg_resources.resource_filename(rr.test.__name__,
+                                                   'testdata/crrr_yankee.shtml')
 
-        with open(self.results_file.name, 'r') as f:
-            html = f.read()
-            self.assertTrue("ZACH DAY" in html)
+        self.populate_membership_file('ZACH,DAY')
+        self.run_test(racefile, "ZACH DAY")
 
 
 if __name__ == "__main__":
