@@ -57,44 +57,6 @@ class CompuScore(RaceResults):
 
         self.load_membership_list()
 
-    def load_membership_list(self):
-        """
-        Construct regular expressions for each person in the membership list.
-        """
-        first_name_regex = []
-        last_name_regex = []
-        for last_name, first_name in self.parse_membership_list():
-            # Example to match:
-            #
-            #   '60.Gene Gugliotta       North Plainfiel,NJ 53 M U '
-            #
-            # Use word boundaries for the regexps except at the very beginning.
-            pattern = '\\.' + first_name + '\\b'
-            first_name_regex.append(re.compile(pattern, re.IGNORECASE))
-            pattern = '\\b' + last_name + '\\b'
-            last_name_regex.append(re.compile(pattern, re.IGNORECASE))
-
-        self.first_name_regex = first_name_regex
-        self.last_name_regex = last_name_regex
-
-    def run(self):
-        """
-        Load the membership list and run through all the results.
-        """
-        self.compile_results()
-
-    def compile_results(self):
-        """
-        Either download the requested results or go through the
-        provided list.
-        """
-
-        self.initialize_output_file()
-        if self.race_list is None:
-            self.compile_web_results()
-        else:
-            self.compile_local_results()
-
     def compile_web_results(self):
         """
         Download the requested results and compile them.

@@ -34,19 +34,6 @@ class BestRace(RaceResults):
         # Set the appropriate logging level.
         self.logger.setLevel(getattr(logging, self.verbose.upper()))
 
-    def run(self):
-        """
-        Start collecting race result files.
-        """
-
-        self.initialize_output_file()
-        if self.race_list is None:
-            # No race list specified, so look at the remote web site.
-            self.compile_web_results()
-        else:
-            # Get race results
-            self.compile_local_results()
-
     def compile_web_results(self):
         """
         Download the requested results and compile them.

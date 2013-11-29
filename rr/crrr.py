@@ -38,17 +38,6 @@ class CoolRunning(RaceResults):
         # Set the appropriate logging level.
         self.logger.setLevel(getattr(logging, self.verbose.upper()))
 
-    def run(self):
-        """
-        Either download the requested results or go through the
-        provided list.
-        """
-        self.initialize_output_file()
-        if self.race_list is None:
-            self.compile_web_results()
-        else:
-            self.compile_local_results()
-
     def compile_web_results(self):
         """
         Download the requested results and compile them.

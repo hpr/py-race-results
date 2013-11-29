@@ -113,6 +113,17 @@ class RaceResults:
 
         return members
 
+    def run(self):
+        """
+        Either download the requested results or go through the
+        provided list.
+        """
+        self.initialize_output_file()
+        if self.race_list is None:
+            self.compile_web_results()
+        else:
+            self.compile_local_results()
+
     def local_tidy(self, local_file=None):
         """
         Tidy up the HTML.

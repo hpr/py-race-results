@@ -38,23 +38,6 @@ class LMSports(RaceResults):
 
         self.load_membership_list()
 
-    def run(self):
-        self.compile_results()
-        self.local_tidy(local_file=self.output_file)
-
-    def compile_results(self):
-        """
-        Start collecting race result files.
-        """
-
-        self.initialize_output_file()
-        if self.race_list is None:
-            # No race list specified, so look at the remote web site.
-            self.compile_web_results()
-        else:
-            # Get race results
-            self.compile_local_results()
-
     def compile_web_results(self):
         """
         Download the requested results and compile them.
