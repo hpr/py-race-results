@@ -278,7 +278,8 @@ class CoolRunning(RaceResults):
             self.logger.info('Skipping {0} race series.'.format(variant))
         elif variant in ['Harriers']:
             self.logger.info('Skipping harriers (snowstorm classic?) series.')
-        elif variant in ['FFAST', 'lungne', 'northeastracers', 'sri']:
+        elif variant in ['DavidWill', 'FFAST', 'lungne', 'northeastracers',
+                         'sri']:
             msg = 'Skipping {0} pattern (unhandled XML pattern).'
             self.logger.info(msg.format(variant))
         elif variant in ['WCRCSCOTT']:
