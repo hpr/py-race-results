@@ -242,21 +242,6 @@ class NewYorkRR(RaceResults):
         div.append(table)
         return div
 
-    def insert_race_results(self, results):
-        """
-        Insert HTML-ized results into the output file.
-        """
-        parser = etree.HTMLParser()
-        tree = etree.parse(self.output_file, parser)
-        root = tree.getroot()
-        body = root.findall('.//body')[0]
-        body.append(results)
-
-        result = etree.tostring(root, pretty_print=True, method="html")
-        with open(self.output_file, 'wb') as fptr:
-            fptr.write(result)
-        self.local_tidy(local_file=self.output_file)
-
     def sanitize_table(self, old_table):
         """The table as-is has a few links that we need to remove.
         """
