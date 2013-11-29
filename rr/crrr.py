@@ -251,10 +251,12 @@ class CoolRunning(RaceResults):
                 html = self.webify_ccrr_results(results)
                 self.insert_race_results(html)
         elif variant in ['ACCU', 'baystate', 'charlie', 'gstate', 'Harrier',
-                         'netiming', 'JFRC', 'mmg1214', 'Spitler', 'yk']:
+                         'netiming', 'JFRC', 'mmg1214', 'Spitler', 'SWCL',
+                         'yk']:
             # These cases are verified in the test suite.
             # "charlie" is "Last Mile"
             # "mmg1214" is "Wilbur Racing Systems"
+            # "SWCL" is also "Wilbur Racing Systems"
             results = self.compile_vanilla_results()
             if len(results) > 0:
                 html = self.webify_vanilla_results(results)

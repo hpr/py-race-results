@@ -349,6 +349,16 @@ class TestRacingCompanies(unittest.TestCase):
                                                    'testdata/crrr_spitler.shtml')
         self.run_test(racefile, "Charlie Coffman")
 
+    def test_swcl(self):
+        """
+        Verify that we handle SWCL races from wilbur race management.
+        """
+        racefile = pkg_resources.resource_filename(rr.test.__name__,
+                                                   'testdata/crrr_swcl.shtml')
+
+        self.populate_membership_file('ERIN,CARMONE')
+        self.run_test(racefile, "Carmone, Erin")
+
     def test_wilbur(self):
         """
         Verify that we handle races from wilbur race management.
