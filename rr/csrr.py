@@ -72,19 +72,12 @@ class CompuScore(RaceResults):
         """
         year = self.start_date.year
         monthstr = MONTHSTRS[self.start_date.month]
-        pattern = 'http://www.compuscore.com/cs{0}/{1}/(?P<race>\w+)\.htm'
+        pattern = r'http://www.compuscore.com/cs{0}/{1}/(?P<race>\w+)\.htm'
         pattern = pattern.format(year, monthstr)
         matchiter = re.finditer(pattern, self.html)
+        urls = [matchobj.group() for matchobj in matchiter]
 
-        lst = []
-        for match in matchiter:
-            span = match.span()
-            start = span[0]
-            stop = span[1]
-            url = self.html[start:stop]
-            lst.append(url)
-
-        for url in lst:
+        for url in urls:
             self.logger.info('Downloading {0}...'.format(url))
 
             response = urllib.request.urlopen(url)

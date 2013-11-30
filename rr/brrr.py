@@ -61,15 +61,9 @@ class BestRace(RaceResults):
         self.logger.debug('pattern is "%s"' % pattern)
 
         matchiter = re.finditer(pattern, self.html)
-        lst = []
-        for match in matchiter:
-            span = match.span()
-            start = span[0]
-            stop = span[1]
-            url = self.html[start:stop]
-            lst.append(url)
+        urls = [matchobj.group() for matchobj in matchiter]
 
-        for url in lst:
+        for url in urls:
             self.logger.info('Downloading %s...' % url)
             self.download_race(url)
             self.compile_race_results()

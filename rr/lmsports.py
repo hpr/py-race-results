@@ -144,13 +144,3 @@ class LMSports(RaceResults):
         self.logger.info('Downloading {0}.'.format(url))
         response = urllib.request.urlopen(url)
         self.html = response.read().decode('utf-8')
-
-    def download_race(self, url):
-        """
-        Download a race URL to a local file.
-        """
-        name = url.split('/')[-1]
-        self.logger.info('Downloading %s...' % name)
-        self.download_file(url)
-        self.downloaded_url = url
-        self.local_tidy()

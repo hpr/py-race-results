@@ -1,7 +1,5 @@
 """Parse race results.
 """
-import copy
-import codecs
 import csv
 import http
 import http.cookiejar
@@ -179,8 +177,8 @@ class RaceResults:
             html = html.decode('latin1')
 
         if local_file is not None:
-            with open(local_file, 'wb') as f:
-                f.write(html.encode())
+            with open(local_file, 'wb') as fptr:
+                fptr.write(html.encode())
         else:
             self.html = html
 
@@ -223,8 +221,8 @@ class RaceResults:
     def compile_local_results(self):
         """Compile results from list of local files.
         """
-        with open(self.race_list) as fp:
-            for line in fp.readlines():
+        with open(self.race_list) as fptr:
+            for line in fptr.readlines():
                 filename = line.rstrip()
                 with open(filename, 'rt') as fptr:
                     self.html = fptr.read()

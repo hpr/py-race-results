@@ -107,7 +107,7 @@ class CoolRunning(RaceResults):
             # "TheRaceSet[2345].shmtl" etc.
             parts = race_file.split('.')
             base = parts[-2][0:-1]
-            pat = '<a href="(?P<inner_url>\.\/' + base + '\d+\.shtml)">'
+            pat = r'<a href="(?P<inner_url>\.\/' + base + r'\d+\.shtml)">'
             inner_regex = re.compile(pat)
             for matchobj in inner_regex.finditer(markup):
 
