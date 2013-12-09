@@ -80,7 +80,7 @@ class BestRace(RaceResults):
 
         # Get the title, but don't bother with the date information.
         # <title>  Purple Stride 5K     - November 10, 2013   </title>
-        regex = re.compile(r"""<title>\s+
+        regex = re.compile(r"""<title>\s*
                                (?P<the_title>.*)-\s+
                                \w*\s\d+,\s+\d\d\d\d\s*
                                </title>""", re.VERBOSE | re.IGNORECASE)
