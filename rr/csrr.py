@@ -57,44 +57,6 @@ class CompuScore(RaceResults):
 
         self.load_membership_list()
 
-    def load_membership_list(self):
-        """
-        Construct regular expressions for each person in the membership list.
-        """
-        first_name_regex = []
-        last_name_regex = []
-        for last_name, first_name in self.parse_membership_list():
-            # Example to match:
-            #
-            #   '60.Gene Gugliotta       North Plainfiel,NJ 53 M U '
-            #
-            # Use word boundaries for the regexps except at the very beginning.
-            pattern = '\\.' + first_name + '\\b'
-            first_name_regex.append(re.compile(pattern, re.IGNORECASE))
-            pattern = '\\b' + last_name + '\\b'
-            last_name_regex.append(re.compile(pattern, re.IGNORECASE))
-
-        self.first_name_regex = first_name_regex
-        self.last_name_regex = last_name_regex
-
-    def run(self):
-        """
-        Load the membership list and run through all the results.
-        """
-        self.compile_results()
-
-    def compile_results(self):
-        """
-        Either download the requested results or go through the
-        provided list.
-        """
-
-        self.initialize_output_file()
-        if self.race_list is None:
-            self.compile_web_results()
-        else:
-            self.compile_local_results()
-
     def compile_web_results(self):
         """
         Download the requested results and compile them.
@@ -110,19 +72,12 @@ class CompuScore(RaceResults):
         """
         year = self.start_date.year
         monthstr = MONTHSTRS[self.start_date.month]
-        pattern = 'http://www.compuscore.com/cs{0}/{1}/(?P<race>\w+)\.htm'
+        pattern = r'http://www.compuscore.com/cs{0}/{1}/(?P<race>\w+)\.htm'
         pattern = pattern.format(year, monthstr)
         matchiter = re.finditer(pattern, self.html)
+        urls = [matchobj.group() for matchobj in matchiter]
 
-        lst = []
-        for match in matchiter:
-            span = match.span()
-            start = span[0]
-            stop = span[1]
-            url = self.html[start:stop]
-            lst.append(url)
-
-        for url in lst:
+        for url in urls:
             self.logger.info('Downloading {0}...'.format(url))
 
             response = urllib.request.urlopen(url)
@@ -172,19 +127,6 @@ class CompuScore(RaceResults):
         """
         race_date = self.get_race_date()
         return (self.start_date <= race_date and race_date <= self.stop_date)
-
-    def compile_race_results(self):
-        """
-        Go through a race file and collect results.
-        """
-        results = []
-        for line in self.html.split('\n'):
-            if self.match_against_membership(line):
-                results.append(line)
-
-        if len(results) > 0:
-            results = self.webify_results(results)
-            self.insert_race_results(results)
 
     def webify_results(self, results):
         """

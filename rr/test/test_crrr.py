@@ -207,5 +207,188 @@ class TestCoolRunning(unittest.TestCase):
             self.assertTrue("Dan Harrington" not in html)
 
 
+class TestRacingCompanies(unittest.TestCase):
+    """
+    Test parsing results from CoolRunning, various racing companies
+    """
+    def setUp(self):
+
+        # Create other fixtures that are easy to clean up later.
+        self.membership_file = tempfile.NamedTemporaryFile(suffix=".txt")
+        self.racelist_file = tempfile.NamedTemporaryFile(suffix=".txt")
+        self.results_file = tempfile.NamedTemporaryFile(suffix=".txt")
+        self.populate_membership_file()
+
+    def tearDown(self):
+        self.membership_file.close()
+        self.racelist_file.close()
+        self.results_file.close()
+
+    def populate_membership_file(self, lst=None):
+        """
+        Put some names into a faux membership file.
+        """
+        if lst is None:
+            with open(self.membership_file.name, 'w') as fp:
+                fp.write('GARTNER,CALEB\n')
+                fp.write('SPALDING,SEAN\n')
+                fp.write('BANNER,JOHN\n')
+                fp.write('NORTON,MIKE\n')
+                fp.flush()
+        else:
+            with open(self.membership_file.name, 'w') as fp:
+                for name_line in lst:
+                    fp.write(name_line)
+
+    def populate_racelist_file(self, race_files):
+        """
+        Put a test race into a racelist file.
+        """
+        with open(self.racelist_file.name, 'w') as fp:
+            for racefile in race_files:
+                fp.write(racefile + '\n')
+            fp.flush()
+
+    def run_test(self, racefile, test_string):
+        """
+        Parameters
+        ----------
+        racefile : str
+            Path to race results file to be tested.
+        test_string : str
+            String that must be present in the results file in order for the
+            test to pass.
+        """
+        self.populate_racelist_file([racefile])
+        o = rr.CoolRunning(verbose='critical',
+                           memb_list=self.membership_file.name,
+                           race_list=self.racelist_file.name,
+                           output_file=self.results_file.name)
+        o.run()
+
+        with open(self.results_file.name, 'r') as f:
+            html = f.read()
+            self.assertTrue(test_string in html)
+
+
+    def test_accu(self):
+        """
+        Verify that we handle races from accu race management.
+        """
+        racefile = pkg_resources.resource_filename(rr.test.__name__,
+                                                   'testdata/crrr_accu.shtml')
+        self.populate_membership_file('ANDREW,PITTS')
+        self.run_test(racefile, "ANDREW PITTS")
+
+    def test_baystate(self):
+        """
+        Verify that we handle races from baystate racing services.
+        """
+        racefile = pkg_resources.resource_filename(rr.test.__name__,
+                                                   'testdata/baystate.shtml')
+
+        self.populate_membership_file('Dan,Chebot')
+        self.run_test(racefile, "Dan Chebot")
+
+    def test_gstate(self):
+        """
+        Verify that we handle races from granite state race management.
+        """
+        racefile = pkg_resources.resource_filename(rr.test.__name__,
+                                                   'testdata/crrr_gstate.shtml')
+
+        self.populate_membership_file('BRIAN,SCHELL')
+        self.run_test(racefile, "Brian Schell")
+
+    def test_harriers(self):
+        """
+        Verify that we handle races from harriers race management.
+        """
+        racefile = pkg_resources.resource_filename(rr.test.__name__,
+                                                   'testdata/crrr_harrier.shtml')
+
+        self.populate_membership_file('Dennis,MULDOON')
+        self.run_test(racefile, "DENNIS MULDOON")
+
+    def test_jfrc(self):
+        """
+        Verify that we handle races from jfrc race management.
+        """
+        racefile = pkg_resources.resource_filename(rr.test.__name__,
+                                                   'testdata/crrr_jfrc.shtml')
+
+        self.populate_membership_file('CHRIS,MCCANN')
+        self.run_test(racefile, "Chris McCann")
+
+    def test_lastmile(self):
+        """
+        Verify that we handle races from last mile race management.
+        """
+        racefile = pkg_resources.resource_filename(rr.test.__name__,
+                                                   'testdata/crrr_lastmile.shtml')
+
+        self.populate_membership_file('JONATHAN,JOYCE')
+        self.run_test(racefile, "Jonathan Joyce")
+
+    def test_mooserd(self):
+        """
+        Verify that we handle races from mooserd (
+        """
+        racefile = pkg_resources.resource_filename(rr.test.__name__,
+                                                   'testdata/crrr_mooserd.shtml')
+
+        self.populate_membership_file('CHRIS,GREENLEE')
+        self.run_test(racefile, "CHRIS GREENLEE")
+
+    def test_netiming(self):
+        """
+        Verify that we handle races from new england timing management.
+        """
+        racefile = pkg_resources.resource_filename(rr.test.__name__,
+                                                   'testdata/crrr_ne.shtml')
+
+        self.populate_membership_file('AARON,KEENE')
+        self.run_test(racefile, "Aaron Keene")
+
+    def test_spitler(self):
+        """
+        Verify that we handle races from spitler race management.
+        """
+        self.populate_membership_file('CHARLIE,COFFMAN')
+        racefile = pkg_resources.resource_filename(rr.test.__name__,
+                                                   'testdata/crrr_spitler.shtml')
+        self.run_test(racefile, "Charlie Coffman")
+
+    def test_swcl(self):
+        """
+        Verify that we handle SWCL races from wilbur race management.
+        """
+        racefile = pkg_resources.resource_filename(rr.test.__name__,
+                                                   'testdata/crrr_swcl.shtml')
+
+        self.populate_membership_file('ERIN,CARMONE')
+        self.run_test(racefile, "Carmone, Erin")
+
+    def test_wilbur(self):
+        """
+        Verify that we handle races from wilbur race management.
+        """
+        racefile = pkg_resources.resource_filename(rr.test.__name__,
+                                                   'testdata/crrr_wilbur.shtml')
+
+        self.populate_membership_file('KEVIN,JOHNSON')
+        self.run_test(racefile, "JOHNSON, KEVIN")
+
+    def test_yankee(self):
+        """
+        Verify that we handle races from yankee race management.
+        """
+        racefile = pkg_resources.resource_filename(rr.test.__name__,
+                                                   'testdata/crrr_yankee.shtml')
+
+        self.populate_membership_file('ZACH,DAY')
+        self.run_test(racefile, "ZACH DAY")
+
+
 if __name__ == "__main__":
     unittest.main()

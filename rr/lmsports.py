@@ -38,23 +38,6 @@ class LMSports(RaceResults):
 
         self.load_membership_list()
 
-    def run(self):
-        self.compile_results()
-        self.local_tidy(local_file=self.output_file)
-
-    def compile_results(self):
-        """
-        Start collecting race result files.
-        """
-
-        self.initialize_output_file()
-        if self.race_list is None:
-            # No race list specified, so look at the remote web site.
-            self.compile_web_results()
-        else:
-            # Get race results
-            self.compile_local_results()
-
     def compile_web_results(self):
         """
         Download the requested results and compile them.
@@ -71,7 +54,7 @@ class LMSports(RaceResults):
         # - Saturday, November 2, 2013 - OC/Somers Point, NJ -
         # ( <a href="trail12.htm">2012 results</a> )
         pattern = r"""<a\s
-                      href=\"(?P<href>\w*?\d\d.htm)\">\s*
+                      href=\"(?P<href>\w*?{year}.htm)\">\s*
                       (?P<race_name>.*?)\s*
                       </a>\s*
                       -\s*
@@ -79,6 +62,7 @@ class LMSports(RaceResults):
                       (?P<month>.*?)\s+
                       (?P<day>\d+),\s+
                       (?P<year>\d+)\s*-"""
+        pattern = pattern.format(year=self.start_date.strftime('%y'))
         regex = re.compile(pattern, re.VERBOSE | re.DOTALL | re.IGNORECASE)
         for matchobj in regex.finditer(self.html):
             datestring = '{0} {1:02d}, {2}'.format(matchobj.group('month'),
@@ -98,19 +82,6 @@ class LMSports(RaceResults):
             response = urllib.request.urlopen(url)
             self.html = response.readall().decode('utf-8')
             self.compile_race_results()
-
-    def compile_race_results(self):
-        """
-        Go through a single race file and collect results.
-        """
-        results = []
-        for line in self.html.split('\n'):
-            if self.match_against_membership(line):
-                results.append(line)
-
-        if len(results) > 0:
-            results = self.webify_results(results)
-            self.insert_race_results(results)
 
     def webify_results(self, results_lst):
         """
@@ -174,13 +145,3 @@ class LMSports(RaceResults):
         self.logger.info('Downloading {0}.'.format(url))
         response = urllib.request.urlopen(url)
         self.html = response.read().decode('utf-8')
-
-    def download_race(self, url):
-        """
-        Download a race URL to a local file.
-        """
-        name = url.split('/')[-1]
-        self.logger.info('Downloading %s...' % name)
-        self.download_file(url)
-        self.downloaded_url = url
-        self.local_tidy()

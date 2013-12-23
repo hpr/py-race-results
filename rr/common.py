@@ -1,7 +1,5 @@
 """Parse race results.
 """
-import copy
-import codecs
 import csv
 import http
 import http.cookiejar
@@ -105,13 +103,22 @@ class RaceResults:
         members = []
         with open(self.memb_list) as csvfile:
             mlreader = csv.reader(csvfile, delimiter=',')
-            first_name = []
-            last_name = []
             for row in mlreader:
                 # members.append((lname, fname))
                 members.append((row[0], row[1]))
 
         return members
+
+    def run(self):
+        """
+        Either download the requested results or go through the
+        provided list.
+        """
+        self.initialize_output_file()
+        if self.race_list is None:
+            self.compile_web_results()
+        else:
+            self.compile_local_results()
 
     def local_tidy(self, local_file=None):
         """
@@ -170,8 +177,8 @@ class RaceResults:
             html = html.decode('latin1')
 
         if local_file is not None:
-            with open(local_file, 'wb') as f:
-                f.write(html.encode())
+            with open(local_file, 'wb') as fptr:
+                fptr.write(html.encode())
         else:
             self.html = html
 
@@ -198,11 +205,24 @@ class RaceResults:
         p.append(span)
         return p
 
+    def compile_race_results(self):
+        """
+        Go through a single race file and collect results.
+        """
+        results = []
+        for line in self.html.split('\n'):
+            if self.match_against_membership(line):
+                results.append(line)
+
+        if len(results) > 0:
+            results = self.webify_results(results)
+            self.insert_race_results(results)
+
     def compile_local_results(self):
         """Compile results from list of local files.
         """
-        with open(self.race_list) as fp:
-            for line in fp.readlines():
+        with open(self.race_list) as fptr:
+            for line in fptr.readlines():
                 filename = line.rstrip()
                 with open(filename, 'rt') as fptr:
                     self.html = fptr.read()

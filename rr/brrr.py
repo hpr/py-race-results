@@ -34,19 +34,6 @@ class BestRace(RaceResults):
         # Set the appropriate logging level.
         self.logger.setLevel(getattr(logging, self.verbose.upper()))
 
-    def run(self):
-        """
-        Start collecting race result files.
-        """
-
-        self.initialize_output_file()
-        if self.race_list is None:
-            # No race list specified, so look at the remote web site.
-            self.compile_web_results()
-        else:
-            # Get race results
-            self.compile_local_results()
-
     def compile_web_results(self):
         """
         Download the requested results and compile them.
@@ -58,7 +45,7 @@ class BestRace(RaceResults):
         """
         Compile results for the specified state.
         """
-        pattern = 'http://www.bestrace.com/results/{0}/{1}{2}'
+        pattern = 'http://www.bestrace.com/results/{}/{}{}'
         pattern = pattern.format(self.start_date.strftime('%y'),
                                  self.start_date.strftime('%y'),
                                  self.start_date.strftime('%m'))
@@ -70,35 +57,16 @@ class BestRace(RaceResults):
 
         pattern += day_range
 
-        pattern += "\w+\.HTM"
+        pattern += r"\w+\.HTM"
         self.logger.debug('pattern is "%s"' % pattern)
 
         matchiter = re.finditer(pattern, self.html)
-        lst = []
-        for match in matchiter:
-            span = match.span()
-            start = span[0]
-            stop = span[1]
-            url = self.html[start:stop]
-            lst.append(url)
+        urls = [matchobj.group() for matchobj in matchiter]
 
-        for url in lst:
+        for url in urls:
             self.logger.info('Downloading %s...' % url)
             self.download_race(url)
             self.compile_race_results()
-
-    def compile_race_results(self):
-        """
-        Go through a single race file and collect results.
-        """
-        results = []
-        for line in self.html.split('\n'):
-            if self.match_against_membership(line):
-                results.append(line)
-
-        if len(results) > 0:
-            results = self.webify_results(results)
-            self.insert_race_results(results)
 
     def webify_results(self, results_lst):
         """
@@ -112,7 +80,7 @@ class BestRace(RaceResults):
 
         # Get the title, but don't bother with the date information.
         # <title>  Purple Stride 5K     - November 10, 2013   </title>
-        regex = re.compile(r"""<title>\s+
+        regex = re.compile(r"""<title>\s*
                                (?P<the_title>.*)-\s+
                                \w*\s\d+,\s+\d\d\d\d\s*
                                </title>""", re.VERBOSE | re.IGNORECASE)

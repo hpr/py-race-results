@@ -108,8 +108,8 @@ class NewYorkRR(RaceResults):
 
             # Get rid of leading and trailing white space in the race name.
             race_name = matchobj.group('race_name')
-            race_name = re.sub('^\s*', '', race_name)
-            race_name = re.sub('\s*$', '', race_name)
+            race_name = re.sub(r'^\s*', '', race_name)
+            race_name = re.sub(r'\s*$', '', race_name)
 
             race_date = datetime.date(int(matchobj.group('year')) + 2000,
                                       int(matchobj.group('month')),
@@ -241,21 +241,6 @@ class NewYorkRR(RaceResults):
         table = self.sanitize_table(tables[3])
         div.append(table)
         return div
-
-    def insert_race_results(self, results):
-        """
-        Insert HTML-ized results into the output file.
-        """
-        parser = etree.HTMLParser()
-        tree = etree.parse(self.output_file, parser)
-        root = tree.getroot()
-        body = root.findall('.//body')[0]
-        body.append(results)
-
-        result = etree.tostring(root, pretty_print=True, method="html")
-        with open(self.output_file, 'wb') as fptr:
-            fptr.write(result)
-        self.local_tidy(local_file=self.output_file)
 
     def sanitize_table(self, old_table):
         """The table as-is has a few links that we need to remove.

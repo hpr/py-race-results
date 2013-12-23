@@ -38,17 +38,6 @@ class CoolRunning(RaceResults):
         # Set the appropriate logging level.
         self.logger.setLevel(getattr(logging, self.verbose.upper()))
 
-    def run(self):
-        """
-        Either download the requested results or go through the
-        provided list.
-        """
-        self.initialize_output_file()
-        if self.race_list is None:
-            self.compile_web_results()
-        else:
-            self.compile_local_results()
-
     def compile_web_results(self):
         """
         Download the requested results and compile them.
@@ -118,7 +107,7 @@ class CoolRunning(RaceResults):
             # "TheRaceSet[2345].shmtl" etc.
             parts = race_file.split('.')
             base = parts[-2][0:-1]
-            pat = '<a href="(?P<inner_url>\.\/' + base + '\d+\.shtml)">'
+            pat = r'<a href="(?P<inner_url>\.\/' + base + r'\d+\.shtml)">'
             inner_regex = re.compile(pat)
             for matchobj in inner_regex.finditer(markup):
 
@@ -244,18 +233,28 @@ class CoolRunning(RaceResults):
         """
         html = None
         variant = self.get_author()
-        self.logger.info('Variant is {0}'.format(variant))
         if variant in ['CapeCodRoadRunners']:
             self.logger.debug('Cape Cod Road Runners pattern')
             results = self.compile_ccrr_race_results()
             if len(results) > 0:
                 html = self.webify_ccrr_results(results)
                 self.insert_race_results(html)
-        elif variant in ['kick610', 'JB Race', 'gstate', 'ab-mac', 'FTO',
-                         'NSTC', 'ndatrackxc', 'wcrc',
-                         'Spitler']:
+        elif variant in ['ACCU', 'baystate', 'charlie', 'gstate', 'Harrier',
+                         'netiming', 'JFRC', 'mmg1214', 'mooserd', 'Spitler',
+                         'SWCL', 'yk']:
+            # These cases are verified in the test suite.
+            # "charlie" is "Last Mile"
+            # "mmg1214" is "Wilbur Racing Systems"
+            # "SWCL" is also "Wilbur Racing Systems"
+            results = self.compile_vanilla_results()
+            if len(results) > 0:
+                html = self.webify_vanilla_results(results)
+                self.insert_race_results(html)
+        elif variant in ['kick610', 'JB Race', 'ab-mac', 'FTO',
+                         'NSTC', 'ndatrackxc', 'wcrc']:
             # Assume the usual coolrunning pattern.
-            self.logger.debug('Vanilla Coolrunning pattern')
+            msg = '{0} ==> assuming vanilla Coolrunning pattern'
+            self.logger.debug(msg.format(variant))
             results = self.compile_vanilla_results()
             if len(results) > 0:
                 html = self.webify_vanilla_results(results)
@@ -268,7 +267,8 @@ class CoolRunning(RaceResults):
             self.logger.info('Skipping {0} race series.'.format(variant))
         elif variant in ['Harriers']:
             self.logger.info('Skipping harriers (snowstorm classic?) series.')
-        elif variant in ['FFAST', 'lungne', 'northeastracers', 'sri']:
+        elif variant in ['DavidWill', 'FFAST', 'lungne', 'northeastracers',
+                         'sri']:
             msg = 'Skipping {0} pattern (unhandled XML pattern).'
             self.logger.info(msg.format(variant))
         elif variant in ['WCRCSCOTT']:
