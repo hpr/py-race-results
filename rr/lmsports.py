@@ -54,7 +54,7 @@ class LMSports(RaceResults):
         # - Saturday, November 2, 2013 - OC/Somers Point, NJ -
         # ( <a href="trail12.htm">2012 results</a> )
         pattern = r"""<a\s
-                      href=\"(?P<href>\w*?\d\d.htm)\">\s*
+                      href=\"(?P<href>\w*?{year}.htm)\">\s*
                       (?P<race_name>.*?)\s*
                       </a>\s*
                       -\s*
@@ -62,6 +62,7 @@ class LMSports(RaceResults):
                       (?P<month>.*?)\s+
                       (?P<day>\d+),\s+
                       (?P<year>\d+)\s*-"""
+        pattern = pattern.format(year=self.start_date.strftime('%y'))
         regex = re.compile(pattern, re.VERBOSE | re.DOTALL | re.IGNORECASE)
         for matchobj in regex.finditer(self.html):
             datestring = '{0} {1:02d}, {2}'.format(matchobj.group('month'),
