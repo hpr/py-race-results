@@ -1,3 +1,6 @@
+December 29, 2013 John Evans <john.g.evans.ne@gmail.com> - 0.3.3
+- Issue 54 for cool running.
+
 December 22, 2013 John Evans <john.g.evans.ne@gmail.com> - 0.3.2
 - Issue 53 for lmsports.
 
