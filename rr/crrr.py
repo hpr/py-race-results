@@ -15,6 +15,12 @@ from .common import RaceResults, remove_namespace
 class CoolRunning(RaceResults):
     """
     Class for handling CoolRunning Race Results.
+
+    Attributes
+    ----------
+    author : str
+        Identifier for the authority or racing company that produced the
+        results.
     """
     def __init__(self, states=None, **kwargs):
         """
@@ -37,6 +43,8 @@ class CoolRunning(RaceResults):
 
         # Set the appropriate logging level.
         self.logger.setLevel(getattr(logging, self.verbose.upper()))
+
+        self.author = None
 
     def compile_web_results(self):
         """
@@ -218,11 +226,12 @@ class CoolRunning(RaceResults):
 
         matchobj = regex1.search(self.html)
         if matchobj is not None:
-            return matchobj.group('content')
+            self.author = matchobj.group('content')
+            return
 
         matchobj = regex2.search(self.html)
         if matchobj is not None:
-            return matchobj.group('content')
+            self.author = matchobj.group('content')
         else:
             msg = "Could not parse the race company identifier"
             raise RuntimeError(msg)
@@ -232,14 +241,14 @@ class CoolRunning(RaceResults):
         Go through a race file and collect results.
         """
         html = None
-        variant = self.get_author()
-        if variant in ['CapeCodRoadRunners']:
+        self.get_author()
+        if self.author in ['CapeCodRoadRunners']:
             self.logger.debug('Cape Cod Road Runners pattern')
             results = self.compile_ccrr_race_results()
             if len(results) > 0:
                 html = self.webify_ccrr_results(results)
                 self.insert_race_results(html)
-        elif variant in ['ACCU', 'baystate', 'charlie', 'gstate', 'Harrier',
+        elif self.author in ['ACCU', 'baystate', 'charlie', 'gstate', 'Harrier',
                          'netiming', 'JFRC', 'mmg1214', 'mooserd', 'Spitler',
                          'SWCL', 'yk']:
             # These cases are verified in the test suite.
@@ -250,33 +259,35 @@ class CoolRunning(RaceResults):
             if len(results) > 0:
                 html = self.webify_vanilla_results(results)
                 self.insert_race_results(html)
-        elif variant in ['kick610', 'JB Race', 'ab-mac', 'FTO',
+        elif self.author in ['kick610', 'JB Race', 'ab-mac', 'FTO',
                          'NSTC', 'ndatrackxc', 'wcrc']:
             # Assume the usual coolrunning pattern.
             msg = '{0} ==> assuming vanilla Coolrunning pattern'
-            self.logger.debug(msg.format(variant))
+            self.logger.debug(msg.format(self.author))
             results = self.compile_vanilla_results()
             if len(results) > 0:
                 html = self.webify_vanilla_results(results)
                 self.insert_race_results(html)
-        elif variant in ['colonial', 'opportunity']:
+        elif self.author in ['colonial', 'opportunity']:
             # 'colonial' is a local race series.  Gawd-awful
             # excel-to-bastardized-html.  The hell with it.
             #
             # 'opportunity' seems to be CMS 52 Week Series
-            self.logger.info('Skipping {0} race series.'.format(variant))
-        elif variant in ['Harriers']:
+            self.logger.info('Skipping {0} race series.'.format(self.author))
+        elif self.author in ['Harriers']:
             self.logger.info('Skipping harriers (snowstorm classic?) series.')
-        elif variant in ['DavidWill', 'FFAST', 'lungne', 'northeastracers',
+        elif self.author in ['jalfano']:
+            self.logger.info('Skipping CMS(?) series.')
+        elif self.author in ['DavidWill', 'FFAST', 'lungne', 'northeastracers',
                          'sri']:
             msg = 'Skipping {0} pattern (unhandled XML pattern).'
-            self.logger.info(msg.format(variant))
-        elif variant in ['WCRCSCOTT']:
+            self.logger.info(msg.format(self.author))
+        elif self.author in ['WCRCSCOTT']:
             msg = 'Skipping {0} XML pattern (looks like a race series).'
-            self.logger.info(msg.format(variant))
+            self.logger.info(msg.format(self.author))
         else:
             msg = 'Unknown pattern (\"{0}\"), going to try vanilla CR parsing.'
-            self.logger.warning(msg.format(variant))
+            self.logger.warning(msg.format(self.author))
             results = self.compile_vanilla_results()
             if len(results) > 0:
                 html = self.webify_vanilla_results(results)
@@ -372,6 +383,11 @@ class CoolRunning(RaceResults):
                                </pre>""",        # stop here
                            re.VERBOSE | re.IGNORECASE | re.DOTALL)
         matchobj = regex.search(markup)
+        if matchobj is None:
+            msg = 'No banner found, authority is {}.'.format(self.author)
+            warnings.warn(msg)
+            return ''
+
         banner_text = matchobj.group('banner')
 
         # Clean it up if necessary.  Some of the clumsier race directors will
