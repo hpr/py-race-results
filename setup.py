@@ -2,7 +2,7 @@ from distutils.core import setup
 
 setup(
     name='RaceResults',
-    version='0.3.3',
+    version='0.3.4',
     author='John Evans',
     author_email='john.g.evans.ne@gmail.com',
     url='http://pypi.python.org/pypi/RaceResults',
@@ -13,7 +13,7 @@ setup(
     scripts=['bin/brrr', 'bin/crrr', 'bin/csrr', 'bin/nyrr', 'bin/lmsports'],
     license='LICENSE.txt',
     description='Race results parsing',
-    install_requires=['lxml>=2.3.4'],
+    install_requires=['lxml>=2.3.4', 'requests>=2.2.0'],
     classifiers=["Programming Language :: Python",
                  "Programming Language :: Python :: 3.3",
                  "Programming Language :: Python :: Implementation :: CPython",
