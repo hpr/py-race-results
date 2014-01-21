@@ -5,6 +5,7 @@ Module for parsing Compuscore race results.
 import datetime
 import logging
 import re
+import requests
 import urllib
 import warnings
 
@@ -61,8 +62,36 @@ class CompuScore(RaceResults):
         """
         Download the requested results and compile them.
         """
-        self.download_master_file()
-        self.process_master_file()
+        #self.process_master_file()
+        fmt = 'http://www.compuscore.com/api/races/events?date_range={},{}'
+        url = fmt.format(self.start_date.strftime('%Y-%m-%d'),
+                         self.stop_date.strftime('%Y-%m-%d'))
+        response = requests.get(url)
+
+        # Get the list of races from the json dump.
+        for event in response.json()['events']:
+
+            # Now get the race details, from where we get the race URL.
+            url2 = 'http://www.compuscore.com/api/races/event-detail?ids={}'
+            url2 = url2.format(event['id'])
+            details = requests.get(url2).json()
+            race_name = details['events'][0]['name']
+            print('Examining {}'.format(race_name))
+            try:
+                web_details = details['events'][0]['races'][0]['files'][0]
+            except IndexError:
+                print('Skipping {}'.format(race_name))
+                continue
+
+
+            # And finally, download the race itself.
+            url3 = 'http://{site}{rel_url}'
+            url3 = url3.format(site=web_details['domain'],
+                               rel_url=web_details['resource'])
+            race_resp = requests.get(url3)
+            self.html = race_resp.content.decode('utf-8')
+            self.compile_race_results()
+
 
     def process_master_file(self):
         """
@@ -126,7 +155,7 @@ class CompuScore(RaceResults):
         Determine if the race file took place in the specified date range.
         """
         race_date = self.get_race_date()
-        return (self.start_date <= race_date and race_date <= self.stop_date)
+        return self.start_date <= race_date and race_date <= self.stop_date
 
     def webify_results(self, results):
         """
@@ -135,25 +164,25 @@ class CompuScore(RaceResults):
         div = etree.Element('div')
         div.set('class', 'race')
 
-        hr = etree.Element('hr')
-        hr.set('class', 'race_header')
-        div.append(hr)
+        hr_elt = etree.Element('hr')
+        hr_elt.set('class', 'race_header')
+        div.append(hr_elt)
 
         # The single H2 element in the file has the race name.
         regex = re.compile(r'<h2.*>(?P<h2>.*)</h2>')
         matchobj = regex.search(self.html)
-        h2 = etree.Element('h2')
+        h2_elt = etree.Element('h2')
         if matchobj is None:
-            h2.text = ''
+            h2_elt.text = ''
         else:
-            h2.text = matchobj.group('h2')
-        div.append(h2)
+            h2_elt.text = matchobj.group('h2')
+        div.append(h2_elt)
 
         # The single H3 element in the file has the race date.
-        dt = self.get_race_date()
-        h3 = etree.Element('h3')
-        h3.text = dt.strftime('Race Date:  %b %d, %Y')
-        div.append(h3)
+        race_date = self.get_race_date()
+        h3_elt = etree.Element('h3')
+        h3_elt.text = race_date.strftime('Race Date:  %b %d, %Y')
+        div.append(h3_elt)
 
         if self.downloaded_url is not None:
             div.append(self.construct_source_url_reference('Compuscore'))
@@ -178,19 +207,3 @@ class CompuScore(RaceResults):
         div.append(pre)
 
         return div
-
-    def download_master_file(self):
-        """
-        Download results for the given month.
-
-        The URL will have the pattern
-
-        http://compuscore.com/csYYYY/MONTH/index.htm
-
-        """
-        url = 'http://compuscore.com/cs{0}/{1}/index.htm'
-        url = url.format(self.start_date.year, self.monthstr)
-        self.logger.info('Downloading master file {0}.'.format(url))
-
-        response = urllib.request.urlopen(url)
-        self.html = response.read().decode('utf-8')
