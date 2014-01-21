@@ -1,3 +1,6 @@
+January 20, 2014 John Evans <john.g.evans.ne@gmail.com> - 0.3.4
+- Rewrote CSRR downloading to use requests with json hooks.  Issue 57.
+
 December 29, 2013 John Evans <john.g.evans.ne@gmail.com> - 0.3.3
 - Issue 54 for cool running.
 
