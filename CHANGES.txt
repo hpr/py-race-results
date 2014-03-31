@@ -1,3 +1,6 @@
+January 20, 2014 John Evans <john.g.evans.ne@gmail.com> - 0.3.5
+- BRRR was not handling ampersands in text.  Issue 59.
+
 January 20, 2014 John Evans <john.g.evans.ne@gmail.com> - 0.3.4
 - Rewrote CSRR downloading to use requests with json hooks.  Issue 57.
 
