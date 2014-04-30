@@ -77,20 +77,22 @@ class CompuScore(RaceResults):
             details = requests.get(url2).json()
             race_name = details['events'][0]['name']
             print('Examining {}'.format(race_name))
-            try:
-                web_details = details['events'][0]['races'][0]['files'][0]
-            except IndexError:
-                print('Skipping {}'.format(race_name))
-                continue
+            for sub_event in details['events'][0]['races']:
+                print('    Examining {}'.format(sub_event['name']))
+                try:
+                    web_details = sub_event['result_files'][0]
+                except IndexError:
+                    print('Skipping {}'.format(race_name))
+                    continue
 
 
-            # And finally, download the race itself.
-            url3 = 'http://{site}{rel_url}'
-            url3 = url3.format(site=web_details['domain'],
-                               rel_url=web_details['resource'])
-            race_resp = requests.get(url3)
-            self.html = race_resp.content.decode('utf-8')
-            self.compile_race_results()
+                # And finally, download the race itself.
+                url3 = 'http://{site}{rel_url}'
+                url3 = url3.format(site=web_details['webfile']['domain'],
+                                   rel_url=web_details['webfile']['resource'])
+                race_resp = requests.get(url3)
+                self.html = race_resp.content.decode('utf-8')
+                self.compile_race_results()
 
 
     def process_master_file(self):
