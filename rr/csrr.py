@@ -91,7 +91,10 @@ class CompuScore(RaceResults):
                 url3 = url3.format(site=web_details['webfile']['domain'],
                                    rel_url=web_details['webfile']['resource'])
                 race_resp = requests.get(url3)
-                self.html = race_resp.content.decode('utf-8')
+                try:
+                    self.html = race_resp.content.decode('utf-8')
+                except UnicodeDecodeError:
+                    self.html = race_resp.content.decode('latin1')
                 self.compile_race_results()
 
 
