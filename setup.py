@@ -1,16 +1,22 @@
-from distutils.core import setup
+from setuptools import setup, find_packages
 
 setup(
     name='RaceResults',
-    version='0.3.5',
+    version='0.3.6',
     author='John Evans',
     author_email='john.g.evans.ne@gmail.com',
     url='http://pypi.python.org/pypi/RaceResults',
-    packages=['rr', 'rr.test'],
+    packages=find_packages(),
     package_data={'rr': ['test/testdata/*.HTM',
         'test/testdata/*.shtml',
         'test/testdata/*.htm']},
-    scripts=['bin/brrr', 'bin/crrr', 'bin/csrr', 'bin/nyrr', 'bin/lmsports'],
+    entry_points={
+        'console_scripts': [
+            'brrr = rr.command_line:run_best_race',
+            'crrr = rr.command_line:run_coolrunning',
+            'csrr = rr.command_line:run_compuscore',
+            'nyrr = rr.command_line:run_nyrr',
+                            ]},
     license='LICENSE.txt',
     description='Race results parsing',
     install_requires=['lxml>=2.3.4', 'requests>=2.2.0'],

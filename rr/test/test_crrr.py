@@ -3,6 +3,7 @@ import os
 import pkg_resources
 import re
 import shutil
+import sys
 import tempfile
 import unittest
 from xml.etree import cElementTree as ET
@@ -92,11 +93,13 @@ class TestCoolRunning(unittest.TestCase):
         Test compiling race results from a list of local files (just one).
         """
         self.populate_racelist_file([self.vanilla_crrr_file.name])
-        o = rr.CoolRunning(verbose='critical',
-                           memb_list=self.membership_file.name,
-                           race_list=self.racelist_file.name,
-                           output_file=self.results_file.name)
-        o.run()
+        sys.argv = [
+                '',
+                '--verbose', 'critical',
+                '--ml', self.membership_file.name,
+                '--rl', self.racelist_file.name,
+                '-o', self.results_file.name]
+        rr.command_line.run_coolrunning()
 
         with open(self.results_file.name, 'r') as f:
             html = f.read()
@@ -111,11 +114,13 @@ class TestCoolRunning(unittest.TestCase):
         See Issue 33
         """
         self.populate_racelist_file([self.vanilla_crrr_file.name])
-        o = rr.CoolRunning(verbose='critical',
-                           memb_list=self.membership_file.name,
-                           race_list=self.racelist_file.name,
-                           output_file=self.results_file.name)
-        o.run()
+        sys.argv = [
+                '',
+                '--verbose', 'critical',
+                '--ml', self.membership_file.name,
+                '--rl', self.racelist_file.name,
+                '-o', self.results_file.name]
+        rr.command_line.run_coolrunning()
 
         with open(self.results_file.name, 'r') as f:
             html = f.read()
@@ -128,11 +133,13 @@ class TestCoolRunning(unittest.TestCase):
         """
         racelist = [self.vanilla_crrr_file.name, self.ccrr_file.name]
         self.populate_racelist_file(racelist)
-        o = rr.CoolRunning(verbose='critical',
-                           memb_list=self.membership_file.name,
-                           race_list=self.racelist_file.name,
-                           output_file=self.results_file.name)
-        o.run()
+        sys.argv = [
+                '',
+                '--verbose', 'critical',
+                '--ml', self.membership_file.name,
+                '--rl', self.racelist_file.name,
+                '-o', self.results_file.name]
+        rr.command_line.run_coolrunning()
 
         with open(self.results_file.name, 'r') as f:
             html = f.read()
@@ -145,11 +152,13 @@ class TestCoolRunning(unittest.TestCase):
         The HTML profile is used by Cape Cod Road Runners.
         """
         self.populate_racelist_file([self.ccrr_file.name])
-        o = rr.CoolRunning(verbose='critical',
-                           memb_list=self.membership_file.name,
-                           race_list=self.racelist_file.name,
-                           output_file=self.results_file.name)
-        o.run()
+        sys.argv = [
+                '',
+                '--verbose', 'critical',
+                '--ml', self.membership_file.name,
+                '--rl', self.racelist_file.name,
+                '-o', self.results_file.name]
+        rr.command_line.run_coolrunning()
 
         with open(self.results_file.name, 'r') as f:
             html = f.read()
@@ -159,14 +168,15 @@ class TestCoolRunning(unittest.TestCase):
         """
         Verify that we can get results from the web.
         """
-        start_date = datetime.datetime(2012, 12, 9)
-        stop_date = datetime.datetime(2012, 12, 10)
-        o = rr.CoolRunning(verbose='critical',
-                           memb_list=self.membership_file.name,
-                           output_file=self.results_file.name,
-                           start_date=start_date,
-                           stop_date=stop_date)
-        o.run()
+        sys.argv = [
+                '',
+                '--verbose', 'critical',
+                '--ml', self.membership_file.name,
+                '-y', '2012',
+                '-m', '12',
+                '-d', '9', '10',
+                '-o', self.results_file.name]
+        rr.command_line.run_coolrunning()
 
         with open(self.results_file.name, 'r') as f:
             html = f.read()
@@ -179,11 +189,13 @@ class TestCoolRunning(unittest.TestCase):
         """
         self.populate_membership_file('Popham,Michael')
         self.populate_racelist_file([self.black_cat_file.name])
-        o = rr.CoolRunning(verbose='critical',
-                           memb_list=self.membership_file.name,
-                           race_list=self.racelist_file.name,
-                           output_file=self.results_file.name)
-        o.run()
+        sys.argv = [
+                '',
+                '--verbose', 'critical',
+                '--ml', self.membership_file.name,
+                '--rl', self.racelist_file.name,
+                '-o', self.results_file.name]
+        rr.command_line.run_coolrunning()
 
         with open(self.results_file.name, 'r') as f:
             html = f.read()
@@ -195,11 +207,13 @@ class TestCoolRunning(unittest.TestCase):
         """
         self.populate_membership_file('Smith-Rohrberg,Karen')
         self.populate_racelist_file([self.ras_na_eireann_file.name])
-        o = rr.CoolRunning(verbose='critical',
-                           memb_list=self.membership_file.name,
-                           race_list=self.racelist_file.name,
-                           output_file=self.results_file.name)
-        o.run()
+        sys.argv = [
+                '',
+                '--verbose', 'critical',
+                '--ml', self.membership_file.name,
+                '--rl', self.racelist_file.name,
+                '-o', self.results_file.name]
+        rr.command_line.run_coolrunning()
 
         with open(self.results_file.name, 'r') as f:
             html = f.read()
@@ -260,11 +274,13 @@ class TestRacingCompanies(unittest.TestCase):
             test to pass.
         """
         self.populate_racelist_file([racefile])
-        o = rr.CoolRunning(verbose='critical',
-                           memb_list=self.membership_file.name,
-                           race_list=self.racelist_file.name,
-                           output_file=self.results_file.name)
-        o.run()
+        sys.argv = [
+                '',
+                '--verbose', 'critical',
+                '--ml', self.membership_file.name,
+                '--rl', self.racelist_file.name,
+                '-o', self.results_file.name]
+        rr.command_line.run_coolrunning()
 
         with open(self.results_file.name, 'r') as f:
             html = f.read()

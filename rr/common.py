@@ -65,10 +65,8 @@ class RaceResults:
         We have a line of text from the race file.  Match it against the
         membership list.
         """
-        for idx in range(0, len(self.first_name_regex)):
-            fregex = self.first_name_regex[idx]
-            lregex = self.last_name_regex[idx]
-            if fregex.search(line) and lregex.search(line):
+        for regex in self.regex:
+            if regex.search(line):
                 return(True)
         return(False)
 
@@ -76,20 +74,18 @@ class RaceResults:
         """
         Construct regular expressions for each person in the membership list.
         """
-        first_name_regex = []
-        last_name_regex = []
+        regex = []
         for last_name, first_name in self.parse_membership_list():
             # Use word boundaries to prevent false positives, e.g. "Ed Ford"
             # does not cause every fricking person from "New Bedford" to
             # match.  Here's an example line to match.
             #   '60 Gene Gugliotta       North Plainfiel,NJ 53 M U '
-            pattern = '\\b' + first_name + '\\b'
-            first_name_regex.append(re.compile(pattern, re.IGNORECASE))
-            pattern = '\\b' + last_name + '\\b'
-            last_name_regex.append(re.compile(pattern, re.IGNORECASE))
+            # The first and last names must be separated by just white space.
+            pattern = '\\b(?:' + first_name + '|' + last_name + ')' + '\\s+(?:' + last_name + '|' + first_name + ')\\b'
 
-        self.first_name_regex = first_name_regex
-        self.last_name_regex = last_name_regex
+            regex.append(re.compile(pattern, re.IGNORECASE))
+
+        self.regex = regex
 
     def parse_membership_list(self):
         """
