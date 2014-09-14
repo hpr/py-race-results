@@ -77,20 +77,26 @@ class CompuScore(RaceResults):
             details = requests.get(url2).json()
             race_name = details['events'][0]['name']
             print('Examining {}'.format(race_name))
-            try:
-                web_details = details['events'][0]['races'][0]['files'][0]
-            except IndexError:
-                print('Skipping {}'.format(race_name))
-                continue
+            for sub_event in details['events'][0]['races']:
+                print('    Examining {}'.format(sub_event['name']))
+                try:
+                    web_details = sub_event['result_files'][0]
+                except IndexError:
+                    print('Skipping {}'.format(race_name))
+                    continue
 
 
-            # And finally, download the race itself.
-            url3 = 'http://{site}{rel_url}'
-            url3 = url3.format(site=web_details['domain'],
-                               rel_url=web_details['resource'])
-            race_resp = requests.get(url3)
-            self.html = race_resp.content.decode('utf-8')
-            self.compile_race_results()
+                # And finally, download the race itself.
+                url3 = 'http://{site}{rel_url}'
+                url3 = url3.format(site=web_details['webfile']['domain'],
+                                   rel_url=web_details['webfile']['resource'])
+                race_resp = requests.get(url3)
+                self.downloaded_url = url3
+                try:
+                    self.html = race_resp.content.decode('utf-8')
+                except UnicodeDecodeError:
+                    self.html = race_resp.content.decode('latin1')
+                self.compile_race_results()
 
 
     def process_master_file(self):
@@ -135,7 +141,11 @@ class CompuScore(RaceResults):
             # Try searching for just the literal text.
             regex = re.compile(r'Race Date:\d\d-\d\d-\d\d')
             matchobj = regex.search(self.html)
-            full_race_date_text = matchobj.group()
+            if matchobj is not None:
+                full_race_date_text = matchobj.group()
+            else:
+                # Give up, nothing here.
+                return None
 
         # The race date should read something like
         #     "    Race Date:11-03-12   "
@@ -179,10 +189,12 @@ class CompuScore(RaceResults):
         div.append(h2_elt)
 
         # The single H3 element in the file has the race date.
+        # If it's there, that is.
         race_date = self.get_race_date()
-        h3_elt = etree.Element('h3')
-        h3_elt.text = race_date.strftime('Race Date:  %b %d, %Y')
-        div.append(h3_elt)
+        if race_date is not None:
+            h3_elt = etree.Element('h3')
+            h3_elt.text = race_date.strftime('Race Date:  %b %d, %Y')
+            div.append(h3_elt)
 
         if self.downloaded_url is not None:
             div.append(self.construct_source_url_reference('Compuscore'))

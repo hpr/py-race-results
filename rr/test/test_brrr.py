@@ -3,6 +3,7 @@ import os
 import pkg_resources
 import re
 import shutil
+import sys
 import tempfile
 import unittest
 
@@ -55,11 +56,14 @@ class TestBestRace(unittest.TestCase):
         self.populate_membership_file()
         lst = [self.viking_race_file.name, self.viking_race_file.name]
         self.populate_racelist_file(lst)
-        o = rr.BestRace(verbose='critical',
-                        memb_list=self.membership_file.name,
-                        race_list=self.racelist_file.name,
-                        output_file=self.results_file.name)
-        o.run()
+        sys.argv = [
+                '',
+                '--verbose', 'critical',
+                '--ml', self.membership_file.name,
+                '--rl', self.racelist_file.name,
+                '-o', self.results_file.name,
+                ]
+        rr.command_line.run_bestrace()
 
         with open(self.results_file.name, 'r') as f:
             html = f.read()
@@ -76,11 +80,14 @@ class TestBestRace(unittest.TestCase):
         self.populate_membership_file()
         lst = [self.viking_race_file.name, self.viking_race_file.name]
         self.populate_racelist_file(lst)
-        o = rr.BestRace(verbose='critical',
-                        memb_list=self.membership_file.name,
-                        race_list=self.racelist_file.name,
-                        output_file=self.results_file.name)
-        o.run()
+        sys.argv = [
+                '',
+                '--verbose', 'critical',
+                '--ml', self.membership_file.name,
+                '--rl', self.racelist_file.name,
+                '-o', self.results_file.name,
+                ]
+        rr.command_line.run_bestrace()
 
         with open(self.results_file.name, 'r') as f:
             html = f.read()
@@ -93,17 +100,16 @@ class TestBestRace(unittest.TestCase):
         self.populate_membership_file()
         start_date = datetime.datetime(2012, 12, 9)
         stop_date = datetime.datetime(2012, 12, 10)
-        o = rr.BestRace(verbose='critical',
-                        memb_list=self.membership_file.name,
-                        output_file=self.results_file.name,
-                        start_date=start_date,
-                        stop_date=stop_date)
-        o.run()
+        sys.argv = [
+                '',
+                '--verbose', 'critical',
+                '--ml', self.membership_file.name,
+                '-o', self.results_file.name,
+                '-y', '2012',
+                '-m', '12',
+                '-d', '9', '10']
+        rr.command_line.run_bestrace()
 
         with open(self.results_file.name, 'r') as f:
             html = f.read()
             self.assertTrue("MARK STRAWN" in html)
-
-
-if __name__ == "__main__":
-    unittest.main()

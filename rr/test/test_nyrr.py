@@ -1,5 +1,6 @@
 import datetime
 import os
+import sys
 import tempfile
 import unittest
 
@@ -20,12 +21,14 @@ class TestNYRR(unittest.TestCase):
         """
         start_date = datetime.date(2012, 12, 14)
         stop_date = datetime.date(2012, 12, 15)
-        o = rr.NewYorkRR(verbose='critical',
-                         output_file=self.results_file.name,
-                         team='RARI',
-                         start_date=start_date,
-                         stop_date=stop_date)
-        o.run()
+        sys.argv = [
+                '',
+                '--verbose', 'critical',
+                '-o', self.results_file.name,
+                '-y', '2012',
+                '-m', '12',
+                '-d', '12', '15']
+        rr.command_line.run_nyrr()
 
         with open(self.results_file.name, 'r') as f:
             html = f.read()
