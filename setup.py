@@ -13,7 +13,7 @@ setup(
     entry_points={
         'console_scripts': [
             'brrr = rr.command_line:run_best_race',
-            'crrr = rr.command_line:run_cool_running',
+            'crrr = rr.command_line:run_coolrunning',
             'csrr = rr.command_line:run_compuscore',
             'nyrr = rr.command_line:run_nyrr',
                             ]},
