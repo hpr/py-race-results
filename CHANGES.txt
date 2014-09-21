@@ -1,3 +1,6 @@
+September 21, 2014 John Evans <john.g.evans.ne@gmail.com> - 0.3.7
+- Fixed bug in brrr console script.  Skipping bad URLs.
+
 January 20, 2014 John Evans <john.g.evans.ne@gmail.com> - 0.3.5
 - BRRR was not handling ampersands in text.  Issue 59.
 

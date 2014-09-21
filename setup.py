@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='RaceResults',
-    version='0.3.6',
+    version='0.3.7',
     author='John Evans',
     author_email='john.g.evans.ne@gmail.com',
     url='http://pypi.python.org/pypi/RaceResults',
@@ -12,7 +12,7 @@ setup(
         'test/testdata/*.htm']},
     entry_points={
         'console_scripts': [
-            'brrr = rr.command_line:run_best_race',
+            'brrr = rr.command_line:run_bestrace',
             'crrr = rr.command_line:run_coolrunning',
             'csrr = rr.command_line:run_compuscore',
             'nyrr = rr.command_line:run_nyrr',
