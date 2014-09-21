@@ -3,6 +3,7 @@ Module for BestRace.
 """
 import logging
 import re
+import urllib
 
 from lxml import etree
 
@@ -65,7 +66,12 @@ class BestRace(RaceResults):
 
         for url in urls:
             self.logger.info('Downloading %s...' % url)
-            self.download_race(url)
+            try:
+                self.download_race(url)
+            except urllib.error.HTTPError as e:
+                print(e)
+                print("Going on to next race...")
+                continue
             self.compile_race_results()
 
     def webify_results(self, results_lst):
