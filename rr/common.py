@@ -258,17 +258,3 @@ def pretty_print_xml(xml_file):
     fptr = open(xml_file, 'w')
     fptr.write(pp_string)
     fptr.close()
-
-
-def remove_namespace(doc):
-    """Remove namespace in the passed document in place."""
-    # We seem to need this for all element searches now.
-    xmlns = 'http://www.w3.org/1999/xhtml'
-
-    namespace = '{%s}' % xmlns
-    nsl = len(namespace)
-    for elem in doc.getiterator():
-        if elem.tag.startswith(namespace):
-            elem.tag = elem.tag[nsl:]
-
-    return(doc)

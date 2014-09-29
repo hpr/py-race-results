@@ -182,7 +182,6 @@ class NewYorkRR(RaceResults):
         parser = etree.HTMLParser()
         tree = etree.parse(local_file, parser)
         root = tree.getroot()
-        #root = remove_namespace(root)
 
         # 3rd table is the one we want.
         pattern = './/table'

@@ -11,7 +11,7 @@ import warnings
 import lxml
 from lxml import etree
 
-from .common import RaceResults, remove_namespace
+from .common import RaceResults
 
 
 class CoolRunning(RaceResults):
@@ -181,7 +181,6 @@ class CoolRunning(RaceResults):
             tree = etree.parse(tfile.name, parser)
 
         root = tree.getroot()
-        root = remove_namespace(root)
 
         trs = root.findall(pattern)
 
