@@ -1,3 +1,7 @@
+September 28, 2014 John Evans <john.g.evans.ne@gmail.com> - 0.3.8
+- Continue processing coolrunning races in case of errors.
+- Improved NYRR metadata display with additional HRs.
+
 September 21, 2014 John Evans <john.g.evans.ne@gmail.com> - 0.3.7
 - Fixed bug in brrr console script.  Skipping bad URLs.
 
