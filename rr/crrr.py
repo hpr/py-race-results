@@ -4,9 +4,11 @@ Backend class for handling CoolRunning race results.
 
 import logging
 import re
+import sys
 import tempfile
 import warnings
 
+import lxml
 from lxml import etree
 
 from .common import RaceResults, remove_namespace
@@ -355,15 +357,17 @@ class CoolRunning(RaceResults):
         """
         div = self.construct_common_div()
 
-        pre = etree.Element('pre')
-        pre.set('class', 'actual_results')
-
         banner_text = self.parse_banner()
 
         text = '<pre class="actual_results">\n'
         text += banner_text + '\n'.join(result_lst) + '\n'
         text += '</pre>'
-        pre = etree.XML(text)
+        try:
+            pre = etree.XML(text)
+        except lxml.etree.XMLSyntaxError as error:
+            pre = etree.Element('pre')
+            pre.set('class', 'actual_results')
+            pre.text = str(error)
         div.append(pre)
 
         return div

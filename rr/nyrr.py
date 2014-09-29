@@ -213,9 +213,11 @@ class NewYorkRR(RaceResults):
         # race name
         elts = td.findall('.//span')
         race_meta.append(elts[0])
+        race_meta.append(etree.Element('br'))
 
         # list by team
         race_meta.append(elts[1])
+        race_meta.append(etree.Element('br'))
 
         # distance, race time, location
         race_meta.append(elts[2])
