@@ -121,7 +121,7 @@ class BestRace(RaceResults):
         text += matchobj.group()
         text += '\n' + '\n'.join(results_lst)
         text += '</pre>'
-        
+
         # Replace any singleton ampersand.
         text = text.replace(' & ', ' and ')
         pre = etree.fromstring(text)
