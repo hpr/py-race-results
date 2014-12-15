@@ -1,3 +1,6 @@
+December 14, 2014 John Evans <john.g.evans.ne@gmail.com> - 0.3.9
+- Cleaned up code with flake8 
+
 September 28, 2014 John Evans <john.g.evans.ne@gmail.com> - 0.3.8
 - Continue processing coolrunning races in case of errors.
 - Improved NYRR metadata display with additional HRs.
