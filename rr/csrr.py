@@ -62,7 +62,6 @@ class CompuScore(RaceResults):
         """
         Download the requested results and compile them.
         """
-        #self.process_master_file()
         fmt = 'http://www.compuscore.com/api/races/events?date_range={},{}'
         url = fmt.format(self.start_date.strftime('%Y-%m-%d'),
                          self.stop_date.strftime('%Y-%m-%d'))
@@ -85,7 +84,6 @@ class CompuScore(RaceResults):
                     print('Skipping {}'.format(race_name))
                     continue
 
-
                 # And finally, download the race itself.
                 url3 = 'http://{site}{rel_url}'
                 url3 = url3.format(site=web_details['webfile']['domain'],
@@ -97,7 +95,6 @@ class CompuScore(RaceResults):
                 except UnicodeDecodeError:
                     self.html = race_resp.content.decode('latin1')
                 self.compile_race_results()
-
 
     def process_master_file(self):
         """

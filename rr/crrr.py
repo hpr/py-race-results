@@ -7,9 +7,10 @@ import re
 import tempfile
 import warnings
 
+import lxml
 from lxml import etree
 
-from .common import RaceResults, remove_namespace
+from .common import RaceResults
 
 
 class CoolRunning(RaceResults):
@@ -63,8 +64,6 @@ class CoolRunning(RaceResults):
         So we construct a regular expression to match against
         all the dates in the specified range.
         """
-
-        #pattern = 'http://ww.coolrunning.com/results/'
         pattern = '/results/'
         pattern += self.start_date.strftime('%y')
         pattern += '/'
@@ -172,14 +171,13 @@ class CoolRunning(RaceResults):
         # Write it back out to a file, need to use the HTML parser to read
         # it back in.
         with tempfile.NamedTemporaryFile(suffix=".html", mode='wt') as tfile:
-            tfile.write(self.html)    
+            tfile.write(self.html)
             tfile.flush()
-            
+
             parser = etree.HTMLParser()
             tree = etree.parse(tfile.name, parser)
 
         root = tree.getroot()
-        root = remove_namespace(root)
 
         trs = root.findall(pattern)
 
@@ -248,9 +246,9 @@ class CoolRunning(RaceResults):
             if len(results) > 0:
                 html = self.webify_ccrr_results(results)
                 self.insert_race_results(html)
-        elif self.author in ['ACCU', 'baystate', 'charlie', 'gstate', 'Harrier',
-                         'netiming', 'JFRC', 'mmg1214', 'mooserd', 'Spitler',
-                         'SWCL', 'yk']:
+        elif self.author in ['ACCU', 'baystate', 'charlie', 'gstate',
+                             'Harrier', 'netiming', 'JFRC', 'mmg1214',
+                             'mooserd', 'Spitler', 'SWCL', 'yk']:
             # These cases are verified in the test suite.
             # "charlie" is "Last Mile"
             # "mmg1214" is "Wilbur Racing Systems"
@@ -260,7 +258,7 @@ class CoolRunning(RaceResults):
                 html = self.webify_vanilla_results(results)
                 self.insert_race_results(html)
         elif self.author in ['kick610', 'JB Race', 'ab-mac', 'FTO',
-                         'NSTC', 'ndatrackxc', 'wcrc']:
+                             'NSTC', 'ndatrackxc', 'wcrc']:
             # Assume the usual coolrunning pattern.
             msg = '{0} ==> assuming vanilla Coolrunning pattern'
             self.logger.debug(msg.format(self.author))
@@ -279,7 +277,7 @@ class CoolRunning(RaceResults):
         elif self.author in ['jalfano']:
             self.logger.info('Skipping CMS(?) series.')
         elif self.author in ['DavidWill', 'FFAST', 'lungne', 'northeastracers',
-                         'sri']:
+                             'sri']:
             msg = 'Skipping {0} pattern (unhandled XML pattern).'
             self.logger.info(msg.format(self.author))
         elif self.author in ['WCRCSCOTT']:
@@ -355,15 +353,17 @@ class CoolRunning(RaceResults):
         """
         div = self.construct_common_div()
 
-        pre = etree.Element('pre')
-        pre.set('class', 'actual_results')
-
         banner_text = self.parse_banner()
 
         text = '<pre class="actual_results">\n'
         text += banner_text + '\n'.join(result_lst) + '\n'
         text += '</pre>'
-        pre = etree.XML(text)
+        try:
+            pre = etree.XML(text)
+        except lxml.etree.XMLSyntaxError as error:
+            pre = etree.Element('pre')
+            pre.set('class', 'actual_results')
+            pre.text = str(error)
         div.append(pre)
 
         return div
@@ -392,10 +392,10 @@ class CoolRunning(RaceResults):
 
         # Clean it up if necessary.  Some of the clumsier race directors will
         # put ampersands into the text without making them XML entities.
-        #regex = re.compile(r"""&                    # match the ampersand,
+        # regex = re.compile(r"""&                    # match the ampersand
         #                       (?!                  # negative lookahead
         #                         [A-Za-z]+[0-9]*;   # named entity
-        #                        | 
+        #                        |
         #                         #[0-9]+;             # decimal entity
         #                        |
         #                         #x[0-9a-fA-F]+;)""", # hexidecimal entity

@@ -182,7 +182,6 @@ class NewYorkRR(RaceResults):
         parser = etree.HTMLParser()
         tree = etree.parse(local_file, parser)
         root = tree.getroot()
-        #root = remove_namespace(root)
 
         # 3rd table is the one we want.
         pattern = './/table'
@@ -213,9 +212,11 @@ class NewYorkRR(RaceResults):
         # race name
         elts = td.findall('.//span')
         race_meta.append(elts[0])
+        race_meta.append(etree.Element('br'))
 
         # list by team
         race_meta.append(elts[1])
+        race_meta.append(etree.Element('br'))
 
         # distance, race time, location
         race_meta.append(elts[2])

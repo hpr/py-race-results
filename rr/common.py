@@ -81,7 +81,8 @@ class RaceResults:
             # match.  Here's an example line to match.
             #   '60 Gene Gugliotta       North Plainfiel,NJ 53 M U '
             # The first and last names must be separated by just white space.
-            pattern = '\\b(?:' + first_name + '|' + last_name + ')' + '\\s+(?:' + last_name + '|' + first_name + ')\\b'
+            pattern = ('\\b(?:' + first_name + '|' + last_name + ')'
+                       + '\\s+(?:' + last_name + '|' + first_name + ')\\b')
 
             regex.append(re.compile(pattern, re.IGNORECASE))
 
@@ -126,7 +127,6 @@ class RaceResults:
         result = etree.tostring(root, pretty_print=True, method="html")
         with open(local_file, 'wb') as fptr:
             fptr.write(result)
-
 
     def insert_race_results(self, results):
         """
@@ -185,7 +185,7 @@ class RaceResults:
         Parameters
         ----------
         source : str
-            Name for web site from which the information comes, such as 
+            Name for web site from which the information comes, such as
             "CoolRunning" or "Compuscore".
         """
         p = etree.Element('p')
@@ -258,17 +258,3 @@ def pretty_print_xml(xml_file):
     fptr = open(xml_file, 'w')
     fptr.write(pp_string)
     fptr.close()
-
-
-def remove_namespace(doc):
-    """Remove namespace in the passed document in place."""
-    # We seem to need this for all element searches now.
-    xmlns = 'http://www.w3.org/1999/xhtml'
-
-    namespace = '{%s}' % xmlns
-    nsl = len(namespace)
-    for elem in doc.getiterator():
-        if elem.tag.startswith(namespace):
-            elem.tag = elem.tag[nsl:]
-
-    return(doc)
