@@ -12,6 +12,7 @@ setup(
         'test/testdata/*.htm']},
     entry_points={
         'console_scripts': [
+            'active = rr.command_line:run_active',
             'brrr = rr.command_line:run_bestrace',
             'crrr = rr.command_line:run_coolrunning',
             'csrr = rr.command_line:run_compuscore',

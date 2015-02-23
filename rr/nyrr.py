@@ -17,17 +17,21 @@ class NewYorkRR(RaceResults):
     """
     Handles race results from New York Road Runners website.
     """
-    def __init__(self, **kwargs):
+    def __init__(self, membership_list=None, verbose='INFO', **kwargs):
         """
+        Parameters
+        ----------
+        membership_list : str
+            CSV membership list
+        verbose : str
+            How much verbosity.
         """
-        RaceResults.__init__(self)
+        RaceResults.__init__(self, membership_list=membership_list,
+                             verbose=verbose)
         self.__dict__.update(**kwargs)
 
         # Need to remember the current URL.
         self.downloaded_url = None
-
-        # Set the appropriate logging level.
-        self.logger.setLevel(getattr(logging, self.verbose.upper()))
 
         self.cookie_jar = None
 
