@@ -14,26 +14,36 @@ class BestRace(RaceResults):
     """
     Process races found on BestRace.com.
 
-    Attributes:
-        start_date, stop_date:  date range to restrict race searches
-        memb_list:  membership list
-        race_list:  file containing list of races
-        output_file:  final race results file
-        verbose:  how much output to produce
-        logger: handles verbosity of program execution
-        downloaded_url:  If a race retrieved from a URL has results for anyone
+    Attributes
+    ----------
+    start_date, stop_date:  datetime.datetime
+        date range to restrict race searches
+    memb_list:  membership list
+    race_list:  file containing list of races
+    output_file:  str
+        final race results file
+    logger: handles verbosity of program execution
+    downloaded_url:  If a race retrieved from a URL has results for anyone
             in the membership list, then we want to record that URL in the
             output.
     """
 
-    def __init__(self, **kwargs):
-        RaceResults.__init__(self)
+    def __init__(self, verbose='INFO', membership_list=None, output_file=None,
+                 **kwargs):
+        """
+        Parameters
+        ----------
+        membership_list : str
+            CSV membership list
+        verbose : str
+            Level of verbosity
+        output_file : str
+            All race results written to this file
+        """
+        RaceResults.__init__(self, verbose=verbose,
+                             membership_list=membership_list,
+                             output_file=output_file)
         self.__dict__.update(**kwargs)
-
-        self.load_membership_list()
-
-        # Set the appropriate logging level.
-        self.logger.setLevel(getattr(logging, self.verbose.upper()))
 
     def compile_web_results(self):
         """

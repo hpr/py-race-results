@@ -1,6 +1,7 @@
 """Parse race results.
 """
 import csv
+import datetime as dt
 import http
 import http.cookiejar
 import logging
@@ -14,35 +15,46 @@ from lxml import etree
 
 class RaceResults:
     """
-    Attributes:
-        start_date, stop_date:  date range to restrict race searches
-        memb_list:  membership list
-        race_list:  file containing list of race files
-        output_file:  final race results file
-        verbose:  how much output to produce
-        logger: handles verbosity of program execution.  All is logged to
+    Attributes
+    ----------
+    start_date, stop_date : datetime.datetime
+        date range to restrict race searches
+    memb_list:  membership list
+    output_file : str
+        All race results written to this file
+    logger: handles verbosity of program execution.  All is logged to
             standard output.
-        cookies : NYRR requires cookies
-        html : str
+    cookies : NYRR requires cookies
+    html : str
             HTML from downloaded web page
-        user_agent:  masquerade as browser because some sites do not like
+    user_agent:  masquerade as browser because some sites do not like
             "Python-urllib"
-        downloaded_url:  URL to a race that has been downloaded.  We link back
+    downloaded_url:  URL to a race that has been downloaded.  We link back
             to it in the resulting output.
     """
 
-    def __init__(self):
-        # These attributes could/should be overridden by a subclass
-        # initialization.
-        self.start_date = None
-        self.stop_date = None
-        self.memb_list = None
-        self.race_list = None
-        self.output_file = None
-        self.verbose = 'info'
+    def __init__(self, verbose='INFO', membership_list=None,
+                 start_date=dt.datetime.now() - dt.timedelta(days=7),
+                 stop_date=dt.datetime.now(),
+                 output_file=None):
+        """
+        Parameters
+        ----------
+        start_date, stop_date : datetime.datetime
+            Specifies time range in which to search for race results.
+        verbose : str
+            Level of verbosity
+        """
+        self.start_date = start_date
+        self.stop_date = stop_date
+        self.output_file = output_file
 
         # Set up a logger for relaying progress back to the user.
         self.logger = logging.getLogger('race_results')
+        self.logger.setLevel(getattr(logging, verbose.upper()))
+
+        if membership_list is not None:
+            self.load_membership_list(membership_list)
 
         # This may be overridden by a subclass run time.
         self.downloaded_url = None
@@ -70,12 +82,17 @@ class RaceResults:
                 return(True)
         return(False)
 
-    def load_membership_list(self):
+    def load_membership_list(self, csv_file):
         """
         Construct regular expressions for each person in the membership list.
+
+        Parameters
+        ----------
+        membership_list : str
+            CSV file of club membership
         """
         regex = []
-        for last_name, first_name in self.parse_membership_list():
+        for last_name, first_name in self.parse_membership_list(csv_file):
             # Use word boundaries to prevent false positives, e.g. "Ed Ford"
             # does not cause every fricking person from "New Bedford" to
             # match.  Here's an example line to match.
@@ -88,18 +105,23 @@ class RaceResults:
 
         self.regex = regex
 
-    def parse_membership_list(self):
+    def parse_membership_list(self, csv_file):
         """
         Assume a comma-delimited membership list, last name first,
         followed by the first name.
 
         Doe,Jane, ...
         Smith,Joe, ...
+
+        Parameters
+        ----------
+        csv_file : str
+            CSV file of membership
         """
 
         members = []
-        with open(self.memb_list) as csvfile:
-            mlreader = csv.reader(csvfile, delimiter=',')
+        with open(csv_file) as fptr:
+            mlreader = csv.reader(fptr, delimiter=',')
             for row in mlreader:
                 # members.append((lname, fname))
                 members.append((row[0], row[1]))
