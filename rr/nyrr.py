@@ -17,7 +17,8 @@ class NewYorkRR(RaceResults):
     """
     Handles race results from New York Road Runners website.
     """
-    def __init__(self, membership_list=None, verbose='INFO', **kwargs):
+    def __init__(self, membership_list=None, verbose='INFO',
+                 output_file=None, **kwargs):
         """
         Parameters
         ----------
@@ -27,7 +28,7 @@ class NewYorkRR(RaceResults):
             How much verbosity.
         """
         RaceResults.__init__(self, membership_list=membership_list,
-                             verbose=verbose)
+                             output_file=output_file, verbose=verbose)
         self.__dict__.update(**kwargs)
 
         # Need to remember the current URL.

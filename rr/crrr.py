@@ -24,7 +24,7 @@ class CoolRunning(RaceResults):
         results.
     """
     def __init__(self, verbose='INFO', states=None,
-                 membership_list=None, **kwargs):
+                 membership_list=None, output_file=None, **kwargs):
         """
         Parameters
         ----------
@@ -36,7 +36,8 @@ class CoolRunning(RaceResults):
             Level of verbosity
         """
         RaceResults.__init__(self, verbose=verbose,
-                             membership_list=membership_list)
+                             membership_list=membership_list,
+                             output_file=output_file)
         self.__dict__.update(**kwargs)
 
         if states is None:

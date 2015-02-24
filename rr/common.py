@@ -20,7 +20,8 @@ class RaceResults:
     start_date, stop_date:  date range to restrict race searches
     memb_list:  membership list
     race_list:  file containing list of race files
-    output_file:  final race results file
+    output_file : str
+        All race results written to this file
     logger: handles verbosity of program execution.  All is logged to
             standard output.
     cookies : NYRR requires cookies
@@ -34,17 +35,20 @@ class RaceResults:
 
     def __init__(self, verbose='INFO', membership_list=None,
                  start_date=dt.datetime.now() - dt.timedelta(days=7),
-                 stop_date=dt.datetime.now()):
+                 stop_date=dt.datetime.now(),
+                 output_file=None):
         """
         Parameters
         ----------
+        start_date, stop_date : datetime.datetime
+            Specifies time range in which to search for race results.
         verbose : str
-           Level of verbosity
+            Level of verbosity
         """
-        # These attributes could/should be overridden by a subclass
-        # initialization.
         self.race_list = None
-        self.output_file = None
+        self.start_date = start_date
+        self.stop_date = stop_date
+        self.output_file = output_file
 
         # Set up a logger for relaying progress back to the user.
         self.logger = logging.getLogger('race_results')

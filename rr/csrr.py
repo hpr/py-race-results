@@ -35,7 +35,8 @@ class CompuScore(RaceResults):
     """
     Class for handling compuscore results.
     """
-    def __init__(self, verbose='INFO', membership_list=None, **kwargs):
+    def __init__(self, verbose='INFO', membership_list=None,
+                 output_file=None, **kwargs):
         """
         Parameters
         ----------
@@ -44,12 +45,14 @@ class CompuScore(RaceResults):
         verbose : str
             How much verbosity.
         race_list:  file containing list of races
-        output_file:  final race results file
+        output_file : str
+            All race results written here.
         first_name_regex, last_name_regex : regular expressions
             One pair for each running club member.
         """
         RaceResults.__init__(self, verbose=verbose,
-                             membership_list=membership_list)
+                             membership_list=membership_list,
+                             output_file=output_file)
         self.__dict__.update(**kwargs)
 
         if self.start_date is not None:
