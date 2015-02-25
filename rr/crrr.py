@@ -7,6 +7,7 @@ import warnings
 
 import lxml
 from lxml import etree, html
+import requests
 
 from .common import RaceResults
 
@@ -28,11 +29,18 @@ class CoolRunning(RaceResults):
 
     def compile_web_results(self):
         """
-        Download the requested results and compile them.
+        Compile race results for all the requested states.
         """
         for state in self.states:
-            self.download_state_master_file(state)
-            self.process_state_master_file(state)
+
+            # Download state "master" list
+            self.logger.info('Processing {}...'.format(state))
+            state_file = state + '.shtml'
+            url = 'http://www.coolrunning.com/results/{0}/{1}'
+            url = url.format(self.start_date.strftime('%y'), state_file)
+            response = requests.get(url)
+
+            self.process_state_master_list(state, response)
 
     def construct_state_match_pattern(self, state):
         """
@@ -42,6 +50,18 @@ class CoolRunning(RaceResults):
 
         So we construct a regular expression to match against
         all the dates in the specified range.
+
+        Parameters
+        ----------
+        state : str
+            Two-letter state code, such as 'ma'
+
+        Returns
+        -------
+        regex : pattern object
+            Matches a pattern like
+
+            http://www.coolrunning.com/results/MM/ST/MMMDDXXXXX.shtml
         """
         pattern = '/results/'
         pattern += self.start_date.strftime('%y')
@@ -50,7 +70,7 @@ class CoolRunning(RaceResults):
         pattern += '/'
         pattern += self.start_date.strftime('%b')
 
-        # continue with a regexp to match any of the days in the range.
+        # continue with a regexp to match any of the days in the date range.
         # It's a non-capturing group.
         day_range = '(?:'
         for day in range(self.start_date.day, self.stop_date.day):
@@ -64,30 +84,35 @@ class CoolRunning(RaceResults):
         regex = re.compile(pattern)
         return regex
 
-    def process_state_master_file(self, state):
+    def process_state_master_list(self, state, response):
         """
         Compile results for the specified state.
-        We assume that we have the state file stored locally.
+
+        Parameters
+        ----------
+        state : str
+            Two-letter state code, such as 'ma'
+        response : Response object from requests package
+            What's on the other side of the state master list URL
         """
         local_state_file = state + '.shtml'
         regex = self.construct_state_match_pattern(state)
 
-        with open(local_state_file, 'r') as fptr:
-            markup = fptr.read()
-
-        relative_urls = regex.findall(markup)
+        relative_urls = regex.findall(response.text)
 
         for relative_url in relative_urls:
 
             top_level_url = 'http://www.coolrunning.com' + relative_url
             race_file = top_level_url.split('/')[-1]
             self.logger.info(top_level_url)
-            self.download_file(top_level_url)
-            self.compile_race_results()
+
+            response = requests.get(top_level_url)
+            self.downloaded_url = top_level_url
+            html = response.text
+            self.compile_race_results(html)
 
             # Now collect any secondary result files.
-            markup = self.html
-
+            #
             # construct the secondary pattern.  If the race name is something
             # like "TheRaceSet1.shtml", then the secondary races will be
             # "TheRaceSet[2345].shmtl" etc.
@@ -95,7 +120,7 @@ class CoolRunning(RaceResults):
             base = parts[-2][0:-1]
             pat = r'<a href="(?P<inner_url>\.\/' + base + r'\d+\.shtml)">'
             inner_regex = re.compile(pat)
-            for matchobj in inner_regex.finditer(markup):
+            for matchobj in inner_regex.finditer(html):
 
                 relative_inner_url = matchobj.group('inner_url')
                 if relative_inner_url in top_level_url:
@@ -112,15 +137,19 @@ class CoolRunning(RaceResults):
                 lst[-1] = race_file
                 inner_url = '/'.join(lst)
                 self.logger.info(inner_url)
-                self.download_file(inner_url)
-                self.compile_race_results()
 
-    def compile_vanilla_results(self):
+                inner_response = requests.get(inner_url)
+                self.compile_race_results(inner_response.text)
+
+    def compile_vanilla_results(self, markup):
         """
         Compile race results for vanilla CoolRunning races.
-        """
-        markup = self.html
 
+        Parameters
+        ----------
+        markup : str
+            HTML from a race web page.
+        """
         regex = re.compile(r"""<pre>              # banner follows the <pre>
                                (?P<race_text>.*?) # regex should NOT be greedy!
                                </pre>""",
@@ -138,19 +167,22 @@ class CoolRunning(RaceResults):
 
         return results
 
-    def compile_ccrr_race_results(self):
+    def compile_ccrr_race_results(self, markup):
         """
         This is the format generally used by Cape Cod
         Road Runners.
 
-        Return value:
+        Parameters
+        ----------
+        markup : str
+            HTML from a race web page.
+
+        Returns
+        -------
+        results : list:
             List of <TR> elements, each row containing an individual result.
         """
-        parser = etree.HTMLParser()
-        tree = etree.parse(io.StringIO(self.html), parser)
-        root = tree.getroot()
-
-        doc = html.document_fromstring(self.html)
+        doc = html.document_fromstring(markup)
 
         # The table rows follow a set of H1, H2, H3, and P tags.  This seems
         # a bit brittle.
@@ -177,13 +209,18 @@ class CoolRunning(RaceResults):
 
         return results
 
-    def get_author(self):
+    def get_author(self, markup):
         """
         Get the race company identifier.
 
         Example
         -------
             <meta name="Author" content="colonial" />
+
+        Parameters
+        ----------
+        markup : str
+            HTML from a race web page.
         """
         regex1 = re.compile(r"""<meta\s
                                 name=\"Author\"\s
@@ -196,29 +233,34 @@ class CoolRunning(RaceResults):
                                 \/?>""",  # Sometimes there's no /
                             re.VERBOSE | re.IGNORECASE)
 
-        matchobj = regex1.search(self.html)
+        matchobj = regex1.search(markup)
         if matchobj is not None:
             self.author = matchobj.group('content')
             return
 
-        matchobj = regex2.search(self.html)
+        matchobj = regex2.search(markup)
         if matchobj is not None:
             self.author = matchobj.group('content')
         else:
             msg = "Could not parse the race company identifier"
             raise RuntimeError(msg)
 
-    def compile_race_results(self):
+    def compile_race_results(self, markup):
         """
         Go through a race file and collect results.
+
+        Parameters
+        ----------
+        markup : str
+            HTML from a race web page.
         """
         html = None
-        self.get_author()
+        self.get_author(markup)
         if self.author in ['CapeCodRoadRunners']:
             self.logger.debug('Cape Cod Road Runners pattern')
-            results = self.compile_ccrr_race_results()
+            results = self.compile_ccrr_race_results(markup)
             if len(results) > 0:
-                html = self.webify_ccrr_results(results)
+                html = self.webify_ccrr_results(results, markup)
                 self.insert_race_results(html)
         elif self.author in ['ACCU', 'baystate', 'charlie', 'gstate',
                              'Harrier', 'netiming', 'JFRC', 'mmg1214',
@@ -227,18 +269,18 @@ class CoolRunning(RaceResults):
             # "charlie" is "Last Mile"
             # "mmg1214" is "Wilbur Racing Systems"
             # "SWCL" is also "Wilbur Racing Systems"
-            results = self.compile_vanilla_results()
+            results = self.compile_vanilla_results(markup)
             if len(results) > 0:
-                html = self.webify_vanilla_results(results)
+                html = self.webify_vanilla_results(results, markup)
                 self.insert_race_results(html)
         elif self.author in ['kick610', 'JB Race', 'ab-mac', 'FTO',
                              'NSTC', 'ndatrackxc', 'wcrc']:
             # Assume the usual coolrunning pattern.
             msg = '{0} ==> assuming vanilla Coolrunning pattern'
             self.logger.debug(msg.format(self.author))
-            results = self.compile_vanilla_results()
+            results = self.compile_vanilla_results(markup)
             if len(results) > 0:
-                html = self.webify_vanilla_results(results)
+                html = self.webify_vanilla_results(results, markup)
                 self.insert_race_results(html)
         elif self.author in ['colonial', 'opportunity']:
             # 'colonial' is a local race series.  Gawd-awful
@@ -260,22 +302,25 @@ class CoolRunning(RaceResults):
         else:
             msg = 'Unknown pattern (\"{0}\"), going to try vanilla CR parsing.'
             self.logger.warning(msg.format(self.author))
-            results = self.compile_vanilla_results()
+            results = self.compile_vanilla_results(markup)
             if len(results) > 0:
-                html = self.webify_vanilla_results(results)
+                html = self.webify_vanilla_results(results, markup)
                 self.insert_race_results(html)
 
-    def construct_common_div(self):
+    def construct_common_div(self, markup):
         """
         Construct an XHTML element to contain race results.
+
+        Parameters
+        ----------
+        markup : str
+            HTML from a race web page.
         """
         div = etree.Element('div')
         div.set('class', 'race')
         hr_elt = etree.Element('hr')
         hr_elt.set('class', 'race_header')
         div.append(hr_elt)
-
-        markup = self.html
 
         # The H1 tag has the race name.  The H2 tag has the location and date.
         # Both are the only such tabs in the file.
@@ -303,15 +348,24 @@ class CoolRunning(RaceResults):
 
         return(div)
 
-    def webify_ccrr_results(self, results):
+    def webify_ccrr_results(self, results, markup):
         """
         Turn the list of results into full HTML.
         This works for Cape Cod Road Runners formatted results.
 
-        Return value:
-            "finished" HTML for the race.
+        Parameters
+        ----------
+        results : list
+            List of HTML TR rows containing individual race results
+        markup : str
+            HTML from a race web page.
+
+        Returns
+        -------
+        div : element tree
+            DIV element containing "finished" race results.
         """
-        div = self.construct_common_div()
+        div = self.construct_common_div(markup)
 
         table = etree.Element('table')
         for tr_elt in results:
@@ -321,13 +375,25 @@ class CoolRunning(RaceResults):
         div.append(table)
         return div
 
-    def webify_vanilla_results(self, result_lst):
+    def webify_vanilla_results(self, result_lst, markup):
         """
         Insert CoolRunning results into the output file.
-        """
-        div = self.construct_common_div()
 
-        banner_text = self.parse_banner()
+        Parameters
+        ----------
+        results_lst : list
+            List of HTML TR rows containing individual race results
+        markup : str
+            HTML from a race web page.
+
+        Returns
+        -------
+        div : element tree
+            DIV element containing "finished" race results.
+        """
+        div = self.construct_common_div(markup)
+
+        banner_text = self.parse_banner(markup)
 
         text = '<pre class="actual_results">\n'
         text += banner_text + '\n'.join(result_lst) + '\n'
@@ -342,14 +408,23 @@ class CoolRunning(RaceResults):
 
         return div
 
-    def parse_banner(self):
+    def parse_banner(self, markup):
         """
         Tease out the "banner" from the race file.
 
         This will usually be found following the <pre> tag that contains the
         results.
+
+        Parameters
+        ----------
+        markup : str
+            HTML from a race web page.
+
+        Returns
+        -------
+        banner : str
+            Text to use as a banner.
         """
-        markup = self.html
         regex = re.compile(r"""<pre>             # banner text follows
                                (?P<banner>.*?\n) # regex should NOT be greedy!
                                \s*1\b            # stop matching upon 1st place
@@ -377,19 +452,3 @@ class CoolRunning(RaceResults):
         banner_text = re.sub(r'&(?![A-Za-z]+[0-9]*;|#[0-9]+;|#x[0-9a-fA-F]+;)',
                              r'&amp;', banner_text)
         return banner_text
-
-    def download_state_master_file(self, state):
-        """
-        Download results for the specified state.
-
-        The URL will have the pattern
-
-        http://www.coolrunning.com/results/[YY]/[STATE].shtml
-
-        """
-        self.logger.info('Processing %s...' % state)
-        state_file = '{0}.shtml'.format(state)
-        url = 'http://www.coolrunning.com/results/{0}/{1}'
-        url = url.format(self.start_date.strftime('%y'), state_file)
-        self.logger.info('Downloading {0}.'.format(url))
-        self.download_file(url, local_file=state_file)
