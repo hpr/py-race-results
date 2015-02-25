@@ -4,7 +4,8 @@ Module for BestRace.
 import re
 import urllib
 
-from lxml import etree
+from lxml import etree, html
+import requests
 
 from .common import RaceResults
 
@@ -68,19 +69,16 @@ class BestRace(RaceResults):
         pattern += day_range
 
         pattern += r"\w+\.HTM"
+        regex = re.compile(pattern)
         self.logger.debug('pattern is "%s"' % pattern)
 
-        matchiter = re.finditer(pattern, self.html)
+        matchiter = re.finditer(pattern, self.response.text)
         urls = [matchobj.group() for matchobj in matchiter]
 
         for url in urls:
-            self.logger.info('Downloading %s...' % url)
-            try:
-                self.download_race(url)
-            except urllib.error.HTTPError as e:
-                print(e)
-                print("Going on to next race...")
-                continue
+            self.logger.info('Downloading {}...'.format(url))
+            response = requests.get(url)
+            self.html = response.text
             self.compile_race_results()
 
     def webify_results(self, results_lst):
@@ -147,10 +145,10 @@ class BestRace(RaceResults):
         http://www.bestrace.com/YYYYschedule.shtml
 
         """
-        fmt = 'http://www.bestrace.com/%sschedule.html'
-        url = fmt % self.start_date.strftime('%Y')
-        self.logger.info('Downloading %s.' % url)
-        self.download_file(url)
+        url = 'http://www.bestrace.com/{year}schedule.html'
+        url = url.format(year=self.start_date.strftime('%Y'))
+        self.logger.info('Downloading {}'.format(url))
+        self.response = requests.get(url)
 
     def download_race(self, url):
         """

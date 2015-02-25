@@ -166,11 +166,14 @@ class RaceResults:
         """
         Download a URL to a local file.
 
-        Args
-        ----
-            url:  The URL to retrieve
-            local_file:  Name of the file where we will store the web page.
-            params:  POST parameters to supply
+        Parameters
+        ----------
+        url : str
+            The URL to retrieve
+        local_file : str
+            Name of the file where we will store the web page.
+        params : dict
+            POST parameters to supply
         """
         # Store the url in case we need it later.
         self.downloaded_url = url

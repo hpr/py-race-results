@@ -1,14 +1,10 @@
 """
 Module for parsing Active race results.
 """
-import logging
+from lxml import etree, html
 import requests
 
-from lxml import etree, html
-
 from .common import RaceResults
-
-logging.basicConfig()
 
 
 class ActiveRR(RaceResults):
@@ -17,9 +13,6 @@ class ActiveRR(RaceResults):
 
     Attributes
     ----------
-    logger : logging.Logger
-        Handles verbosity of program execution.  All is logged to standard
-        output.
     states : list
         List of states in which to search. Default is ['NJ']
     """
