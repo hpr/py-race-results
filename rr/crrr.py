@@ -23,15 +23,21 @@ class CoolRunning(RaceResults):
         Identifier for the authority or racing company that produced the
         results.
     """
-    def __init__(self, states=None, **kwargs):
+    def __init__(self, verbose='INFO', states=None,
+                 membership_list=None, output_file=None, **kwargs):
         """
+        Parameters
+        ----------
         base_url:
         memb_list:  membership list
         race_list:  file containing list of races
         output_file:  final race results file
-        verbose:  how much output to produce
+        verbose : str
+            Level of verbosity
         """
-        RaceResults.__init__(self)
+        RaceResults.__init__(self, verbose=verbose,
+                             membership_list=membership_list,
+                             output_file=output_file)
         self.__dict__.update(**kwargs)
 
         if states is None:
@@ -39,11 +45,6 @@ class CoolRunning(RaceResults):
         self.states = states
 
         self.base_url = 'http://www.coolrunning.com'
-
-        self.load_membership_list()
-
-        # Set the appropriate logging level.
-        self.logger.setLevel(getattr(logging, self.verbose.upper()))
 
         self.author = None
 

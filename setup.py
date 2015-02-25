@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='RaceResults',
-    version='0.3.9',
+    version='0.3.10',
     author='John Evans',
     author_email='john.g.evans.ne@gmail.com',
     url='http://pypi.python.org/pypi/RaceResults',
@@ -12,6 +12,7 @@ setup(
         'test/testdata/*.htm']},
     entry_points={
         'console_scripts': [
+            'activerr = rr.command_line:run_active',
             'brrr = rr.command_line:run_bestrace',
             'crrr = rr.command_line:run_coolrunning',
             'csrr = rr.command_line:run_compuscore',
@@ -19,7 +20,7 @@ setup(
                             ]},
     license='LICENSE.txt',
     description='Race results parsing',
-    install_requires=['lxml>=2.3.4', 'requests>=2.2.0'],
+    install_requires=['lxml>=2.3.4', 'requests>=2.2.0', 'cssselect>=0.9.1'],
     classifiers=["Programming Language :: Python",
                  "Programming Language :: Python :: 3.4",
                  "Programming Language :: Python :: Implementation :: CPython",

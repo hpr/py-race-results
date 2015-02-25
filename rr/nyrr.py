@@ -17,17 +17,22 @@ class NewYorkRR(RaceResults):
     """
     Handles race results from New York Road Runners website.
     """
-    def __init__(self, **kwargs):
+    def __init__(self, membership_list=None, verbose='INFO',
+                 output_file=None, **kwargs):
         """
+        Parameters
+        ----------
+        membership_list : str
+            CSV membership list
+        verbose : str
+            How much verbosity.
         """
-        RaceResults.__init__(self)
+        RaceResults.__init__(self, membership_list=membership_list,
+                             output_file=output_file, verbose=verbose)
         self.__dict__.update(**kwargs)
 
         # Need to remember the current URL.
         self.downloaded_url = None
-
-        # Set the appropriate logging level.
-        self.logger.setLevel(getattr(logging, self.verbose.upper()))
 
         self.cookie_jar = None
 
@@ -210,8 +215,10 @@ class NewYorkRR(RaceResults):
         race_meta = etree.Element('div')
 
         # race name
+        h1 = etree.Element('h1')
         elts = td.findall('.//span')
-        race_meta.append(elts[0])
+        h1.text = elts[0].text
+        race_meta.append(h1)
         race_meta.append(etree.Element('br'))
 
         # list by team
@@ -269,7 +276,7 @@ class NewYorkRR(RaceResults):
         new_tr.append(td)
 
         # Append the rest of the TD elements in the first row.
-        for td in old_tds[2:]:
+        for td in old_tds[3:]:
             new_tr.append(td)
         new_table.append(new_tr)
 
