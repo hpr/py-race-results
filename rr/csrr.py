@@ -35,16 +35,24 @@ class CompuScore(RaceResults):
     """
     Class for handling compuscore results.
     """
-    def __init__(self, **kwargs):
+    def __init__(self, verbose='INFO', membership_list=None,
+                 output_file=None, **kwargs):
         """
-        memb_list:  membership list
+        Parameters
+        ----------
+        membership_list:  str
+            CSV membership list
+        verbose : str
+            How much verbosity.
         race_list:  file containing list of races
-        output_file:  final race results file
-        verbose:  how much output to produce
+        output_file : str
+            All race results written here.
         first_name_regex, last_name_regex : regular expressions
             One pair for each running club member.
         """
-        RaceResults.__init__(self)
+        RaceResults.__init__(self, verbose=verbose,
+                             membership_list=membership_list,
+                             output_file=output_file)
         self.__dict__.update(**kwargs)
 
         if self.start_date is not None:
@@ -52,11 +60,6 @@ class CompuScore(RaceResults):
 
         # Need to remember the current URL.
         self.downloaded_url = None
-
-        # Set the appropriate logging level.
-        self.logger.setLevel(getattr(logging, self.verbose.upper()))
-
-        self.load_membership_list()
 
     def compile_web_results(self):
         """
