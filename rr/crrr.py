@@ -21,28 +21,8 @@ class CoolRunning(RaceResults):
         Identifier for the authority or racing company that produced the
         results.
     """
-    def __init__(self, verbose='INFO', states=None,
-                 membership_list=None, output_file=None, **kwargs):
-        """
-        Parameters
-        ----------
-        base_url:
-        memb_list:  membership list
-        race_list:  file containing list of races
-        output_file:  final race results file
-        verbose : str
-            Level of verbosity
-        """
-        RaceResults.__init__(self, verbose=verbose,
-                             membership_list=membership_list,
-                             output_file=output_file)
-        self.__dict__.update(**kwargs)
-
-        if states is None:
-            states = ['ma']
-        self.states = states
-
-        self.base_url = 'http://www.coolrunning.com'
+    def __init__(self, **kwargs):
+        RaceResults.__init__(self, **kwargs)
 
         self.author = None
 

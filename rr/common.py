@@ -25,6 +25,8 @@ class RaceResults:
     logger: handles verbosity of program execution.  All is logged to
             standard output.
     cookies : NYRR requires cookies
+    states : list
+        List of states to search.  Not all subclasses use this.
     html : str
             HTML from downloaded web page
     user_agent:  masquerade as browser because some sites do not like
@@ -35,19 +37,22 @@ class RaceResults:
 
     def __init__(self, verbose='INFO', membership_list=None,
                  start_date=dt.datetime.now() - dt.timedelta(days=7),
-                 stop_date=dt.datetime.now(),
+                 stop_date=dt.datetime.now(), states=None,
                  output_file=None):
         """
         Parameters
         ----------
         start_date, stop_date : datetime.datetime
             Specifies time range in which to search for race results.
+        states : list
+            List of states to search.  Not all subclasses use this.
         verbose : str
             Level of verbosity
         """
         self.start_date = start_date
         self.stop_date = stop_date
         self.output_file = output_file
+        self.states = states
 
         # Set up a logger for relaying progress back to the user.
         self.logger = logging.getLogger('race_results')

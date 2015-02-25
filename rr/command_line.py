@@ -150,9 +150,6 @@ def run_coolrunning():
                         dest='membership_list',
                         help='membership list',
                         required=True)
-    group.add_argument('--rl',
-                       dest='race_list',
-                       help='race list')
     args = parser.parse_args()
 
     year = int(args.year)
@@ -169,7 +166,6 @@ def run_coolrunning():
     o = CoolRunning(start_date=start_date,
                     stop_date=stop_date,
                     membership_list=args.membership_list,
-                    race_list=args.race_list,
                     output_file=args.output_file,
                     states=args.states,
                     verbose=args.verbose)
