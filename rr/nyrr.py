@@ -3,6 +3,8 @@ Module for compiling NYRR race resuts.
 """
 import datetime
 import re
+import http
+import http.cookiejar
 import urllib.request
 import warnings
 
@@ -15,23 +17,21 @@ class NewYorkRR(RaceResults):
     """
     Handles race results from New York Road Runners website.
     """
-    def __init__(self, membership_list=None, verbose='INFO',
-                 output_file=None, **kwargs):
+    def __init__(self, team=None, **kwargs):
         """
         Parameters
         ----------
-        membership_list : str
-            CSV membership list
-        verbose : str
-            How much verbosity.
+        team : str
+            Search for results by team name, not individual.
         """
-        RaceResults.__init__(self, membership_list=membership_list,
-                             output_file=output_file, verbose=verbose)
-        self.__dict__.update(**kwargs)
+        RaceResults.__init__(self, membership_list=None, **kwargs)
+
+        self.team = team
 
         # Need to remember the current URL.
         self.downloaded_url = None
 
+        self.cookies = None
         self.cookie_jar = None
 
         # This URL is used in a regular expression that teases out the URLs
@@ -283,3 +283,42 @@ class NewYorkRR(RaceResults):
             new_table.append(tr)
 
         return(new_table)
+
+    def download_file(self, url, local_file=None, params=None):
+        """
+        Download a URL to a local file.
+
+        Parameters
+        ----------
+        url : str
+            The URL to retrieve
+        local_file : str
+            Name of the file where we will store the web page.
+        params : dict
+            POST parameters to supply
+        """
+        # Store the url in case we need it later.
+        self.downloaded_url = url
+
+        # cookie support needed for NYRR results.
+        if self.cookies is None:
+            self.cookies = http.cookiejar.LWPCookieJar()
+        cookie_processor = urllib.request.HTTPCookieProcessor(self.cookies)
+        opener = urllib.request.build_opener(cookie_processor)
+        urllib.request.install_opener(opener)
+
+        headers = {'User-Agent': self.user_agent}
+        req = urllib.request.Request(url, None, headers)
+        response = urllib.request.urlopen(req, params)
+        html = response.readall()
+        try:
+            html = html.decode('utf-8')
+        except UnicodeDecodeError:
+            html = html.decode('latin1')
+
+        if local_file is not None:
+            with open(local_file, 'wb') as fptr:
+                fptr.write(html.encode())
+        else:
+            self.html = html
+
