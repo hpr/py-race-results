@@ -1,12 +1,12 @@
 """
 Backend class for handling CoolRunning race results.
 """
+import io
 import re
-import tempfile
 import warnings
 
 import lxml
-from lxml import etree
+from lxml import etree, html
 
 from .common import RaceResults
 
@@ -166,34 +166,29 @@ class CoolRunning(RaceResults):
         Return value:
             List of <TR> elements, each row containing an individual result.
         """
-        pattern = './/body/table/tr/td/table/tr/td/table/tr/td/div/table/tr'
-        # Write it back out to a file, need to use the HTML parser to read
-        # it back in.
-        with tempfile.NamedTemporaryFile(suffix=".html", mode='wt') as tfile:
-            tfile.write(self.html)
-            tfile.flush()
-
-            parser = etree.HTMLParser()
-            tree = etree.parse(tfile.name, parser)
-
+        parser = etree.HTMLParser()
+        tree = etree.parse(io.StringIO(self.html), parser)
         root = tree.getroot()
 
-        trs = root.findall(pattern)
+        doc = html.document_fromstring(self.html)
+
+        # The table rows follow a set of H1, H2, H3, and P tags.  This seems
+        # a bit brittle.
+        trs = doc.cssselect('h1 + h2 + h3 + p.subhead + table tr')
 
         results = []
         for tr in trs:
             tds = tr.getchildren()
 
             if len(tds) < 3:
+                # Incomplete row, skip it.
                 continue
 
-            runner_name = tds[1].text
+            runner_name = tds[0].text
             if runner_name is None:
                 continue
-            for idx in range(0, len(self.first_name_regex)):
-                fregex = self.first_name_regex[idx]
-                lregex = self.last_name_regex[idx]
-                if fregex.search(runner_name) and lregex.search(runner_name):
+            for regex in self.regex:
+                if regex.match(runner_name):
                     results.append(tr)
 
         if len(results) > 0:
