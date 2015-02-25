@@ -3,17 +3,13 @@ Module for parsing Compuscore race results.
 """
 
 import datetime
-import logging
 import re
 import requests
-import urllib
 import warnings
 
 from lxml import etree
 
 from .common import RaceResults
-
-logging.basicConfig()
 
 # Need to match the month of the search window to the month strings that
 # Compuscore uses.
@@ -35,28 +31,10 @@ class CompuScore(RaceResults):
     """
     Class for handling compuscore results.
     """
-    def __init__(self, verbose='INFO', membership_list=None,
-                 output_file=None, **kwargs):
-        """
-        Parameters
-        ----------
-        membership_list:  str
-            CSV membership list
-        verbose : str
-            How much verbosity.
-        race_list:  file containing list of races
-        output_file : str
-            All race results written here.
-        first_name_regex, last_name_regex : regular expressions
-            One pair for each running club member.
-        """
-        RaceResults.__init__(self, verbose=verbose,
-                             membership_list=membership_list,
-                             output_file=output_file)
-        self.__dict__.update(**kwargs)
+    def __init__(self, **kwargs):
+        RaceResults.__init__(self, **kwargs)
 
-        if self.start_date is not None:
-            self.monthstr = MONTHSTRS[self.start_date.month]
+        self.monthstr = MONTHSTRS[self.start_date.month]
 
         # Need to remember the current URL.
         self.downloaded_url = None
@@ -99,35 +77,6 @@ class CompuScore(RaceResults):
                     self.html = race_resp.content.decode('latin1')
                 self.compile_race_results()
 
-    def process_master_file(self):
-        """
-        Parse the "master" file containing an entire month's worth of races.
-        Pick out the URLs of the race results and process each.  We cannot
-        easily restrict based on the time frame here.
-        """
-        year = self.start_date.year
-        monthstr = MONTHSTRS[self.start_date.month]
-        pattern = r'http://www.compuscore.com/cs{0}/{1}/(?P<race>\w+)\.htm'
-        pattern = pattern.format(year, monthstr)
-        matchiter = re.finditer(pattern, self.html)
-        urls = [matchobj.group() for matchobj in matchiter]
-
-        for url in urls:
-            self.logger.info('Downloading {0}...'.format(url))
-
-            response = urllib.request.urlopen(url)
-            try:
-                self.html = response.read().decode('utf-8')
-            except UnicodeDecodeError as err:
-                msg = "Problem with {0}, skipping....  \"{1}\"."
-                warnings.warn(msg.format(url, err))
-
-            self.downloaded_url = url
-            if self.race_date_in_range():
-                self.compile_race_results()
-            else:
-                self.logger.info('Date not in range...')
-
     def get_race_date(self):
         """
         Return the race date.
@@ -159,13 +108,6 @@ class CompuScore(RaceResults):
         day = int(matchobj.group('dd'))
 
         return datetime.date(year, month, day)
-
-    def race_date_in_range(self):
-        """
-        Determine if the race file took place in the specified date range.
-        """
-        race_date = self.get_race_date()
-        return self.start_date <= race_date and race_date <= self.stop_date
 
     def webify_results(self, results):
         """

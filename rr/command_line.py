@@ -205,8 +205,6 @@ def run_compuscore():
                         help='output file, default is results.html')
     parser.add_argument('--ml', dest='membership_list',
                         help='membership list', required=True)
-    group.add_argument('--rl', dest='race_list',
-                       help='race list')
 
     args = parser.parse_args()
 
@@ -220,7 +218,6 @@ def run_compuscore():
     o = CompuScore(start_date=start_date,
                    stop_date=stop_date,
                    membership_list=args.membership_list,
-                   race_list=args.race_list,
                    output_file=args.output_file,
                    verbose=args.verbose)
     o.run()
@@ -261,8 +258,6 @@ def run_nyrr():
                         dest='team',
                         default='RARI',
                         help='team code (i.e. "RARI")')
-    group.add_argument('--rl', dest='race_list',
-                       help='race list')
 
     args = parser.parse_args()
 
@@ -276,7 +271,6 @@ def run_nyrr():
     o = NewYorkRR(start_date=start_date,
                   stop_date=stop_date,
                   team=args.team,
-                  race_list=args.race_list,
                   output_file=args.output_file,
                   verbose=args.verbose)
     o.run()

@@ -12,6 +12,8 @@ import xml.etree.cElementTree as ET
 
 from lxml import etree
 
+logging.basicConfig()
+
 
 class RaceResults:
     """
