@@ -134,10 +134,7 @@ class RaceResults:
         provided list.
         """
         self.initialize_output_file()
-        if self.race_list is None:
-            self.compile_web_results()
-        else:
-            self.compile_local_results()
+        self.compile_web_results()
 
     def local_tidy(self, local_file=None):
         """
@@ -235,16 +232,6 @@ class RaceResults:
         if len(results) > 0:
             results = self.webify_results(results)
             self.insert_race_results(results)
-
-    def compile_local_results(self):
-        """Compile results from list of local files.
-        """
-        with open(self.race_list) as fptr:
-            for line in fptr.readlines():
-                filename = line.rstrip()
-                with open(filename, 'rt') as fptr:
-                    self.html = fptr.read()
-                self.compile_race_results()
 
     def initialize_output_file(self):
         """

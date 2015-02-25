@@ -1,9 +1,7 @@
 """
 Module for compiling NYRR race resuts.
 """
-
 import datetime
-import logging
 import re
 import urllib.request
 import warnings

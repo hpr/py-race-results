@@ -1,20 +1,15 @@
 """
 Module for parsing Active race results.
 """
-
-import datetime
 import logging
-import re
 import requests
-import warnings
 
-import lxml
 from lxml import etree, html
-from lxml import html
 
 from .common import RaceResults
 
 logging.basicConfig()
+
 
 class ActiveRR(RaceResults):
     """
@@ -60,12 +55,14 @@ class ActiveRR(RaceResults):
         """
         for state in self.states:
             url = 'http://results.active.com/search'
-            params = {'search[source]': 'event',
-                      'search[query]': state,
-                      'search[start_date]': self.start_date.strftime('%Y-%m-%d'),
-                      'search[end_date]': self.stop_date.strftime('%Y-%m-%d')}
+            params = {
+                'search[source]': 'event',
+                'search[query]': state,
+                'search[start_date]': self.start_date.strftime('%Y-%m-%d'),
+                'search[end_date]': self.stop_date.strftime('%Y-%m-%d')
+            }
             response = requests.get(url, params=params)
-    
+
             # Go thru the list of events.  They are identified by DIV tags with
             # "result-rows" class.
             doc = html.document_fromstring(response.content)
@@ -99,7 +96,7 @@ class ActiveRR(RaceResults):
              </div>
             <br class="clear"/>
           </div>
-   
+
         """
         name = event.cssselect('.result-title a')[0].text.strip()
         place = event.cssselect('.result-sub-location')[0].text.strip()
@@ -113,16 +110,6 @@ class ActiveRR(RaceResults):
         if r.status_code != 200:
             raise RuntimeError("Could not retrieve {}".format(url))
 
-        # Hopefully there is an "Overall Results" in there somewhere.
-        #if "Overall Results" in r.text:
-        #    doc = html.document_fromstring(r.content)
-        #    elts = doc.cssselect('.event-nav a')
-        #    elt = [x for x in elts if x.text == 'Overall Results'][0]
-        #    url = 'http://results.active.com' + elt.get('href')
-        #    self.process_results_page(url)
-        #else:
-        #msg = "Could not find overall results in {}.".format(url)
-        #warnings.warn(msg)
         doc = html.document_fromstring(r.content)
         elts = doc.cssselect('.event-nav a')
         for elt in elts:
@@ -141,7 +128,6 @@ class ActiveRR(RaceResults):
             print('\tLooking at {}'.format(elt.text))
             url = 'http://results.active.com' + elt.get('href')
             self.process_results_page(url)
-                
 
     def process_results_page(self, url):
         """
@@ -176,7 +162,7 @@ class ActiveRR(RaceResults):
 
             links = doc.cssselect('.pagination a[rel]')
 
-        # Search the tables.                
+        # Search the tables.
         lst = []
         for table in tables:
             trs = table.cssselect('tr')
@@ -201,7 +187,8 @@ class ActiveRR(RaceResults):
 
         Parameters
         ----------
-        leadin_doc : 
+        leadin_doc : lxml.html.HtmlElement
+            Element tree of lead in page of race results from active.com
         lst : list
             List of <TR> elements consisting of results.
         url : str
@@ -250,6 +237,6 @@ class ActiveRR(RaceResults):
                 tr_elt.append(td_elt)
             # We need to "clean" the row, i.e. remove any links.
             table.append(tr_elt)
-        
+
         div.append(table)
         self.insert_race_results(div)

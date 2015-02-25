@@ -1,7 +1,6 @@
 """
 Module for BestRace.
 """
-import logging
 import re
 import urllib
 

@@ -1,8 +1,6 @@
 """
 Backend class for handling CoolRunning race results.
 """
-
-import logging
 import re
 import tempfile
 import warnings

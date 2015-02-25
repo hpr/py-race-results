@@ -2,7 +2,6 @@
 Module for L & M Computer Sports timing company.
 """
 import datetime
-import logging
 import re
 import urllib
 

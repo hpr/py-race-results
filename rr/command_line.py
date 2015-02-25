@@ -62,6 +62,7 @@ def run_active():
                  output_file=args.output_file)
     o.run()
 
+
 def run_bestrace():
     # -ml cannot be used with -d, -m, or -y
     # But -y and -m have defaults.
