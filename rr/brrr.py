@@ -2,7 +2,6 @@
 Module for BestRace.
 """
 import re
-import urllib
 
 from lxml import etree, html
 import requests
@@ -13,64 +12,41 @@ from .common import RaceResults
 class BestRace(RaceResults):
     """
     Process races found on BestRace.com.
-
-    Attributes
-    ----------
-    start_date, stop_date:  datetime.datetime
-        date range to restrict race searches
-    memb_list:  membership list
-    race_list:  file containing list of races
-    output_file:  str
-        final race results file
-    logger: handles verbosity of program execution
-    downloaded_url:  If a race retrieved from a URL has results for anyone
-            in the membership list, then we want to record that URL in the
-            output.
     """
 
-    def __init__(self, verbose='INFO', membership_list=None, output_file=None,
-                 **kwargs):
-        """
-        Parameters
-        ----------
-        membership_list : str
-            CSV membership list
-        verbose : str
-            Level of verbosity
-        output_file : str
-            All race results written to this file
-        """
-        RaceResults.__init__(self, verbose=verbose,
-                             membership_list=membership_list,
-                             output_file=output_file)
-        self.__dict__.update(**kwargs)
+    def __init__(self, **kwargs):
+        RaceResults.__init__(self, **kwargs)
 
     def compile_web_results(self):
         """
         Download the requested results and compile them.
         """
-        self.download_master_file()
-        self.process_master_file()
+        # The URL for the "master" list will have the pattern
+        #
+        # http://www.bestrace.com/YYYYschedule.shtml
+        url = 'http://www.bestrace.com/{year}schedule.html'
+        url = url.format(year=self.start_date.strftime('%Y'))
+        self.logger.info('Downloading {}'.format(url))
+        self.response = requests.get(url)
 
-    def process_master_file(self):
-        """
-        Compile results for the specified state.
-        """
+        # Look for the following pattern in the "master" list.
+        # 
+        # http://www.bestrace.com/results/YY/YYMMDDXXX.HTM
         pattern = 'http://www.bestrace.com/results/{}/{}{}'
         pattern = pattern.format(self.start_date.strftime('%y'),
                                  self.start_date.strftime('%y'),
                                  self.start_date.strftime('%m'))
 
-        day_range = '('
-        for day in range(self.start_date.day, self.stop_date.day):
-            day_range += "%02d|" % day
-        day_range += '%02d)' % self.stop_date.day
+        ndays = self.stop_date.day - self.start_date.day + 1
+        fmt = '|'.join(['{:02d}' for r in range(ndays)])
+        pargs = [x for x in range(self.start_date.day, self.stop_date.day + 1)]
+        day_range = fmt.format(*pargs)
 
-        pattern += day_range
+        pattern += '(' + day_range + ')'
 
         pattern += r"\w+\.HTM"
         regex = re.compile(pattern)
-        self.logger.debug('pattern is "%s"' % pattern)
+        self.logger.debug('pattern is "{}"'.format(pattern))
 
         matchiter = re.finditer(pattern, self.response.text)
         urls = [matchobj.group() for matchobj in matchiter]
@@ -136,25 +112,3 @@ class BestRace(RaceResults):
         div.append(pre)
 
         return div
-
-    def download_master_file(self):
-        """Download results for the specified state.
-
-        The URL will have the pattern
-
-        http://www.bestrace.com/YYYYschedule.shtml
-
-        """
-        url = 'http://www.bestrace.com/{year}schedule.html'
-        url = url.format(year=self.start_date.strftime('%Y'))
-        self.logger.info('Downloading {}'.format(url))
-        self.response = requests.get(url)
-
-    def download_race(self, url):
-        """
-        Download a race URL to a local file.
-        """
-        name = url.split('/')[-1]
-        self.logger.info('Downloading %s...' % name)
-        self.download_file(url)
-        self.downloaded_url = url
