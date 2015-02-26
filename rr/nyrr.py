@@ -1,7 +1,8 @@
 """
 Module for compiling NYRR race resuts.
 """
-import datetime
+import datetime as dt
+import io
 import re
 import http
 import http.cookiejar
@@ -9,6 +10,7 @@ import urllib.request
 import warnings
 
 from lxml import etree
+from lxml import html as html2
 
 from .common import RaceResults
 
@@ -48,24 +50,15 @@ class NewYorkRR(RaceResults):
         url = 'http://web2.nyrrc.org'
         url += '/cgi-bin/start.cgi/aes-programs/results/resultsarchive.htm'
 
-        local_file = 'resultsarchive.html'
-        self.download_file(url, local_file)
+        text = self.download_file(url)
 
         # There are two forms used for searches.  The one that we want (list
         # all the results for an entire year) is the 2nd on that this regex
         # retrieves.
-        with open(local_file) as fptr:
-            html = fptr.read()
-        regex = re.compile(r"""<form
-                               \s+name="(?P<name>\w+)"
-                               \s+method=post
-                               \s+action=(?P<action>\S+)
-                               .*\s""", re.VERBOSE)
-        lst = regex.findall(html)
-        if len(lst) != 2:
-            msg = "resultsarchive did not yield right number of results."
-            raise RuntimeError(msg)
-        url = lst[0][1]
+        doc = html2.document_fromstring(text)
+        forms = doc.cssselect('form[name="findOtherRaces"]')
+        form = forms[0]
+        url = form.get('action')
 
         # The page for POSTing the search needs POST params.
         post_params = {}
@@ -75,48 +68,22 @@ class NewYorkRR(RaceResults):
         data = data.encode()
 
         # Download the race list page for the specified year
-        local_file = 'nyrrraces.html'
-        self.download_file(url, local_file, data)
+        text = self.download_file(url, data)
 
-        # This is not valid HTML.  Need to get rid of some bad FORMs,
-        # none of which are needed.
-        with open(local_file, 'r', encoding='utf-8') as fptr:
-            html = fptr.read()
-        html = html.replace('form', 'div')
-        with open(local_file, 'w') as fptr:
-            fptr.write(html)
+        doc2 = html2.document_fromstring(text)
+        links = doc2.cssselect('a')
 
-        self.local_tidy(local_file)
+        for link in links:
+            url = link.get('href')
+            if self.result_url_base not in url:
+                continue
 
-        # Parse out the list of races.  They are all in a
-        # particular table.
-        with open(local_file, 'r') as fptr:
-            markup = fptr.read()
-
-        pattern = r"""<a\shref="(?P<url>{0}         # This part too long
-                      \?result.id=
-                      (?P<result_id>[0-9a-z]*)&amp; # Unique for each result.
-                      result.year=\d\d\d\d)">       # End of URL
-                      (?P<race_name>.*?)            # Name of the race.
-                      </a>\s*                       # End of anchor.
-                      (?P<month>\d\d)/
-                      (?P<day>\d\d)/
-                      (?P<year>\d\d)"""             # Race date.
-        pattern = pattern.format(self.result_url_base)
-        regex = re.compile(pattern, re.VERBOSE | re.DOTALL)
-        for matchobj in regex.finditer(markup):
-
-            url = matchobj.group('url')
             url = re.sub('&amp;', '&', url)
 
-            # Get rid of leading and trailing white space in the race name.
-            race_name = matchobj.group('race_name')
-            race_name = re.sub(r'^\s*', '', race_name)
-            race_name = re.sub(r'\s*$', '', race_name)
-
-            race_date = datetime.date(int(matchobj.group('year')) + 2000,
-                                      int(matchobj.group('month')),
-                                      int(matchobj.group('day')))
+            race_name = link.text
+            race_date_text = link.tail.strip()
+            rdt = dt.datetime.strptime(race_date_text, '%m/%d/%y')
+            race_date = dt.date(rdt.year, rdt.month, rdt.day)
 
             if self.start_date <= race_date and race_date <= self.stop_date:
                 self.logger.info("Keeping {0}".format(race_name))
@@ -128,25 +95,11 @@ class NewYorkRR(RaceResults):
         """We have the URL of a single event.  The URL does not lead to the
         results, however, it leads to a search page.
         """
-        local_file = 'event_search.html'
-        self.download_file(url, local_file)
-
-        try:
-            with open(local_file, 'r', encoding='utf-8') as fptr:
-                markup = fptr.read()
-        except UnicodeDecodeError:
-            with open(local_file, 'r', encoding='latin1') as fptr:
-                markup = fptr.read()
-
-        # There should be a single form.
-        regex = re.compile(r"""<form\s*
-                               method=post\s*
-                               action=(?P<action>.*?)\s*
-                               >""", re.VERBOSE | re.DOTALL)
-        matchobj = regex.search(markup)
-        if matchobj is None:
-            warnings.warn("Unable to match the expected form.")
-        url = matchobj.group('action')
+        markup = self.download_file(url)
+        doc = html2.document_fromstring(markup)
+        forms = doc.cssselect('form')
+        form = forms[0]
+        url = form.get('action')
 
         # The page for POSTing the search needs POST params.
         # Provide all the search parameters for this race.  This includes, most
@@ -169,35 +122,31 @@ class NewYorkRR(RaceResults):
         data = urllib.parse.urlencode(post_params)
         data = data.encode()
 
-        local_file = 'nyrrresult.html'
-        self.download_file(url, local_file, data)
-        self.local_tidy(local_file)
+        markup = self.download_file(url, data)
 
         # If there were no results for the specified team, then the html will
         # contain some red text to the effect of "Your search returns no
         # match."
-        with open(local_file, 'r', encoding='utf-8') as fptr:
-            html = fptr.read()
-        if re.search("Your search returns no match.", html) is not None:
+        if re.search("Your search returns no match.", markup) is not None:
             return
 
         # So now we have a result.  Parse it for the result table.
         parser = etree.HTMLParser()
-        tree = etree.parse(local_file, parser)
+        tree = etree.parse(io.StringIO(markup), parser)
         root = tree.getroot()
 
-        # 3rd table is the one we want.
-        pattern = './/table'
-        tables = root.findall(pattern)
+        doc = html2.document_fromstring(markup)
+        tables = doc.cssselect('table')
 
-        if len(tables) < 3:
+        if len(tables) < 4:
             return
 
-        div = self.webify_results(tables)
+        div = self.webify_results(tables[1], tables[3])
         self.insert_race_results(div)
 
-    def webify_results(self, tables):
-        """Turn the results into the output form that we want.
+    def webify_results(self, meta_table, results_table):
+        """
+        Turn the results into the output form that we want.
         """
 
         # maybe abstract this into a webify function.
@@ -208,13 +157,12 @@ class NewYorkRR(RaceResults):
         div.append(hr)
 
         # Append the race metadata.
-        tds = tables[1].findall('.//td')
-        td = tds[2]
+        td = meta_table.cssselect('td:nth-child(3)')[0]
         race_meta = etree.Element('div')
 
         # race name
         h1 = etree.Element('h1')
-        elts = td.findall('.//span')
+        elts = td.cssselect('span')
         h1.text = elts[0].text
         race_meta.append(h1)
         race_meta.append(etree.Element('br'))
@@ -244,7 +192,7 @@ class NewYorkRR(RaceResults):
 
         # The table we want is the 3rd one.  We need
         # to sanitize it, though.
-        table = self.sanitize_table(tables[3])
+        table = self.sanitize_table(results_table)
         div.append(table)
         return div
 
@@ -284,7 +232,7 @@ class NewYorkRR(RaceResults):
 
         return(new_table)
 
-    def download_file(self, url, local_file=None, params=None):
+    def download_file(self, url, params=None):
         """
         Download a URL to a local file.
 
@@ -292,8 +240,6 @@ class NewYorkRR(RaceResults):
         ----------
         url : str
             The URL to retrieve
-        local_file : str
-            Name of the file where we will store the web page.
         params : dict
             POST parameters to supply
         """
@@ -316,9 +262,4 @@ class NewYorkRR(RaceResults):
         except UnicodeDecodeError:
             html = html.decode('latin1')
 
-        if local_file is not None:
-            with open(local_file, 'wb') as fptr:
-                fptr.write(html.encode())
-        else:
-            self.html = html
-
+        return html
