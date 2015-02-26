@@ -222,28 +222,12 @@ class CoolRunning(RaceResults):
         markup : str
             HTML from a race web page.
         """
-        regex1 = re.compile(r"""<meta\s
-                                name=\"Author\"\s
-                                content=\"(?P<content>.*)\"\s*
-                                \/?>""",  # Sometimes there's no /
-                            re.VERBOSE | re.IGNORECASE)
-        regex2 = re.compile(r"""<meta\s
-                                content=\"(?P<content>.*)\"\s*
-                                name=\"Author\"\s*
-                                \/?>""",  # Sometimes there's no /
-                            re.VERBOSE | re.IGNORECASE)
-
-        matchobj = regex1.search(markup)
-        if matchobj is not None:
-            self.author = matchobj.group('content')
-            return
-
-        matchobj = regex2.search(markup)
-        if matchobj is not None:
-            self.author = matchobj.group('content')
-        else:
+        doc = html.document_fromstring(markup)
+        elts = doc.cssselect('meta[name="Author"]')
+        if len(elts) == 0:
             msg = "Could not parse the race company identifier"
             raise RuntimeError(msg)
+        self.author = elts[0].get('content')
 
     def compile_race_results(self, markup):
         """
@@ -316,6 +300,8 @@ class CoolRunning(RaceResults):
         markup : str
             HTML from a race web page.
         """
+        doc = html.document_fromstring(markup)
+
         div = etree.Element('div')
         div.set('class', 'race')
         hr_elt = etree.Element('hr')
@@ -326,20 +312,14 @@ class CoolRunning(RaceResults):
         # Both are the only such tabs in the file.
         #
         # Use re.DOTALL since . must match across lines.
-        regex = re.compile('<h1>(?P<h1>.*)</h1>.*<h2>(?P<h2>.*)</h2>',
-                           re.DOTALL)
-        matchobj = regex.search(markup)
-        if matchobj is None:
-            msg = "Could not find H1/H2 tags from {0}"
-            msg = msg.format(self.downloaded_url)
-            raise RuntimeError(msg)
-
+        h1 = doc.cssselect('h1')[0]
         h1_elt = etree.Element('h1')
-        h1_elt.text = matchobj.group('h1')
+        h1_elt.text = h1.text
         div.append(h1_elt)
 
+        h2 = doc.cssselect('h2')[0]
         h2_elt = etree.Element('h2')
-        h2_elt.text = matchobj.group('h2')
+        h2_elt.text = h2.text
         div.append(h2_elt)
 
         # Append the URL if possible.
