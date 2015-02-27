@@ -164,7 +164,7 @@ class ActiveRR(RaceResults):
                 tds = tr.getchildren()
                 if len(tds) < 2:
                     continue
-                for regex in self.regex:
+                for _, regex in self.df['fname_lname_regex'].iteritems():
                     if regex.match(tds[2].text_content()):
                         lst.append(tr)
 
