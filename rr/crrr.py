@@ -199,7 +199,7 @@ class CoolRunning(RaceResults):
             runner_name = tds[0].text
             if runner_name is None:
                 continue
-            for regex in self.regex:
+            for _, regex in self.df['fname_lname_regex'].iteritems():
                 if regex.match(runner_name):
                     results.append(tr)
 

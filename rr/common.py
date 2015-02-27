@@ -1,6 +1,5 @@
 """Parse race results.
 """
-import csv
 import datetime as dt
 import logging
 import re
@@ -9,6 +8,7 @@ import xml.dom.minidom
 import xml.etree.cElementTree as ET
 
 from lxml import etree
+import pandas as pd
 
 logging.basicConfig()
 
@@ -80,33 +80,37 @@ class RaceResults:
         We have a line of text from the race file.  Match it against the
         membership list.
         """
-        for regex in self.regex:
+        for _, regex in self.df['fname_lname_regex'].iteritems():
             if regex.search(line):
                 return(True)
         return(False)
 
-    def load_membership_list(self, csv_file):
+    def load_membership_list(self, membership_file):
         """
         Construct regular expressions for each person in the membership list.
 
         Parameters
         ----------
         membership_list : str
-            CSV file of club membership
+            CSV or Excel spreadsheet file of club membership
         """
-        regex = []
-        for last_name, first_name in self.parse_membership_list(csv_file):
+        df = pd.read_csv(membership_file)
+        cols = [col.lower() for col in df]
+        df.columns = cols
+
+        df['fname_lname_regex'] = None
+        for j in range(len(df)):
             # Use word boundaries to prevent false positives, e.g. "Ed Ford"
             # does not cause every fricking person from "New Bedford" to
             # match.  Here's an example line to match.
             #   '60 Gene Gugliotta       North Plainfiel,NJ 53 M U '
             # The first and last names must be separated by just white space.
-            pattern = ('\\b(?:' + first_name + '|' + last_name + ')'
-                       + '\\s+(?:' + last_name + '|' + first_name + ')\\b')
+            pattern = ('\\b(?:' + df['fname'][j]+ '|' + df['lname'][j] + ')'
+                       + '\\s+(?:' + df['lname'][j] + '|' + df['fname'][j] + ')\\b')
 
-            regex.append(re.compile(pattern, re.IGNORECASE))
+            df['fname_lname_regex'][j] = re.compile(pattern, re.IGNORECASE)
 
-        self.regex = regex
+        self.df = df
 
     def parse_membership_list(self, csv_file):
         """
