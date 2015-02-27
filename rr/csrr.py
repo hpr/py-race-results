@@ -7,7 +7,7 @@ import re
 import requests
 import warnings
 
-from lxml import etree
+from lxml import etree, html
 
 from .common import RaceResults
 
@@ -67,15 +67,41 @@ class CompuScore(RaceResults):
 
                 # And finally, download the race itself.
                 url3 = 'http://{site}{rel_url}'
-                url3 = url3.format(site=web_details['webfile']['domain'],
-                                   rel_url=web_details['webfile']['resource'])
+                kwargs = {'site': web_details['webfile']['domain'],
+                          'rel_url': web_details['webfile']['resource']}
+                url3 = url3.format(**kwargs)
                 race_resp = requests.get(url3)
                 self.downloaded_url = url3
-                try:
-                    self.html = race_resp.content.decode('utf-8')
-                except UnicodeDecodeError:
-                    self.html = race_resp.content.decode('latin1')
-                self.compile_race_results()
+
+                self.compile_race_results(race_resp)
+
+    def compile_race_results(self, resp):
+        """
+        """
+        doc = html.document_fromstring(resp.text)
+        self.html = resp.text
+        pre = doc.cssselect('strong + pre')[0]
+
+        # The prior <STRONG> element should have a <A NAME="overall"> element
+        strong = pre.getprevious()
+        lst = strong.cssselect('a[name="overall"]')
+        if len(lst) == 0:
+            msg = "Could not find overall results."
+            raise RuntimeError(msg)
+
+        # OK, we are properly positioned.
+        results = []
+        already_found = []
+        for line in pre.text_content().split('\n'):
+            for _, regex in self.df['fname_lname_regex'].iteritems():
+                if regex.search(line):
+                    if regex not in already_found:
+                        results.append(line)
+                        already_found.append(regex)
+
+        if len(results) > 0:
+            results = self.webify_results(doc, results)
+            self.insert_race_results(results)
 
     def get_race_date(self):
         """
@@ -109,7 +135,7 @@ class CompuScore(RaceResults):
 
         return datetime.date(year, month, day)
 
-    def webify_results(self, results):
+    def webify_results(self, doc, results):
         """
         Take the list of results and turn it into output HTML.
         """
@@ -121,22 +147,17 @@ class CompuScore(RaceResults):
         div.append(hr_elt)
 
         # The single H2 element in the file has the race name.
-        regex = re.compile(r'<h2.*>(?P<h2>.*)</h2>')
-        matchobj = regex.search(self.html)
+        h2 = doc.cssselect('h2')[0]
         h2_elt = etree.Element('h2')
-        if matchobj is None:
-            h2_elt.text = ''
-        else:
-            h2_elt.text = matchobj.group('h2')
+        h2_elt.text = h2.text
         div.append(h2_elt)
 
         # The single H3 element in the file has the race date.
         # If it's there, that is.
-        race_date = self.get_race_date()
-        if race_date is not None:
-            h3_elt = etree.Element('h3')
-            h3_elt.text = race_date.strftime('Race Date:  %b %d, %Y')
-            div.append(h3_elt)
+        h3 = doc.cssselect('h3')[0]
+        h3_elt = etree.Element('h3')
+        h3_elt.text = h3.text
+        div.append(h3_elt)
 
         if self.downloaded_url is not None:
             div.append(self.construct_source_url_reference('Compuscore'))
