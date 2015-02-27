@@ -2,6 +2,7 @@
 Backend class for handling CoolRunning race results.
 """
 import io
+import itertools
 import re
 import warnings
 
@@ -150,16 +151,9 @@ class CoolRunning(RaceResults):
         markup : str
             HTML from a race web page.
         """
-        regex = re.compile(r"""<pre>              # banner follows the <pre>
-                               (?P<race_text>.*?) # regex should NOT be greedy!
-                               </pre>""",
-                           re.VERBOSE | re.IGNORECASE | re.DOTALL)
-        matchobj = regex.search(markup)
-        if matchobj is None:
-            warnings.warn('Vanilla CRRR regex did not match.')
-            return []
-
-        text = matchobj.group('race_text')
+        doc = html.document_fromstring(markup)
+        pre = doc.cssselect('pre')[0]
+        text = pre.text
         results = []
         for line in text.split('\n'):
             if self.match_against_membership(line):
@@ -405,30 +399,14 @@ class CoolRunning(RaceResults):
         banner : str
             Text to use as a banner.
         """
-        regex = re.compile(r"""<pre>             # banner text follows
-                               (?P<banner>.*?\n) # regex should NOT be greedy!
-                               \s*1\b            # stop matching upon 1st place
-                               .*                # the results are here
-                               </pre>""",        # stop here
-                           re.VERBOSE | re.IGNORECASE | re.DOTALL)
-        matchobj = regex.search(markup)
-        if matchobj is None:
-            msg = 'No banner found, authority is {}.'.format(self.author)
-            warnings.warn(msg)
-            return ''
-
-        banner_text = matchobj.group('banner')
-
-        # Clean it up if necessary.  Some of the clumsier race directors will
-        # put ampersands into the text without making them XML entities.
-        # regex = re.compile(r"""&                    # match the ampersand
-        #                       (?!                  # negative lookahead
-        #                         [A-Za-z]+[0-9]*;   # named entity
-        #                        |
-        #                         #[0-9]+;             # decimal entity
-        #                        |
-        #                         #x[0-9a-fA-F]+;)""", # hexidecimal entity
-        #                   re.VERBOSE)
-        banner_text = re.sub(r'&(?![A-Za-z]+[0-9]*;|#[0-9]+;|#x[0-9a-fA-F]+;)',
-                             r'&amp;', banner_text)
-        return banner_text
+        doc = html.document_fromstring(markup)
+        pre = doc.cssselect('pre')[0]
+        text = pre.text
+        lines = text.split('\n')
+        
+        # accumulate lines of text until we hit a start of line followed by
+        # whitespace followed by a 1 (for 1st place) followed by white space.
+        regex = re.compile(r'^\s*1\b')
+        lst = itertools.takewhile(lambda x: regex.match(x) is None, lines)
+        banner = '\n'.join(lst)
+        return banner

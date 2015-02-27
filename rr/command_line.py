@@ -116,7 +116,6 @@ def run_coolrunning():
     # But -y and -m have defaults.
     the_description = 'Process Coolrunning race results'
     parser = argparse.ArgumentParser(description=the_description)
-    group = parser.add_mutually_exclusive_group()
     parser.add_argument('-y', '--year',
                         dest='year',
                         default=datetime.date.today().year,
@@ -127,10 +126,10 @@ def run_coolrunning():
                         choices=range(1, 13),
                         type=int,
                         help='month')
-    group.add_argument('-d', '--day',
-                       dest='day',
-                       nargs=2,
-                       help='day range')
+    parser.add_argument('-d', '--day',
+                        dest='day',
+                        nargs=2,
+                        help='day range')
     parser.add_argument('-v', '--verbose',
                         dest='verbose',
                         choices=['debug', 'info', 'warning', 'error',
