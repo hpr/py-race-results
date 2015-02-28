@@ -69,16 +69,12 @@ class BestRace(RaceResults):
 
         # Get the title, but don't bother with the date information.
         # <title>  Purple Stride 5K     - November 10, 2013   </title>
-        regex = re.compile(r"""<title>\s*
-                               (?P<the_title>.*)-\s+
-                               \w*\s\d+,\s+\d\d\d\d\s*
-                               </title>""", re.VERBOSE | re.IGNORECASE)
-        matchobj = regex.search(self.html)
-        if matchobj is None:
-            raise RuntimeError("Could not find the title.")
+        doc = html.document_fromstring(self.html)
+        title = doc.cssselect('title')[0]
+        title_string = title.text.split('-')[0]
 
         h1_elt = etree.Element('h1')
-        h1_elt.text = matchobj.group('the_title')
+        h1_elt.text = title_string
         div.append(h1_elt)
 
         # Append the URL if possible.
