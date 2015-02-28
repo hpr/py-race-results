@@ -2,12 +2,10 @@
 Module for compiling NYRR race resuts.
 """
 import datetime as dt
-import io
 import re
 import http
 import http.cookiejar
 import urllib.request
-import warnings
 
 from lxml import etree
 from lxml import html as html2
@@ -129,11 +127,6 @@ class NewYorkRR(RaceResults):
         # match."
         if re.search("Your search returns no match.", markup) is not None:
             return
-
-        # So now we have a result.  Parse it for the result table.
-        parser = etree.HTMLParser()
-        tree = etree.parse(io.StringIO(markup), parser)
-        root = tree.getroot()
 
         doc = html2.document_fromstring(markup)
         tables = doc.cssselect('table')

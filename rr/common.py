@@ -3,7 +3,6 @@
 import datetime as dt
 import logging
 import re
-import urllib
 
 from lxml import etree
 import pandas as pd
@@ -22,8 +21,8 @@ class RaceResults:
     output_file : str
         All race results written to this file
     logger : logging.logger
-	    Handles verbosity of program execution.  All is logged
-	    to standard output.
+        Handles verbosity of program execution.  All is logged
+        to standard output.
     states : list
         List of states to search.  Not all subclasses use this.
     html : str
@@ -95,35 +94,14 @@ class RaceResults:
             # match.  Here's an example line to match.
             #   '60 Gene Gugliotta       North Plainfiel,NJ 53 M U '
             # The first and last names must be separated by just white space.
-            pattern = ('\\b(?:' + df['fname'][j]+ '|' + df['lname'][j] + ')'
-                       + '\\s+(?:' + df['lname'][j] + '|' + df['fname'][j] + ')\\b')
+            pattern = ('\\b(?:' +
+                       df['fname'][j] + '|' + df['lname'][j] + ')' +
+                       '\\s+(?:'
+                       + df['lname'][j] + '|' + df['fname'][j] + ')\\b')
 
             df['fname_lname_regex'][j] = re.compile(pattern, re.IGNORECASE)
 
         self.df = df
-
-    def parse_membership_list(self, csv_file):
-        """
-        Assume a comma-delimited membership list, last name first,
-        followed by the first name.
-
-        Doe,Jane, ...
-        Smith,Joe, ...
-
-        Parameters
-        ----------
-        csv_file : str
-            CSV file of membership
-        """
-
-        members = []
-        with open(csv_file) as fptr:
-            mlreader = csv.reader(fptr, delimiter=',')
-            for row in mlreader:
-                # members.append((lname, fname))
-                members.append((row[0], row[1]))
-
-        return members
 
     def run(self):
         """

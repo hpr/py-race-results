@@ -30,7 +30,7 @@ class BestRace(RaceResults):
         self.response = requests.get(url)
 
         # Look for the following pattern in the "master" list.
-        # 
+        #
         # http://www.bestrace.com/results/YY/YYMMDDXXX.HTM
         pattern = 'http://www.bestrace.com/results/{}/{}{}'
         pattern = pattern.format(self.start_date.strftime('%y'),
@@ -45,7 +45,6 @@ class BestRace(RaceResults):
         pattern += '(' + day_range + ')'
 
         pattern += r"\w+\.HTM"
-        regex = re.compile(pattern)
         self.logger.debug('pattern is "{}"'.format(pattern))
 
         matchiter = re.finditer(pattern, self.response.text)

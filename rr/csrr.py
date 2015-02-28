@@ -1,15 +1,13 @@
 """
 Module for parsing Compuscore race results.
 """
-
-import datetime
 import re
 import requests
-import warnings
 
 from lxml import etree, html
 
 from .common import RaceResults
+
 
 class CompuScore(RaceResults):
     """
@@ -27,7 +25,7 @@ class CompuScore(RaceResults):
         # match.  Here's an example line to match.
         #   '60.Gene Gugliotta       North Plainfiel,NJ 53 M U '
         # The first and last names must be separated by just white space.
-        # 
+        #
         # So, match the following:
         #     start of line
         #     place (like first, 2nd, etc.)

@@ -1,10 +1,8 @@
 """
 Backend class for handling CoolRunning race results.
 """
-import io
 import itertools
 import re
-import warnings
 
 import lxml
 from lxml import etree, html
@@ -96,7 +94,6 @@ class CoolRunning(RaceResults):
         response : Response object from requests package
             What's on the other side of the state master list URL
         """
-        local_state_file = state + '.shtml'
         regex = self.construct_state_match_pattern(state)
 
         relative_urls = regex.findall(response.text)
@@ -403,7 +400,7 @@ class CoolRunning(RaceResults):
         pre = doc.cssselect('pre')[0]
         text = pre.text
         lines = text.split('\n')
-        
+
         # accumulate lines of text until we hit a start of line followed by
         # whitespace followed by a 1 (for 1st place) followed by white space.
         regex = re.compile(r'^\s*1\b')
