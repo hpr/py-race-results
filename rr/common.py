@@ -4,8 +4,6 @@ import datetime as dt
 import logging
 import re
 import urllib
-import xml.dom.minidom
-import xml.etree.cElementTree as ET
 
 from lxml import etree
 import pandas as pd
@@ -19,19 +17,19 @@ class RaceResults:
     ----------
     start_date, stop_date : datetime.datetime
         date range to restrict race searches
-    memb_list:  membership list
+    df : pandas dataframe
+        contains membership list information, including regular expressions
     output_file : str
         All race results written to this file
-    logger: handles verbosity of program execution.  All is logged to
-            standard output.
+    logger : logging.logger
+	    Handles verbosity of program execution.  All is logged
+	    to standard output.
     states : list
         List of states to search.  Not all subclasses use this.
     html : str
-            HTML from downloaded web page
-    user_agent:  masquerade as browser because some sites do not like
-            "Python-urllib"
+        HTML from downloaded web page
     downloaded_url:  URL to a race that has been downloaded.  We link back
-            to it in the resulting output.
+        to it in the resulting output.
     """
 
     def __init__(self, verbose='INFO', membership_list=None,
@@ -43,8 +41,10 @@ class RaceResults:
         ----------
         start_date, stop_date : datetime.datetime
             Specifies time range in which to search for race results.
-        states : list
-            List of states to search.  Not all subclasses use this.
+        membership_list : str
+            Path to membership list.  CSV files and excel files are supported.
+        output_file : str
+            Path to output file of race results.
         verbose : str
             Level of verbosity
         """
@@ -62,13 +62,6 @@ class RaceResults:
 
         # This may be overridden by a subclass run time.
         self.downloaded_url = None
-
-        # Not clear if this works or not.
-        user_agent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_8) "
-        user_agent += "AppleWebKit/535.19 (KHTML, like Gecko) "
-        user_agent += "Chrome/18.0.1025.45 "
-        user_agent += "Safari/535.19"
-        self.user_agent = user_agent
 
         self.html = None
 
@@ -140,17 +133,6 @@ class RaceResults:
         self.initialize_output_file()
         self.compile_web_results()
 
-    def local_tidy(self, local_file=None):
-        """
-        Tidy up the HTML.
-        """
-        parser = etree.HTMLParser()
-        tree = etree.parse(local_file, parser)
-        root = tree.getroot()
-        result = etree.tostring(root, pretty_print=True, method="html")
-        with open(local_file, 'wb') as fptr:
-            fptr.write(result)
-
     def insert_race_results(self, results):
         """
         Insert HTML-ized results into the output file.
@@ -161,10 +143,11 @@ class RaceResults:
         body = root.findall('.//body')[0]
         body.append(results)
 
-        result = etree.tostring(root, pretty_print=True, method="html")
-        with open(self.output_file, 'wb') as fptr:
+        result = etree.tostring(root, pretty_print=True, method="html",
+                                encoding='unicode')
+        result = result.replace('\r', '\n')
+        with open(self.output_file, 'w') as fptr:
             fptr.write(result)
-        self.local_tidy(local_file=self.output_file)
 
     def construct_source_url_reference(self, source):
         """
@@ -216,23 +199,11 @@ class RaceResults:
             </body>
         </html>
         """
-        ofile = ET.Element('html')
-        head = ET.SubElement(ofile, 'head')
-        link = ET.SubElement(head, 'link')
+        ofile = etree.Element('html')
+        head = etree.SubElement(ofile, 'head')
+        link = etree.SubElement(head, 'link')
         link.set('rel', 'stylesheet')
         link.set('href', 'rr.css')
         link.set('type', 'text/css')
-        ET.SubElement(ofile, 'body')
-        ET.ElementTree(ofile).write(self.output_file)
-        pretty_print_xml(self.output_file)
-
-
-def pretty_print_xml(xml_file):
-    """
-    Taken from StackOverflow
-    """
-    xml_string = xml.dom.minidom.parse(xml_file)
-    pp_string = xml_string.toprettyxml()
-    fptr = open(xml_file, 'w')
-    fptr.write(pp_string)
-    fptr.close()
+        etree.SubElement(ofile, 'body')
+        etree.ElementTree(ofile).write(self.output_file, pretty_print=True)

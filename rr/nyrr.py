@@ -253,8 +253,9 @@ class NewYorkRR(RaceResults):
         opener = urllib.request.build_opener(cookie_processor)
         urllib.request.install_opener(opener)
 
-        headers = {'User-Agent': self.user_agent}
-        req = urllib.request.Request(url, None, headers)
+        # headers = {'User-Agent': self.user_agent}
+        # req = urllib.request.Request(url, None, headers)
+        req = urllib.request.Request(url)
         response = urllib.request.urlopen(req, params)
         html = response.readall()
         try:
