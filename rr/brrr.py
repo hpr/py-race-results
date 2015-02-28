@@ -54,8 +54,30 @@ class BestRace(RaceResults):
         for url in urls:
             self.logger.info('Downloading {}...'.format(url))
             response = requests.get(url)
+            self.downloaded_url = url
             self.html = response.text
-            self.compile_race_results()
+            self.compile_race_results(response)
+
+    def compile_race_results(self, resp):
+        """
+        """
+        doc = html.document_fromstring(resp.text)
+        self.html = resp.text
+
+        # We are looking for a <PRE> element.  That element is preceded by
+        # a <PRE><A NAME="overall"></PRE> set of tags.
+        pre = doc.cssselect('pre + pre')[0]
+
+        # OK, we are properly positioned.
+        results = []
+        for line in pre.text_content().split('\n'):
+            for _, regex in self.df['fname_lname_regex'].iteritems():
+                if regex.search(line):
+                    results.append(line)
+
+        if len(results) > 0:
+            results = self.webify_results(results)
+            self.insert_race_results(results)
 
     def webify_results(self, results_lst):
         """
