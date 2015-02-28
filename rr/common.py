@@ -76,16 +76,27 @@ class RaceResults:
 
     def load_membership_list(self, membership_file):
         """
-        Construct regular expressions for each person in the membership list.
+        Load the membership file.
+
+        In addition, construct regular expressions for each member that we use
+        to search for race results.
 
         Parameters
         ----------
         membership_list : str
             CSV or Excel spreadsheet file of club membership
         """
-        df = pd.read_csv(membership_file)
+        try:
+            df = pd.read_csv(membership_file)
+        except:
+            df = pd.read_excel(membership_file)
         cols = [col.lower() for col in df]
         df.columns = cols
+
+        if 'fname' not in df.columns and 'lname' not in df.columns:
+            msg = 'The membership file must have both "FName" and '
+            msg += '"LName" columns (first name and last name).'
+            raise RuntimeError(msg)
 
         df['fname_lname_regex'] = None
         for j in range(len(df)):
