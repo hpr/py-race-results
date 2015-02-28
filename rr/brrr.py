@@ -102,30 +102,12 @@ class BestRace(RaceResults):
         if self.downloaded_url is not None:
             div.append(self.construct_source_url_reference('BestRace'))
 
+        # Parse out the banner.  The banner has 'tail' content, however, so we
+        # have to be careful.
+        banner = doc.cssselect('pre + pre > b')[0]
         pre = etree.Element('pre')
-        pre.set('class', 'actual_results')
-
-        # Parse out the banner.
-        regex = re.compile(r"""<b>
-                               (?P<mixed_content_1>[^<>]*)
-                               <u>(?P<mixed_content_2>[^<>]*)</u>
-                               </b>""",
-                           re.VERBOSE | re.IGNORECASE)
-        matchobj = regex.search(self.html)
-        if matchobj is None:
-            raise RuntimeError("Could not parse out the banner.")
-
-        # Construct the banner as mixed content XML.  Difficult to do this
-        # any other way and still get this to look right.
-        text = '<pre class="actual_results">\n'
-        text += matchobj.group()
-        text += '\n' + '\n'.join(results_lst)
-        text += '</pre>'
-
-        # Replace any singleton ampersand.
-        text = text.replace(' & ', ' and ')
-        pre = etree.fromstring(text)
-
+        pre.append(banner)
+        banner.tail = '\n' + '\n'.join(results_lst)
         div.append(pre)
 
         return div
