@@ -301,8 +301,6 @@ class CoolRunning(RaceResults):
 
         # The H1 tag has the race name.  The H2 tag has the location and date.
         # Both are the only such tabs in the file.
-        #
-        # Use re.DOTALL since . must match across lines.
         h1 = doc.cssselect('h1')[0]
         h1_elt = etree.Element('h1')
         h1_elt.text = h1.text
@@ -366,15 +364,9 @@ class CoolRunning(RaceResults):
 
         banner_text = self.parse_banner(markup)
 
-        text = '<pre class="actual_results">\n'
-        text += banner_text + '\n'.join(result_lst) + '\n'
-        text += '</pre>'
-        try:
-            pre = etree.XML(text)
-        except lxml.etree.XMLSyntaxError as error:
-            pre = etree.Element('pre')
-            pre.set('class', 'actual_results')
-            pre.text = str(error)
+        pre = etree.Element('pre')
+        pre.attrib['class'] = 'actual_results'
+        pre.text = banner_text + '\n' + '\n'.join(result_lst) + '\n'
         div.append(pre)
 
         return div
