@@ -72,9 +72,6 @@ class RaceResults:
 
         self.html = None
 
-        self.first_name_regex = None
-        self.last_name_regex = None
-
     def match_against_membership(self, line):
         """
         We have a line of text from the race file.  Match it against the

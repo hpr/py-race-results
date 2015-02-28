@@ -11,22 +11,6 @@ from lxml import etree, html
 
 from .common import RaceResults
 
-# Need to match the month of the search window to the month strings that
-# Compuscore uses.
-MONTHSTRS = {1: 'janfeb',
-             2: 'janfeb',
-             3: 'march',
-             4: 'april',
-             5: 'may',
-             6: 'june',
-             7: 'july',
-             8: 'aug',
-             9: 'sept',
-             10: 'october',
-             11: 'novdec',
-             12: 'novdec', }
-
-
 class CompuScore(RaceResults):
     """
     Class for handling compuscore results.
@@ -34,14 +18,32 @@ class CompuScore(RaceResults):
     def __init__(self, **kwargs):
         RaceResults.__init__(self, **kwargs)
 
-        self.monthstr = MONTHSTRS[self.start_date.month]
-
         # Need to remember the current URL.
         self.downloaded_url = None
 
+        # Customize the regular expressions.
+        # Use word boundaries to prevent false positives, e.g. "Ed Ford"
+        # does not cause every fricking person from "New Bedford" to
+        # match.  Here's an example line to match.
+        #   '60.Gene Gugliotta       North Plainfiel,NJ 53 M U '
+        # The first and last names must be separated by just white space.
+        # 
+        # So, match the following:
+        #     start of line
+        #     place (like first, 2nd, etc.)
+        #     '.'
+        #     First name
+        #     space
+        #     Last name
+        self.df['regex'] = None
+        for _, row in self.df.iterrows():
+            pattern = (r'^\s*(?P<place>\d+)\.' +
+                       row['fname'] + '\s+' + row['lname'] + r'\b')
+            row['regex'] = re.compile(pattern, re.IGNORECASE)
+
     def compile_web_results(self):
         """
-        Download the requested results and compile them.
+        Download the race results in the requested time frame.
         """
         fmt = 'http://www.compuscore.com/api/races/events?date_range={},{}'
         url = fmt.format(self.start_date.strftime('%Y-%m-%d'),
@@ -91,49 +93,14 @@ class CompuScore(RaceResults):
 
         # OK, we are properly positioned.
         results = []
-        already_found = []
         for line in pre.text_content().split('\n'):
-            for _, regex in self.df['fname_lname_regex'].iteritems():
+            for _, regex in self.df['regex'].iteritems():
                 if regex.search(line):
-                    if regex not in already_found:
-                        results.append(line)
-                        already_found.append(regex)
+                    results.append(line)
 
         if len(results) > 0:
             results = self.webify_results(doc, results)
             self.insert_race_results(results)
-
-    def get_race_date(self):
-        """
-        Return the race date.
-        """
-        # The date text is in the file's sole H3 tag.
-        regex = re.compile(r'<h3.*>(?P<h3>.*)</h3>')
-        matchobj = regex.search(self.html)
-        if matchobj is not None:
-            full_race_date_text = matchobj.group('h3')
-        else:
-            # Try searching for just the literal text.
-            regex = re.compile(r'Race Date:\d\d-\d\d-\d\d')
-            matchobj = regex.search(self.html)
-            if matchobj is not None:
-                full_race_date_text = matchobj.group()
-            else:
-                # Give up, nothing here.
-                return None
-
-        # The race date should read something like
-        #     "    Race Date:11-03-12   "
-        pat = r'\s*Race\sDate:(?P<mo>\d{1,2})-(?P<dd>\d{2})-(?P<yy>\d{2})\s*'
-        regex = re.compile(pat)
-        matchobj = regex.search(full_race_date_text)
-
-        # NOW we get to see if the race is in the proper time frame or not.
-        year = 2000 + int(matchobj.group('yy'))
-        month = int(matchobj.group('mo'))
-        day = int(matchobj.group('dd'))
-
-        return datetime.date(year, month, day)
 
     def webify_results(self, doc, results):
         """
