@@ -3,6 +3,7 @@ Backend class for handling CoolRunning race results.
 """
 import itertools
 import re
+import warnings
 
 import lxml
 from lxml import etree, html
@@ -148,10 +149,16 @@ class CoolRunning(RaceResults):
         markup : str
             HTML from a race web page.
         """
-        doc = html.document_fromstring(markup)
-        pre = doc.cssselect('pre')[0]
-        text = pre.text
         results = []
+
+        doc = html.document_fromstring(markup)
+        try:
+            pre = doc.cssselect('pre')[0]
+        except IndexError:
+            warnings.warn = "No <PRE> element found.  Skipping..."
+            return results
+
+        text = pre.text_content()
         for line in text.split('\n'):
             if self.match_against_membership(line):
                 results.append(line)
@@ -231,7 +238,7 @@ class CoolRunning(RaceResults):
         """
         html = None
         self.get_author(markup)
-        if self.author in ['CapeCodRoadRunners']:
+        if self.author in ['CapeCodRoadRunners', 'GreenfieldRecreation']:
             self.logger.debug('Cape Cod Road Runners pattern')
             results = self.compile_ccrr_race_results(markup)
             if len(results) > 0:
@@ -390,7 +397,8 @@ class CoolRunning(RaceResults):
         """
         doc = html.document_fromstring(markup)
         pre = doc.cssselect('pre')[0]
-        text = pre.text
+        text = pre.text_content()
+
         lines = text.split('\n')
 
         # accumulate lines of text until we hit a start of line followed by
