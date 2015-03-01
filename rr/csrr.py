@@ -83,6 +83,9 @@ class CompuScore(RaceResults):
         pre = doc.cssselect('strong + pre')[0]
 
         # The prior <STRONG> element should have a <A NAME="overall"> element
+        # <strong><big><font face="Arial Narrow">
+        # <a name="overall">CJRRC HANGOVER 5K RUN</a></font></big></strong>
+        # <pre>
         strong = pre.getprevious()
         lst = strong.cssselect('a[name="overall"]')
         if len(lst) == 0:
@@ -94,7 +97,8 @@ class CompuScore(RaceResults):
         for line in pre.text_content().split('\n'):
             for _, regex in self.df['regex'].iteritems():
                 if regex.search(line):
-                    results.append(line)
+                    # Get rid of carriage returns '\r'
+                    results.append(line.rstrip())
 
         if len(results) > 0:
             results = self.webify_results(doc, results)
@@ -132,18 +136,12 @@ class CompuScore(RaceResults):
         pre = etree.Element('pre')
         pre.set('class', 'actual_results')
 
-        regex = re.compile(r"""<strong>(?P<strong1>[^<>]*)</strong>\s*
-                               <strong><u>(?P<strong2>[^<>]*)</u></strong>""",
-                           re.VERBOSE)
-        matchobj = regex.search(self.html)
-        if matchobj is None:
-            pre.text = '\n' + '\n'.join(results)
-        else:
-            # This <pre> element must be mixed content in order to look
-            # right.  Difficult to do this without using "fromstring".
-            inner = '\n' + matchobj.group() + '\n' + '\n'.join(results)
-            mixed_content = '<pre>' + inner + '</pre>'
-            pre = etree.fromstring(mixed_content)
-        div.append(pre)
+        # Get the banner.  Consists of two STRONG elements inside the <PRE>
+        # element with the race results.
+        strongs = doc.cssselect('strong + pre')[0].cssselect('strong')
+        pre.append(strongs[1])
+        strongs[2].tail = '\n' + '\n'.join(results)
+        pre.append(strongs[2])
 
+        div.append(pre)
         return div
