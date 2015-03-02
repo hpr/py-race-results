@@ -155,7 +155,7 @@ class CoolRunning(RaceResults):
         try:
             pre = doc.cssselect('pre')[0]
         except IndexError:
-            warnings.warn = "No <PRE> element found.  Skipping..."
+            warnings.warn("No <PRE> element found.  Skipping...")
             return results
 
         text = pre.text_content()

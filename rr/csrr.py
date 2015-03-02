@@ -2,8 +2,9 @@
 Module for parsing Compuscore race results.
 """
 import re
-import requests
+import warnings
 
+import requests
 from lxml import etree, html
 
 from .common import RaceResults
@@ -80,12 +81,18 @@ class CompuScore(RaceResults):
         """
         doc = html.document_fromstring(resp.text)
         self.html = resp.text
-        pre = doc.cssselect('strong + pre')[0]
 
         # The prior <STRONG> element should have a <A NAME="overall"> element
         # <strong><big><font face="Arial Narrow">
         # <a name="overall">CJRRC HANGOVER 5K RUN</a></font></big></strong>
         # <pre>
+        try:
+            pre = doc.cssselect('strong + pre')[0]
+        except IndexError:
+            msg = "No <STRONG><PRE> element combination found.  Skipping..."
+            warnings.warn(msg)
+            return 
+
         strong = pre.getprevious()
         lst = strong.cssselect('a[name="overall"]')
         if len(lst) == 0:

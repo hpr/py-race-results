@@ -47,6 +47,8 @@ class ActiveRR(RaceResults):
         Download the requested results and compile them.
         """
         for state in self.states:
+            print("Searching for results in {}...".format(state))
+            self.state = state
             url = 'http://results.active.com/search'
             params = {
                 'search[source]': 'event',
@@ -95,6 +97,9 @@ class ActiveRR(RaceResults):
         place = event.cssselect('.result-sub-location')[0].text.strip()
         date = event.cssselect('.result-extras .title')[0].tail.strip()
         print('Looking at {}, {}, {}'.format(name, place, date))
+        if not place.endswith(self.state):
+            print("\tSkipping, state mismatch.")
+            return
 
         link = event.cssselect('.result-title a[href]')[0].get('href')
         url = 'http://results.active.com' + link
